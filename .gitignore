@@ -1,0 +1,9 @@
+.vscode/
+autoshift.egg-info/
+**/__pycache__/
+**/*.ipynb
+.env
+
+src/server/logs/
+src/server/lib/engine/bin/
+src/server/lib/engine/run.sh
