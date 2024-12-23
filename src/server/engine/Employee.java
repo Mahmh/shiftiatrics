@@ -1,4 +1,4 @@
-package server.lib.engine;
+package server.engine;
 import java.util.Objects;
 
 /** A struct to represent an employee with an ID and name. */

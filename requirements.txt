@@ -4,4 +4,8 @@ uvicorn==0.34.0
 jpype1==1.5.1
 python-dotenv==1.0.1
 pytest==8.3.4
+pydantic==2.10.4
+SQLAlchemy==2.0.36
+ipykernel==6.29.5
+psycopg2-binary==2.9.10
 setuptools

@@ -2,8 +2,9 @@
 autoshift.egg-info/
 **/__pycache__/
 **/*.ipynb
+.pytest_cache/
 .env
 
 src/server/logs/
-src/server/lib/engine/bin/
-src/server/lib/engine/run.sh
+src/server/engine/bin/
+src/server/engine/run.sh

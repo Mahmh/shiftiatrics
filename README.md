@@ -37,5 +37,5 @@ With all of that information, I can design an effective system for automating sc
     | Accounts    | Account ID, Username, Password                  |
     | Employees   | Account ID, Employee ID, Employee name          |
     | Shifts      | Account ID, Shift ID, Shift name, Time range    |
-    | Schedules   | Account ID, Schedule                            |
+    | Schedules   | Account ID, Schedule ID, Schedule               |
     | Settings    | Account ID, ...                                 |
