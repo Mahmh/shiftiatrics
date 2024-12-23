@@ -1,6 +1,8 @@
+from typing import Any
 from datetime import time
 from functools import wraps
-from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, Time
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Time
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base, Session as SessionType
 from src.server.lib.constants import ENGINE_URL
 from src.server.lib.utils import log, err_log, parse_time
@@ -44,14 +46,14 @@ class Account(Base):
 
 class Employee(Base):
     __tablename__ = 'employees'
-    account_id = Column(Integer, ForeignKey('accounts.account_id'), nullable=False)
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     employee_id = Column(Integer, primary_key=True, autoincrement=True)
     employee_name = Column(String(100), nullable=False)
     __repr__ = lambda self: f'Employee({self.employee_id})'
 
 class Shift(Base):
     __tablename__ = 'shifts'
-    account_id = Column(Integer, ForeignKey('accounts.account_id'), nullable=False)
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     shift_id = Column(Integer, primary_key=True, autoincrement=True)
     shift_name = Column(String(100), nullable=False)
     start_time = Column(Time, nullable=False)
@@ -60,9 +62,9 @@ class Shift(Base):
 
 class Schedule(Base):
     __tablename__ = 'schedules'
-    account_id = Column(Integer, ForeignKey('accounts.account_id'), nullable=False)
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     schedule_id = Column(Integer, primary_key=True, autoincrement=True)
-    schedule = Column(Text, nullable=False)
+    schedule = Column(ARRAY(Integer, dimensions=2), nullable=False)
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
 
 
@@ -82,18 +84,32 @@ def _validate_credentials(cred: Credentials, *, session: SessionType) -> Account
     return account
 
 
+def _check_account(account_id: int, *, session: SessionType) -> Account:
+    """Returns an account if it exists using its ID."""
+    account = session.query(Account).filter_by(account_id=account_id).first()
+    if not account: raise NonExistent('account', account_id)
+    return account
+
+
 def _check_employee(employee_id: int, *, session: SessionType) -> Employee:
-    """Checks if an employee exists based on their ID."""
+    """Returns an employee if it exists using its ID."""
     employee = session.query(Employee).filter_by(employee_id=employee_id).first()
     if not employee: raise NonExistent('employee', employee_id)
     return employee
 
 
 def _check_shift(shift_id: int, *, session: SessionType) -> Shift:
-    """Checks if a shift exists based on its ID."""
+    """Returns a shift if it exists using its ID."""
     shift = session.query(Shift).filter_by(shift_id=shift_id).first()
     if not shift: raise NonExistent('shift', shift_id)
     return shift
+
+
+def _check_schedule(schedule_id: int, *, session: SessionType) -> Schedule:
+    """Returns an schedule if it exists using its ID."""
+    schedule = session.query(Schedule).filter_by(schedule_id=schedule_id).first()
+    if not schedule: raise NonExistent('schedule', schedule_id)
+    return schedule
 
 
 
@@ -151,12 +167,14 @@ def delete_account(cred: Credentials, *, session: SessionType) -> None:
 @dbsession()
 def get_all_employees_of_account(account_id: int, *, session: SessionType) -> list[Employee]:
     """Returns all employees in the database."""
+    _check_account(account_id, session=session)
     return session.query(Employee).filter_by(account_id=account_id).all()
 
 
 @dbsession(commit=True)
 def create_employee(account_id: int, employee_name: str, *, session: SessionType) -> Employee:
     """Creates an employee for the given account ID."""
+    _check_account(account_id, session=session)
     employee = Employee(account_id=account_id, employee_name=employee_name)
     session.add(employee)
     log(f'Created employee: {employee}', 'db', 'INFO')
@@ -190,12 +208,14 @@ def delete_employee(employee_id: int, *, session: SessionType) -> None:
 @dbsession()
 def get_all_shifts_of_account(account_id: int, *, session: SessionType) -> list[Shift]:
     """Returns all shifts associated with the given account ID."""
+    _check_account(account_id, session=session)
     return session.query(Shift).filter_by(account_id=account_id).all()
 
 
 @dbsession(commit=True)
 def create_shift(account_id: int, shift_name: str, start_time: str|time, end_time: str|time, *, session: SessionType) -> Shift:
     """Creates a shift for the given account ID."""
+    _check_account(account_id, session=session)
     if type(start_time) is str: start_time = parse_time(start_time)
     if type(end_time) is str: end_time = parse_time(end_time)
     shift = Shift(account_id=account_id, shift_name=shift_name, start_time=start_time, end_time=end_time)
@@ -224,3 +244,44 @@ def delete_shift(shift_id: int, *, session: SessionType) -> None:
     shift = _check_shift(shift_id, session=session)
     session.delete(shift)
     log(f'Deleted shift: {shift}', 'db', 'INFO')
+
+
+
+## Schedule
+@dbsession()
+def get_all_schedules_of_account(account_id: int, *, session: SessionType) -> list[Schedule]:
+    """Returns all schedules associated with the given account ID."""
+    _check_account(account_id, session=session)
+    return session.query(Schedule).filter_by(account_id=account_id).all()
+
+
+@dbsession(commit=True)
+def create_schedule(account_id: int, schedule: list[list[int]], *, session: SessionType) -> Schedule:
+    """Creates a schedule for the given account ID."""
+    _check_account(account_id, session=session)
+    schedule = Schedule(account_id=account_id, schedule=schedule)
+    session.add(schedule)
+    log(f'Created schedule: {schedule}', 'db', 'INFO')
+    return schedule
+
+
+@dbsession(commit=True)
+def update_schedule(schedule_id: int, updates: dict[str, Any], *, session: SessionType) -> Schedule:
+    """Updates a schedule's attributes based on the given schedule ID and updates."""
+    schedule = _check_schedule(schedule_id, session=session)
+
+    ALLOWED_FIELDS = {'schedule'}
+    for key, value in updates.items():
+        if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        setattr(schedule, key, value)
+
+    log(f'Updated schedule: {schedule}, updates: {updates}', 'db', 'INFO')
+    return schedule
+
+
+@dbsession(commit=True)
+def delete_schedule(schedule_id: int, *, session: SessionType) -> None:
+    """Deletes a schedule by its ID."""
+    schedule = _check_schedule(schedule_id, session=session)
+    session.delete(schedule)
+    log(f'Deleted schedule: {schedule}', 'db', 'INFO')

@@ -44,3 +44,23 @@ def parse_time(time_str: str) -> time:
         return time(hours, minutes)
     except ValueError:
         raise ValueError(f'Invalid time format: "{time_str}". Expected format is "HH:MM".')
+
+
+def parse_schedule(schedule: list[list[str]]) -> list[list[int]]:
+    """Converts the given schedule from being a 2D string array to being a 2D integer array."""
+    flattened = [item for sublist in schedule for item in sublist]
+    flattened = flattened[1:-1]  # Remove the first and last '{' and '}'
+
+    # Initialize the result and a temporary list to hold each row
+    result, current_row = [], []
+
+    for token in flattened:
+        if token == '{':  # Start of a new row
+            current_row = []
+        elif token == '}':  # End of the current row
+            if current_row:  # Append the completed row to the result
+                result.append(current_row)
+                current_row = []
+        elif token.isdigit():  # Add integer values to the current row
+            current_row.append(int(token))
+    return result
