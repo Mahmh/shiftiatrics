@@ -7,20 +7,21 @@ CREATE TABLE accounts (
 );
 
 CREATE TABLE employees (
-    account_id INT NOT NULL REFERENCES accounts(account_id),
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     employee_id SERIAL PRIMARY KEY,
     employee_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE shifts (
-    account_id INT NOT NULL REFERENCES accounts(account_id),
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     shift_id SERIAL PRIMARY KEY,
     shift_name VARCHAR(100) NOT NULL,
-    time_range VARCHAR(50) NOT NULL
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
 );
 
 CREATE TABLE schedules (
-    account_id INT NOT NULL REFERENCES accounts(account_id),
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     schedule_id SERIAL PRIMARY KEY,
     schedule TEXT NOT NULL
 );

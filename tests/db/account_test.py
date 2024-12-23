@@ -2,7 +2,7 @@ from sqlalchemy import text
 import pytest
 from src.server.lib.db import Session, create_account, log_in_account, delete_account, update_account, get_all_accounts
 from src.server.lib.models import Credentials
-from src.server.lib.exceptions import UsernameTaken, InvalidCredentials, AccountDoesNotExist
+from src.server.lib.exceptions import UsernameTaken, InvalidCredentials, NonExistent
 
 CRED = Credentials(username='testuser', password='testpass')
 
@@ -14,7 +14,7 @@ def setup_and_teardown():
     yield  # Run the test
     # Teardown: Delete the account & reset the account_id serial sequence
     try: delete_account(CRED)
-    except AccountDoesNotExist: pass
+    except NonExistent: pass
     with Session() as session:
         session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
         session.commit()
@@ -46,13 +46,13 @@ def test_log_in_account_invalid_credentials():
 
 def test_log_in_account_nonexistent_user():
     nonexistent_credentials = Credentials(username='nonexistent', password='nopass')
-    with pytest.raises(AccountDoesNotExist):
+    with pytest.raises(NonExistent):
         log_in_account(nonexistent_credentials)
 
 
 def test_delete_account():
     delete_account(CRED)
-    with pytest.raises(AccountDoesNotExist):
+    with pytest.raises(NonExistent):
         log_in_account(CRED)
 
 

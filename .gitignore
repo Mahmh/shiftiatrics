@@ -4,6 +4,7 @@ autoshift.egg-info/
 **/*.ipynb
 .pytest_cache/
 .env
+tasks.txt
 
 src/server/logs/
 src/server/engine/bin/
