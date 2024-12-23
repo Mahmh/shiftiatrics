@@ -65,7 +65,12 @@ class Schedule(Base):
 
 
 
-# Utils
+# Utils not meant to be called directly
+def _check_username_is_unique(username: str, *, session: SessionType) -> bool:
+    if session.query(Account).filter_by(username=username).first():
+        raise UsernameTaken(username)
+
+
 def _validate_credentials(cred: Credentials, *, session: SessionType) -> Account:
     """Validates credentials to ensure the account exists and is authenticated."""
     account = session.query(Account).filter_by(username=cred.username).first()
@@ -74,8 +79,15 @@ def _validate_credentials(cred: Credentials, *, session: SessionType) -> Account
     return account
 
 
+def _check_employee(employee_id: int, *, session: SessionType) -> Employee:
+    employee = session.query(Employee).filter_by(employee_id=employee_id).first()
+    if not employee: raise ValueError(f'Employee with ID {employee_id} does not exist.')
+    return employee
+
+
 
 # Functional
+## Account
 @dbsession()
 def get_all_accounts(*, session: SessionType) -> list[Account]:
     """Returns all accounts in the DB."""
@@ -93,8 +105,7 @@ def log_in_account(cred: Credentials, *, session: SessionType) -> Account:
 @dbsession(commit=True)
 def create_account(cred: Credentials, *, session: SessionType) -> Account:
     """Creates an account with the provided credentials"""
-    username_is_unique = not session.query(Account).filter_by(username=cred.username).first()
-    if not username_is_unique: raise UsernameTaken(cred.username)
+    _check_username_is_unique(cred.username, session=session)
     account = Account(username=cred.username, password=cred.password)
     session.add(account)
     return account
@@ -102,23 +113,71 @@ def create_account(cred: Credentials, *, session: SessionType) -> Account:
 
 @dbsession(commit=True)
 def delete_account(cred: Credentials, *, session: SessionType) -> None:
-    """Deletes an account based on the provided credentials."""
+    """Deletes an account and all its employees based on the provided credentials."""
     account = _validate_credentials(cred, session=session)
+
+    # Delete all employees associated with the account
+    employees = session.query(Employee).filter_by(account_id=account.account_id).all()
+    for employee in employees:
+        session.delete(employee)
+        log(f'Deleted employee: {employee}', 'auth', 'INFO')
+
+    # Explicitly flush the session to ensure employees are deleted first, then delete the account
+    session.flush()
     session.delete(account)
     log(f'Deleted account: {account}', 'auth', 'INFO')
 
 
 @dbsession(commit=True)
-def modify_account(cred: Credentials, updates: dict, *, session: SessionType) -> Account:
+def update_account(cred: Credentials, updates: dict, *, session: SessionType) -> Account:
     """Modifies an account's attributes based on the provided credentials and updates."""
     account = _validate_credentials(cred, session=session)
 
     # Update the account attributes
     ALLOWED_FIELDS = {'username', 'password'}
     for key, value in updates.items():
-        if key not in ALLOWED_FIELDS:
-            raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        if key == 'username': _check_username_is_unique(value, session=session)
         setattr(account, key, value)
 
     log(f'Modified account: {account}, updates: {updates}', 'auth', 'INFO')
     return account
+
+
+
+## Emoloyee
+@dbsession()
+def get_all_employees_of_account(account_id: int, *, session: SessionType) -> list[Employee]:
+    """Returns all employees in the database."""
+    return session.query(Employee).filter_by(account_id=account_id).all()
+
+
+@dbsession(commit=True)
+def create_employee(account_id: int, employee_name: str, *, session: SessionType) -> Employee:
+    """Creates an employee for the given account ID."""
+    employee = Employee(account_id=account_id, employee_name=employee_name)
+    session.add(employee)
+    log(f'Created employee: {employee}', 'db', 'INFO')
+    return employee
+
+
+@dbsession(commit=True)
+def update_employee(employee_id: int, updates: dict, *, session: SessionType) -> Employee:
+    """Updates an employee's attributes based on their ID and the updates."""
+    employee = _check_employee(employee_id, session=session)
+
+    ALLOWED_FIELDS = {'employee_name'}
+    for key, value in updates.items():
+        if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        setattr(employee, key, value)
+
+    log(f'Updated employee: {employee}, updates: {updates}', 'db', 'INFO')
+    return employee
+
+
+@dbsession(commit=True)
+def delete_employee(employee_id: int, *, session: SessionType) -> None:
+    """Deletes an employee by their ID."""
+    employee = _check_employee(employee_id, session=session)
+    session.delete(employee)
+    log(f'Deleted employee: {employee}', 'db', 'INFO')

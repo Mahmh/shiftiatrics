@@ -1,5 +1,6 @@
+from sqlalchemy import text
 import pytest
-from src.server.lib.db import create_account, log_in_account, delete_account, modify_account, get_all_accounts
+from src.server.lib.db import Session, create_account, log_in_account, delete_account, update_account, get_all_accounts
 from src.server.lib.models import Credentials
 from src.server.lib.exceptions import UsernameTaken, InvalidCredentials, AccountDoesNotExist
 
@@ -11,9 +12,12 @@ def setup_and_teardown():
     try: create_account(CRED)
     except UsernameTaken: pass
     yield  # Run the test
-    # Teardown: Delete the account
+    # Teardown: Delete the account & reset the account_id serial sequence
     try: delete_account(CRED)
     except AccountDoesNotExist: pass
+    with Session() as session:
+        session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
+        session.commit()
 
 
 # Tests
@@ -52,9 +56,9 @@ def test_delete_account():
         log_in_account(CRED)
 
 
-def test_modify_account():
+def test_update_account():
     updates = {'username': 'newuser', 'password': 'newpass'}
-    modified_account = modify_account(CRED, updates)
+    modified_account = update_account(CRED, updates)
     assert modified_account.username == 'newuser'
     assert modified_account.password == 'newpass'
 
@@ -63,10 +67,10 @@ def test_modify_account():
     delete_account(modified_cred)
 
 
-def test_modify_account_invalid_field():
+def test_update_account_invalid_field():
     updates = {'invalid_field': 'value'}
     with pytest.raises(ValueError):
-        modify_account(CRED, updates)
+        update_account(CRED, updates)
 
 
 def test_get_all_accounts():
