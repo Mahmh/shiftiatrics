@@ -1,13 +1,15 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import jpype
+from src.server.lib.constants import WEB_SERVER_URL, locate
+from src.server.routers.db import account_router, employee_router, shift_router, schedule_router
 
-# Init
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     """Defines the application lifespan to manage JVM startup and shutdown."""
     if not jpype.isJVMStarted():
-        jpype.startJVM(classpath='../utils/out/')
+        jpype.startJVM(classpath=locate('../engine/bin/'))
     try:
         yield 
     finally:
@@ -15,3 +17,13 @@ async def _lifespan(app: FastAPI):
             jpype.shutdownJVM()
 
 app = FastAPI(lifespan=_lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[WEB_SERVER_URL],
+    allow_credentials=True,
+    allow_methods=['GET', 'POST', 'PATCH', 'DELETE'],
+    allow_headers=['*'],
+)
+
+for r in (account_router, employee_router, shift_router, schedule_router):
+    app.include_router(r)

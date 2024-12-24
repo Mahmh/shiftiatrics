@@ -35,7 +35,6 @@ def dbsession(*, commit=False):
     return decorator
 
 
-
 # Tables
 class Account(Base):
     __tablename__ = 'accounts'
