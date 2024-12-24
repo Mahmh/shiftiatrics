@@ -10,7 +10,7 @@ from src.server.lib.db import (
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule
 )
 
-# Routers
+# Init
 account_router = APIRouter()
 employee_router = APIRouter()
 shift_router = APIRouter()

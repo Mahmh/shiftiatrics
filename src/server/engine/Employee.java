@@ -3,8 +3,8 @@ import java.util.Objects;
 
 /** A struct to represent an employee with an ID and name. */
 public class Employee {
-    final int id;
-    final String name;
+    public final int id;
+    public final String name;
 
     public Employee(int id, String name) {
         this.id = id;
