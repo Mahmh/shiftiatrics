@@ -1,0 +1,40 @@
+#shifts-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    .shift-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: get-color('pale-blue');
+        padding: 10px 25px;
+        border-radius: 20px;
+        box-shadow: $main-box-shadow;
+
+        .shift-details {
+            @include vertical-flex;
+            padding-bottom: 10px;
+        }
+
+        h1 { font-size: 1.5rem }
+        div {
+            display: flex;
+            gap: 10px;
+
+            button {
+                @include circle(50px);
+                @include compressible;
+                background-color: get-color('background');
+            }
+        }
+    }
+
+    #add-shift-btn {
+        background-color: get-color('primary-blue');
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+        &:hover { background-color: get-color('primary-blue-hover') }
+    }
+}

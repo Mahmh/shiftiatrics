@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { AppContext } from '@context'
-import { Employee } from '@/app/types'
-import { Icon, Request } from '@/app/utils'
+import { Employee } from '@types'
+import { Icon, Request } from '@utils'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -30,7 +30,7 @@ const EmployeeCard = ({ id, name }: Employee) => {
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
-                        placeholder='Type the new name here'
+                        placeholder='New name'
                         value={tempName}
                         onChange={handleNameChange}
                         maxLength={40}
@@ -65,11 +65,11 @@ const EmployeeCard = ({ id, name }: Employee) => {
     }
 
     return (
-        <div className="employee-card">
+        <div className='employee-card'>
             <h1>{name}</h1>
             <div>
-                <button onClick={openEditModal}><Icon src={editIcon} alt="Edit"/></button>
-                <button onClick={openDeleteModal}><Icon src={removeIcon} alt="Remove"/></button>
+                <button onClick={openEditModal}><Icon src={editIcon} alt='Edit'/></button>
+                <button onClick={openDeleteModal}><Icon src={removeIcon} alt='Remove'/></button>
             </div>
         </div>
     )
@@ -105,7 +105,7 @@ export default function Employees() {
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
-                        placeholder='Type their name here'
+                        placeholder='Employee name'
                         value={tempName}
                         onChange={handleNameChange}
                         maxLength={40}
@@ -129,6 +129,6 @@ export default function Employees() {
                 ? employees.map(emp => <EmployeeCard id={emp.id} name={emp.name} key={emp.id} />)
                 : <div>No employees registered.</div>
             }
-            <button id="add-employee-btn" onClick={openAddModal}>Add New Employee</button>
+            <button id='add-employee-btn' onClick={openAddModal}>Add New Employee</button>
     </>
 }

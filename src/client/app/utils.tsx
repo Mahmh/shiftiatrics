@@ -17,6 +17,19 @@ export const isLoggedIn = (account: Account): boolean => {
 
 
 /**
+ * Converts time from 24-hour format to AM/PM format
+ * @param time Time in 24-hour format
+ * @returns Time in AM/PM format
+ */
+export const formatTimeToAMPM = (time: string): string => {
+    const [hours, minutes] = time.split(':').map(Number)
+    const suffix = hours >= 12 ? 'PM' : 'AM'
+    const formattedHours = hours % 12 || 12 // Convert 0 -> 12 for midnight
+    return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${suffix}`
+}
+
+
+/**
  * Class for making a GET, POST, PATCH, or DELETE request to the API server
  * ### Constructor
  * @param endpoint The API endpoint to send the request

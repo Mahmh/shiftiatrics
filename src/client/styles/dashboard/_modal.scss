@@ -74,6 +74,7 @@
             &#disabled-confirm-btn {
                 background-color: get-color('gray');
                 color: get-color('alpha-black');
+                cursor: default;
             }
         }
     }

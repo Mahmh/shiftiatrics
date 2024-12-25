@@ -1,7 +1,219 @@
-export default function Shifts() {
+import { useContext, useState } from 'react'
+import { AppContext } from '@context'
+import { Shift } from '@types'
+import { Icon, Request, formatTimeToAMPM } from '@utils'
+import editIcon from '@icons/edit.png'
+import removeIcon from '@icons/remove.png'
+
+const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
+    const { setModalContent, openModal, closeModal, loadShifts } = useContext(AppContext)
+
+    const openEditModal = () => {
+        const EditModalContent = () => {
+            const [tempName, setTempName] = useState(name)
+            const [tempStartTime, setStartTime] = useState(startTime)
+            const [tempEndTime, setEndTime] = useState(endTime)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.length < 3)
+
+            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const newName = e.target.value
+                setTempName(newName)
+                setConfirmDisabled(newName.length < 3 || !tempStartTime || !tempEndTime)
+            }
+
+            const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                setStartTime(e.target.value)
+            }
+
+            const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                setEndTime(e.target.value)
+            }
+
+            const confirmEdit = async () => {
+                await new Request(`shifts/${id}`, () => loadShifts(), {
+                    shift_name: tempName,
+                    start_time: tempStartTime,
+                    end_time: tempEndTime,
+                }).patch()
+                closeModal()
+            }
+
+            return (
+                <>
+                    <h2>Edit Shift</h2>
+                    <div style={{ marginBottom: 20 }}>
+                        <label style={{ marginRight: 10 }}>Name: </label>
+                        <input
+                            type='text'
+                            placeholder='Shift name'
+                            value={tempName}
+                            onChange={handleNameChange}
+                            maxLength={40}
+                        />
+                    </div>
+                    <div style={{ marginBottom: 20 }}>
+                        <label style={{ marginRight: 10 }}>Start Time: </label>
+                        <input
+                            type='time'
+                            value={tempStartTime}
+                            onChange={handleStartTimeChange}
+                        />
+                    </div>
+                    <div style={{ marginBottom: 20 }}>
+                        <label style={{ marginRight: 10 }}>End Time: </label>
+                        <input
+                            type='time'
+                            value={tempEndTime}
+                            onChange={handleEndTimeChange}
+                        />
+                    </div>
+                    <button
+                        onClick={confirmEdit}
+                        disabled={isConfirmDisabled}
+                        id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+                    >
+                        Confirm
+                    </button>
+                </>
+            )
+        }
+
+        openModal()
+        setModalContent(<EditModalContent/>)
+    }
+
+    const openDeleteModal = () => {
+        const confirmDelete = async () => {
+            await new Request(`shifts/${id}`, () => loadShifts()).delete()
+            closeModal()
+        }
+
+        openModal()
+        setModalContent(<>
+            <h2>Remove Shift "{name}"?</h2>
+            <div style={{ display: 'flex', gap: 10 }}>
+                <button style={{ width: '100%' }} onClick={confirmDelete}>Yes</button>
+                <button style={{ width: '100%' }} onClick={closeModal}>No</button>
+            </div>
+        </>)
+    }
+
     return (
-        <div>
-            Shifts
+        <div className='shift-card'>
+            <div className='shift-details'>
+                <h1>{name}</h1>
+                <span><strong>Starts:</strong> {formatTimeToAMPM(startTime)}</span>
+                <span><strong>Ends:</strong> {formatTimeToAMPM(endTime)}</span>
+            </div>
+            <div>
+                <button onClick={openEditModal}>
+                    <Icon src={editIcon} alt='Edit'/>
+                </button>
+                <button onClick={openDeleteModal}>
+                    <Icon src={removeIcon} alt='Remove'/>
+                </button>
+            </div>
         </div>
     )
+}
+
+export default function Shifts() {
+    const { account, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(AppContext)
+
+    const openAddModal = () => {
+        const AddModalContent = () => {
+            const [tempName, setTempName] = useState('')
+            const [tempStartTime, setStartTime] = useState('')
+            const [tempEndTime, setEndTime] = useState('')
+            const [isConfirmDisabled, setConfirmDisabled] = useState(true)
+
+            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const newName = e.target.value
+                setTempName(newName)
+                setConfirmDisabled(newName.length < 3 || !tempStartTime || !tempEndTime)
+            }
+
+            const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                setStartTime(e.target.value)
+                setConfirmDisabled(tempName.length < 3 || !e.target.value || !tempEndTime)
+            }
+
+            const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                setEndTime(e.target.value)
+                setConfirmDisabled(tempName.length < 3 || !tempStartTime || !e.target.value)
+            }
+
+            const confirmAdd = async () => {
+                console.log('tempStartTime', tempStartTime)
+                console.log('tempEndTime', tempEndTime)
+                await new Request(
+                    `accounts/${account.id}/shifts`,
+                    () => loadShifts(),
+                    {
+                        shift_name: tempName,
+                        start_time: tempStartTime,
+                        end_time: tempEndTime,
+                    }
+                ).post()
+                closeModal()
+            }
+
+            return <>
+                <h1>Add New Shift</h1>
+                <div>
+                    <label style={{ marginRight: 10 }}>Name: </label>
+                    <input
+                        type='text'
+                        placeholder='Shift name'
+                        value={tempName}
+                        onChange={handleNameChange}
+                        maxLength={40}
+                    />
+                </div>
+                <div>
+                    <label style={{ marginRight: 10 }}>Start Time: </label>
+                    <input
+                        type='time'
+                        value={tempStartTime}
+                        onChange={handleStartTimeChange}
+                    />
+                </div>
+                <div>
+                    <label style={{ marginRight: 10 }}>End Time: </label>
+                    <input
+                        type='time'
+                        value={tempEndTime}
+                        onChange={handleEndTimeChange}
+                    />
+                </div>
+                <button
+                    onClick={confirmAdd}
+                    disabled={isConfirmDisabled}
+                    id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+                >
+                    Add Shift
+                </button>
+            </>
+        }
+
+        openModal()
+        setModalContent(<AddModalContent/>)
+    }
+
+    return <>
+        {shifts.length > 0 ? (
+            shifts.map((shift) => (
+                <ShiftCard
+                    id={shift.id}
+                    name={shift.name}
+                    startTime={shift.startTime}
+                    endTime={shift.endTime}
+                    key={shift.id}
+                />
+            ))
+        ) : (
+            <div>No shifts registered.</div>
+        )}
+        <button id='add-shift-btn' onClick={openAddModal}>Add New Shift</button>
+    </>
 }
