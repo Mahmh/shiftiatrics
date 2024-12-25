@@ -1,0 +1,48 @@
+$color-palette: (
+    'background': #f8f9fa, // General background
+    'primary-text': #343a40, // Main content text
+    'primary-blue': #4a90e2, // Buttons, highlights
+    'primary-blue-hover': #357abd, // Button hover state
+    'accent-green': #28a745, // Success actions
+    'accent-orange': #fc642d, // Warnings or scheduling focus
+    'error-red': #dc3545, // Errors or invalid inputs
+    'border-gray': #e9ecef, // Input fields, dividers
+    'medium-gray': #6c757d, // Placeholder text
+    'dark-gray': #495057, // Labels and descriptions
+    'alpha-white': rgba(255, 255, 255, .2)
+);
+$main-box-shadow: 0 0 10px 0 rgba(0, 0, 0, .1);
+
+
+// Fonts
+@font-face {
+    font-family: Lato;
+    src: url('../public/fonts/Lato-Light.ttf') format('truetype');
+    font-weight: lighter;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: Lato;
+    src: url('../public/fonts/Lato-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: Lato;
+    src: url('../public/fonts/Lato-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+
+// Functions & Mixins
+@function get-color($name) {
+    @return map-get($color-palette, $name);
+}
+
+@mixin vertical-flex() {
+    display: flex;
+    flex-direction: column;
+}

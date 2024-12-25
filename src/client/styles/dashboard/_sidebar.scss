@@ -1,0 +1,27 @@
+#sidebar {
+    @include vertical-flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    justify-content: space-between;
+    background-color: get-color('primary-blue');
+
+    #sidebar-upper, #sidebar-lower { @include vertical-flex }
+
+    button {
+        display: flex;
+        align-items: center;
+        background-color: transparent;
+        color: white;
+        width: 100%;
+        padding: 13px;
+        text-align: left;
+        transition: background-color 250ms ease;
+        &:hover { background-color: get-color('primary-blue-hover') }
+        &.active-content-btn { background-color: get-color('alpha-white') }
+
+        img { margin-right: 7px }
+    }
+}

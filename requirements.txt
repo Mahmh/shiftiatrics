@@ -9,4 +9,5 @@ SQLAlchemy==2.0.36
 ipykernel==6.29.5
 psycopg2-binary==2.9.10
 httpx==0.28.1
+pytest-cov==6.0.0
 setuptools

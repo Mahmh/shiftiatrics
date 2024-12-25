@@ -6,6 +6,16 @@ autoshift.egg-info/
 .env
 tasks.txt
 
+htmlcov/
+.coverage
+
 src/server/logs/
 src/server/engine/bin/
 src/server/engine/run.sh
+
+src/client/next-env.d.ts
+src/client/node_modules/
+src/client/.next/
+src/client/build/
+src/client/out/
+src/client/styles/main.css
