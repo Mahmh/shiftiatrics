@@ -1,17 +1,15 @@
 $color-palette: (
-    'background': #f8f9fa, // General background
-    'primary-text': #343a40, // Main content text
-    'primary-blue': #4a90e2, // Buttons, highlights
-    'primary-blue-hover': #357abd, // Button hover state
-    'accent-green': #28a745, // Success actions
-    'accent-orange': #fc642d, // Warnings or scheduling focus
-    'error-red': #dc3545, // Errors or invalid inputs
-    'border-gray': #e9ecef, // Input fields, dividers
-    'medium-gray': #6c757d, // Placeholder text
-    'dark-gray': #495057, // Labels and descriptions
-    'alpha-white': rgba(255, 255, 255, .2)
+    'background': #f8f9fa,
+    'primary-text': #343a40,
+    'primary-blue': #4a90e2,
+    'primary-blue-hover': #357abd,
+    'pale-blue': #bed4eb,
+    'gray': #e6e6e6df,
+    'alpha-white': #ffffff33,
+    'alpha-black': #0000004a,
+    'extra-alpha-black': #00000025
 );
-$main-box-shadow: 0 0 10px 0 rgba(0, 0, 0, .1);
+$main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
 
 
 // Fonts
@@ -42,7 +40,21 @@ $main-box-shadow: 0 0 10px 0 rgba(0, 0, 0, .1);
     @return map-get($color-palette, $name);
 }
 
-@mixin vertical-flex() {
+@mixin vertical-flex {
     display: flex;
     flex-direction: column;
+}
+
+@mixin circle($diameter: 50px) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    width: $diameter;
+    height: $diameter;
+}
+
+@mixin compressible {
+    transition: background-color .2s ease, scale 150ms ease;
+    &:active { scale: .93 }
 }

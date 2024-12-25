@@ -7,6 +7,5 @@ import LandingPage from '@/components/landing_page/LandingPage'
 
 export default function Home() {
     const { account } = useContext(AppContext)
-    // return isLoggedIn(account) ? <Dashboard/>  : <LandingPage/>
-    return <Dashboard/>
+    return isLoggedIn(account) ? <Dashboard/> : <LandingPage/>
 }

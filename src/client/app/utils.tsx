@@ -1,6 +1,11 @@
 import Image, { StaticImageData } from 'next/image'
 import type { Account } from '@types'
 
+export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
+    <Image src={src} width={size} height={size} alt={alt}/>
+)
+
+
 /**
  * Checks if a user is logged in
  * @param account Account set in the context of the app
@@ -11,6 +16,72 @@ export const isLoggedIn = (account: Account): boolean => {
 }
 
 
-export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
-    <Image src={src} width={size} height={size} alt={alt}/>
-)
+/**
+ * Class for making a GET, POST, PATCH, or DELETE request to the API server
+ * ### Constructor
+ * @param endpoint The API endpoint to send the request
+ * @param callbackFunc The callback function to apply to the retrieved JSON response
+ * @param data The data payload to send to the API endpoint
+ */
+export class Request {
+    //// Properties ////
+    private readonly url: string
+    private readonly data: object
+    private readonly callbackFunc: (x:any)=>any
+    
+    constructor(endpoint: string, callbackFunc: (x:any)=>any = x=>x, data: object = {}) {
+        this.url = `http://localhost:8000/${endpoint}`
+        this.data = data
+        this.callbackFunc = callbackFunc
+    }
+    
+    /**
+     * Makes `this.data` able to be sent to the API server
+     * @param method REST API Method
+     * @returns The appropriate payload for the method
+     */
+    private getPayload(method: string): object {
+        return {
+            method: method,
+            body: JSON.stringify(this.data),
+            headers: {'Content-Type': 'application/json'}
+        }
+    }
+
+    //// Request methods ////
+    /**
+     * Performs a GET request
+     * @returns The output of the inputted callback function
+     */
+    public async get(): Promise<any> {
+        const response = await fetch(this.url)
+        return this.callbackFunc(await response.json())
+    }
+
+    /**
+     * Performs a POST request
+     * @returns The output of the inputted callback function
+     */
+    public async post(): Promise<any> {
+        const response = await fetch(this.url, this.getPayload('POST'))
+        return this.callbackFunc(await response.json())
+    }
+
+    /**
+     * Performs a PATCH request
+     * @returns The output of the inputted callback function
+     */
+    public async patch(): Promise<any> {
+        const response = await fetch(this.url, this.getPayload('PATCH'))
+        return this.callbackFunc(await response.json())
+    }
+
+    /**
+     * Performs a DELETE request
+     * @returns The output of the inputted callback function
+     */
+    public async delete(): Promise<any> {
+        const response = await fetch(this.url, this.getPayload('DELETE'))
+        return this.callbackFunc(await response.json())
+    }
+}

@@ -14,6 +14,7 @@ export default function Content() {
     const wrapContent = (name: ContentName, contentElement: ReactNode) => (
         <main id={`${name}-content`} className='content'>{contentElement}</main>
     )
+
     switch (content) {
         case 'employees': return wrapContent('employees', <Employees/>)
         case 'shifts': return wrapContent('shifts', <Shifts/>)
