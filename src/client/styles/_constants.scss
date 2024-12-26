@@ -3,11 +3,15 @@ $color-palette: (
     'primary-text': #343a40,
     'primary-blue': #4a90e2,
     'primary-blue-hover': #357abd,
+    'primary-red': #e24a4a,
+    'primary-red-hover': #bd3535,
     'pale-blue': #bed4eb,
-    'gray': #e6e6e6df,
+    'gray': rgb(149, 149, 149), 
+    'light-gray': #e6e6e6df,
     'alpha-white': #ffffff33,
-    'alpha-black': #0000004a,
-    'extra-alpha-black': #00000025
+    'alpha-black-0': #00000053,
+    'alpha-black-1': #0000002d,
+    'alpha-black-2':#00000016
 );
 $main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
 
@@ -45,7 +49,7 @@ $main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
     flex-direction: column;
 }
 
-@mixin circle($diameter: 50px) {
+@mixin circle($diameter) {
     display: flex;
     justify-content: center;
     align-items: center;

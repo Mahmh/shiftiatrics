@@ -52,6 +52,10 @@
             gap: 20px;
         }
 
+        .modal-input-div {
+            margin-bottom: 20px;
+        }
+
         button {
             background-color: get-color('primary-blue');
             color: get-color('background');
@@ -63,17 +67,17 @@
             &#close-modal-btn {
                 @include circle(50px);
                 @include compressible;
-                background-color: get-color('extra-alpha-black');
+                background-color: get-color('alpha-black-2');
                 position: absolute;
                 top: 15px;
                 right: 15px;
                 padding: 12px;
-                &:hover { background-color: get-color('alpha-black') }
+                &:hover { background-color: get-color('alpha-black-1') }
             }
 
             &#disabled-confirm-btn {
-                background-color: get-color('gray');
-                color: get-color('alpha-black');
+                background-color: get-color('light-gray');
+                color: get-color('alpha-black-1');
                 cursor: default;
             }
         }

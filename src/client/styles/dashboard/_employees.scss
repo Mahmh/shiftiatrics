@@ -21,6 +21,7 @@
                 @include circle(50px);
                 @include compressible;
                 background-color: get-color('background');
+                &:hover { background-color: get-color('light-gray') }
             }
         }
     }

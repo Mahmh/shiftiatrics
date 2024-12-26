@@ -1,12 +1,12 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect } from 'react'
 import type { ContextProps, ContentName, Employee, Account, Shift } from '@types'
-import { Request } from '@utils'
+import { isLoggedIn, Request } from '@utils'
 
 const defaultContent: ContentName = 'schedules'
-const nullAccount: Account = { id: 1, username: 'string', password: 'string' }
 const nullEmployees: Employee[] = []
 const nullShifts: Shift[] = []
+export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
 export const AppContext = createContext<ContextProps>({
     content: defaultContent,
@@ -63,9 +63,11 @@ export function AppProvider({ children }: Readonly<{children: React.ReactNode}>)
     }
 
     useEffect(() => {
-        loadEmployees()
-        loadShifts()
-    }, [])
+        if (isLoggedIn(account)) {
+            loadEmployees()
+            loadShifts()
+        }
+    }, [account])
 
     return (
         <AppContext.Provider value={{

@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { AppContext } from '@context'
 import { Employee } from '@types'
-import { Icon, Request } from '@utils'
+import { Icon, Request, Choice } from '@utils'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -11,12 +11,12 @@ const EmployeeCard = ({ id, name }: Employee) => {
     const openEditModal = () => {
         const EditModalContent = () => {
             const [tempName, setTempName] = useState(name)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.length < 3)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3)
 
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.length < 3)
+                setConfirmDisabled(newName.trim().length < 3)
             }
 
             const confirmEdit = async () => {
@@ -26,7 +26,7 @@ const EmployeeCard = ({ id, name }: Employee) => {
 
             return <>
                 <h2>Edit Employee</h2>
-                <div style={{ marginBottom: 20 }}>
+                <div className='modal-input-div'>
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
@@ -44,8 +44,8 @@ const EmployeeCard = ({ id, name }: Employee) => {
             </>
         }
 
-        openModal()
         setModalContent(<EditModalContent/>)
+        openModal()
     }
 
     const openDeleteModal = () => {
@@ -54,14 +54,11 @@ const EmployeeCard = ({ id, name }: Employee) => {
             closeModal()
         }
 
-        openModal()
         setModalContent(<>
             <h2>Remove Employee "{name}"?</h2>
-            <div style={{ display: 'flex', gap: 10 }}>
-                <button style={{ width: '100%' }} onClick={confirmDelete}>Yes</button>
-                <button style={{ width: '100%' }} onClick={closeModal}>No</button>
-            </div>
+            <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
+        openModal()
     }
 
     return (
@@ -87,7 +84,7 @@ export default function Employees() {
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.length < 3)
+                setConfirmDisabled(newName.trim().length < 3)
             }
 
             const confirmAdd = async () => {
@@ -101,7 +98,7 @@ export default function Employees() {
 
             return <>
                 <h1>Add New Employee</h1>
-                <div>
+                <div className='modal-input-div'>
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
@@ -119,15 +116,15 @@ export default function Employees() {
             </>
         }
 
-        openModal()
         setModalContent(<AddModalContent/>)
+        openModal()
     }
 
     return <>
             {
                 employees.length > 0 
                 ? employees.map(emp => <EmployeeCard id={emp.id} name={emp.name} key={emp.id} />)
-                : <div>No employees registered.</div>
+                : <p>No employees registered.</p>
             }
             <button id='add-employee-btn' onClick={openAddModal}>Add New Employee</button>
     </>

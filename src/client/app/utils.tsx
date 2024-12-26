@@ -5,6 +5,13 @@ export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, 
     <Image src={src} width={size} height={size} alt={alt}/>
 )
 
+export const Choice = ({ onYes, onNo }: { onYes: () => void, onNo: () => void }) => (
+    <div style={{ display: 'flex', gap: 10 }}>
+        <button style={{ width: '100%' }} onClick={onYes}>Yes</button>
+        <button style={{ width: '100%' }} onClick={onNo}>No</button>
+    </div>
+)
+
 
 /**
  * Checks if a user is logged in
@@ -68,7 +75,9 @@ export class Request {
      */
     public async get(): Promise<any> {
         const response = await fetch(this.url)
-        return this.callbackFunc(await response.json())
+        const data = await response.json()
+        if ('error' in data) console.error(data.error)
+        return this.callbackFunc(data)
     }
 
     /**
@@ -77,7 +86,9 @@ export class Request {
      */
     public async post(): Promise<any> {
         const response = await fetch(this.url, this.getPayload('POST'))
-        return this.callbackFunc(await response.json())
+        const data = await response.json()
+        if ('error' in data) console.error(data.error)
+        return this.callbackFunc(data)
     }
 
     /**
@@ -86,7 +97,9 @@ export class Request {
      */
     public async patch(): Promise<any> {
         const response = await fetch(this.url, this.getPayload('PATCH'))
-        return this.callbackFunc(await response.json())
+        const data = await response.json()
+        if ('error' in data) console.error(data.error)
+        return this.callbackFunc(data)
     }
 
     /**
@@ -95,6 +108,8 @@ export class Request {
      */
     public async delete(): Promise<any> {
         const response = await fetch(this.url, this.getPayload('DELETE'))
-        return this.callbackFunc(await response.json())
+        const data = await response.json()
+        if ('error' in data) console.error(data.error)
+        return this.callbackFunc(data)
     }
 }

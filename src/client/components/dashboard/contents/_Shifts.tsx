@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { AppContext } from '@context'
 import { Shift } from '@types'
-import { Icon, Request, formatTimeToAMPM } from '@utils'
+import { Icon, Request, Choice, formatTimeToAMPM } from '@utils'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -13,12 +13,12 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             const [tempName, setTempName] = useState(name)
             const [tempStartTime, setStartTime] = useState(startTime)
             const [tempEndTime, setEndTime] = useState(endTime)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.length < 3)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3)
 
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.length < 3 || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length < 3 || !tempStartTime || !tempEndTime)
             }
 
             const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,48 +38,46 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
                 closeModal()
             }
 
-            return (
-                <>
-                    <h2>Edit Shift</h2>
-                    <div style={{ marginBottom: 20 }}>
-                        <label style={{ marginRight: 10 }}>Name: </label>
-                        <input
-                            type='text'
-                            placeholder='Shift name'
-                            value={tempName}
-                            onChange={handleNameChange}
-                            maxLength={40}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 20 }}>
-                        <label style={{ marginRight: 10 }}>Start Time: </label>
-                        <input
-                            type='time'
-                            value={tempStartTime}
-                            onChange={handleStartTimeChange}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 20 }}>
-                        <label style={{ marginRight: 10 }}>End Time: </label>
-                        <input
-                            type='time'
-                            value={tempEndTime}
-                            onChange={handleEndTimeChange}
-                        />
-                    </div>
-                    <button
-                        onClick={confirmEdit}
-                        disabled={isConfirmDisabled}
-                        id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
-                    >
-                        Confirm
-                    </button>
-                </>
-            )
+            return <>
+                <h2>Edit Shift</h2>
+                <div style={{ marginBottom: 10 }}>
+                    <label style={{ marginRight: 10 }}>Name: </label>
+                    <input
+                        type='text'
+                        placeholder='Shift name'
+                        value={tempName}
+                        onChange={handleNameChange}
+                        maxLength={40}
+                    />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                    <label style={{ marginRight: 10 }}>Start Time: </label>
+                    <input
+                        type='time'
+                        value={tempStartTime}
+                        onChange={handleStartTimeChange}
+                    />
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                    <label style={{ marginRight: 10 }}>End Time: </label>
+                    <input
+                        type='time'
+                        value={tempEndTime}
+                        onChange={handleEndTimeChange}
+                    />
+                </div>
+                <button
+                    onClick={confirmEdit}
+                    disabled={isConfirmDisabled}
+                    id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+                >
+                    Confirm
+                </button>
+            </>
         }
 
-        openModal()
         setModalContent(<EditModalContent/>)
+        openModal()
     }
 
     const openDeleteModal = () => {
@@ -88,14 +86,11 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             closeModal()
         }
 
-        openModal()
         setModalContent(<>
             <h2>Remove Shift "{name}"?</h2>
-            <div style={{ display: 'flex', gap: 10 }}>
-                <button style={{ width: '100%' }} onClick={confirmDelete}>Yes</button>
-                <button style={{ width: '100%' }} onClick={closeModal}>No</button>
-            </div>
+            <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
+        openModal()
     }
 
     return (
@@ -130,17 +125,17 @@ export default function Shifts() {
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.length < 3 || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length < 3 || !tempStartTime || !tempEndTime)
             }
 
             const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 setStartTime(e.target.value)
-                setConfirmDisabled(tempName.length < 3 || !e.target.value || !tempEndTime)
+                setConfirmDisabled(tempName.trim().length < 3 || !e.target.value || !tempEndTime)
             }
 
             const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 setEndTime(e.target.value)
-                setConfirmDisabled(tempName.length < 3 || !tempStartTime || !e.target.value)
+                setConfirmDisabled(tempName.trim().length < 3 || !tempStartTime || !e.target.value)
             }
 
             const confirmAdd = async () => {
@@ -160,7 +155,7 @@ export default function Shifts() {
 
             return <>
                 <h1>Add New Shift</h1>
-                <div>
+                <div className='modal-input-div'>
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
@@ -170,7 +165,7 @@ export default function Shifts() {
                         maxLength={40}
                     />
                 </div>
-                <div>
+                <div className='modal-input-div'>
                     <label style={{ marginRight: 10 }}>Start Time: </label>
                     <input
                         type='time'
@@ -178,7 +173,7 @@ export default function Shifts() {
                         onChange={handleStartTimeChange}
                     />
                 </div>
-                <div>
+                <div className='modal-input-div'>
                     <label style={{ marginRight: 10 }}>End Time: </label>
                     <input
                         type='time'
@@ -196,8 +191,8 @@ export default function Shifts() {
             </>
         }
 
-        openModal()
         setModalContent(<AddModalContent/>)
+        openModal()
     }
 
     return <>
@@ -212,7 +207,7 @@ export default function Shifts() {
                 />
             ))
         ) : (
-            <div>No shifts registered.</div>
+            <p>No shifts registered.</p>
         )}
         <button id='add-shift-btn' onClick={openAddModal}>Add New Shift</button>
     </>
