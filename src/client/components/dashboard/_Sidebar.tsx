@@ -13,8 +13,8 @@ import { ContentName } from '@/app/types'
 export default function Sidebar() {
     const { content, setContent } = useContext(AppContext)
 
-    const ContentButton = ({ name, src }: { name: string, src: StaticImageData }) => (
-        <button onClick={() => setContent(name.toLowerCase() as ContentName)} className={content === name.toLowerCase() ? 'active-content-btn' : ''}>
+    const ContentButton = ({ name, src, contentName=name }: { name: string, src: StaticImageData, contentName?: string }) => (
+        <button onClick={() => setContent(contentName.toLowerCase() as ContentName)} className={content === contentName.toLowerCase() ? 'active-content-btn' : ''}>
             <Icon src={src} alt={`${name.toLowerCase()}-icon`}/>{name}
         </button>
     )
@@ -24,7 +24,7 @@ export default function Sidebar() {
             <section id='sidebar-upper'>
                 <ContentButton name='Schedules' src={scheduleIcon}/>
                 <ContentButton name='Employees' src={employeeIcon}/>
-                <ContentButton name='Shifts' src={shiftIcon}/>
+                <ContentButton name='Shifts per Day' contentName='Shifts' src={shiftIcon}/>
             </section>
             <section id='sidebar-lower'>
                 <ContentButton name='Account' src={accountIcon}/>

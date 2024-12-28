@@ -10,7 +10,7 @@ from src.server.routers.engine import engine_router
 async def _lifespan(app: FastAPI):
     """Defines the application lifespan to manage JVM startup and shutdown."""
     if not jpype.isJVMStarted():
-        jpype.startJVM(classpath=locate('../engine/bin/'))
+        jpype.startJVM(classpath=locate('../engine/engine.jar'))
     try:
         yield 
     finally:

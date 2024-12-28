@@ -9,7 +9,7 @@ public class ShiftScheduler {
      * Retrieves the current month and its number of days.
      * @return An array where the first element is the month and the second is the number of days.
      */
-    public static final int[] getCurrentMonthDays() {
+    private static final int[] getCurrentMonthDays() {
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
         int year = now.getYear();
@@ -21,21 +21,18 @@ public class ShiftScheduler {
      * Generates a balanced shift schedule for a given number of employees and shifts.
      * @param employees The list of employees.
      * @param numShiftsPerDay The number of shifts per day.
+     * @param numDays The number of days to include in the schedule (i.e., its extent).
      * @return A 2D array where each row represents a day, and each column represents an employee assigned to a shift.
      */
-    public static Employee[][] generateSchedule(List<Employee> employees, int numShiftsPerDay) {
-        int daysInMonth = getCurrentMonthDays()[1];
-
-        Employee[][] schedule = new Employee[daysInMonth][numShiftsPerDay];
-        Map<Employee, Integer> shiftCounts = new HashMap<>();
-        for (Employee employee : employees) {
-            shiftCounts.put(employee, 0);
-        }
+    public static Employee[][] generateSchedule(List<Employee> employees, int numShiftsPerDay, int numDays) {
+        Employee[][] schedule = new Employee[numDays][numShiftsPerDay];
+        HashMap<Employee, Integer> shiftCounts = new HashMap<>();
+        for (Employee employee : employees) shiftCounts.put(employee, 0);
 
         Random random = new Random();
 
         // Generate schedule for each day
-        for (int day = 0; day < daysInMonth; day++) {
+        for (int day = 0; day < numDays; day++) {
             List<Employee> availableEmployees = new ArrayList<>(employees);
             Collections.shuffle(availableEmployees, random);
 
@@ -51,13 +48,23 @@ public class ShiftScheduler {
             }
         }
 
-        // Print shift counts for debugging and verification
-        System.out.println("\nTotal shifts worked by each employee:");
-        for (Map.Entry<Employee, Integer> entry : shiftCounts.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue() + " shifts");
+        return schedule;
+    }
+
+    /**
+     * Returns a mapping from `Employee.id` to the total number of shifts they have worked, according to the given schedule.
+     * @param schedule The generated schedule.
+     * @return A hash map with `Employee.id` as the key and the total shift count as the value.
+     */
+    public static HashMap<Integer, Integer> getShiftCountsOfEmployees(int[][] schedule) {
+        HashMap<Integer, Integer> shiftCounts = new HashMap<>();
+
+        // Flatten the 2D schedule array and count shifts in one pass
+        for (int[] day : schedule) for (int employeeID : day) {
+            if (employeeID > 0) shiftCounts.merge(employeeID, 1, Integer::sum);
         }
 
-        return schedule;
+        return shiftCounts;
     }
 
     public static void main(String[] args) {
@@ -76,8 +83,8 @@ public class ShiftScheduler {
         int[] currentMonth = getCurrentMonthDays();
         System.out.println("Current month: " + currentMonth[0] + ", Days: " + currentMonth[1]);
 
-        Employee[][] schedule = generateSchedule(employees, 3);
-        System.out.println();
+        Employee[][] schedule = generateSchedule(employees, 3, 31);
+        System.out.println("\n---- Schedule ----");
         for (int day = 0; day < schedule.length; day++) {
             System.out.print("Day " + (day + 1) + ": Shifts:\t");
             for (int shift = 0; shift < schedule[day].length; shift++) {

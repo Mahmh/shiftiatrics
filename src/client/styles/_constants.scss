@@ -3,6 +3,8 @@ $color-palette: (
     'primary-text': #343a40,
     'primary-blue': #4a90e2,
     'primary-blue-hover': #357abd,
+    'secondary-blue': #1b4b7a,
+    'secondary-blue-hover': #163c62,
     'primary-red': #e24a4a,
     'primary-red-hover': #bd3535,
     'pale-blue': #bed4eb,
@@ -58,7 +60,7 @@ $main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
     height: $diameter;
 }
 
-@mixin compressible {
+@mixin compressible($min-scale: .93) {
     transition: background-color .2s ease, scale 150ms ease;
-    &:active { scale: .93 }
+    &:active { scale: $min-scale }
 }

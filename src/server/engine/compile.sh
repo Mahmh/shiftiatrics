@@ -1,3 +1,6 @@
 #!/bin/bash
-cd ..
-javac -d ./engine/bin engine/*.java
+cd ../../..
+javac -d src/server/engine/bin src/server/engine/*.java
+jar cfm src/server/engine/engine.jar src/server/engine/MANIFEST.MF -C src/server/engine/bin server/engine
+jar tf src/server/engine/engine.jar
+rm -r src/server/engine/bin

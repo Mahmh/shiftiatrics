@@ -40,7 +40,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
 
             return <>
                 <h2>Edit Shift</h2>
-                <div style={{ marginBottom: 10 }}>
+                <section style={{ marginBottom: 10 }}>
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
@@ -49,23 +49,23 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
                         onChange={handleNameChange}
                         maxLength={40}
                     />
-                </div>
-                <div style={{ marginBottom: 10 }}>
+                </section>
+                <section style={{ marginBottom: 10 }}>
                     <label style={{ marginRight: 10 }}>Start Time: </label>
                     <input
                         type='time'
                         value={tempStartTime}
                         onChange={handleStartTimeChange}
                     />
-                </div>
-                <div style={{ marginBottom: 20 }}>
+                </section>
+                <section style={{ marginBottom: 20 }}>
                     <label style={{ marginRight: 10 }}>End Time: </label>
                     <input
                         type='time'
                         value={tempEndTime}
                         onChange={handleEndTimeChange}
                     />
-                </div>
+                </section>
                 <button
                     onClick={confirmEdit}
                     disabled={isConfirmDisabled}
@@ -87,7 +87,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
         }
 
         setModalContent(<>
-            <h2>Remove Shift "{name}"?</h2>
+            <h2>Remove Shift &quot;{name}&quot;?</h2>
             <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
         openModal()
@@ -139,23 +139,17 @@ export default function Shifts() {
             }
 
             const confirmAdd = async () => {
-                console.log('tempStartTime', tempStartTime)
-                console.log('tempEndTime', tempEndTime)
                 await new Request(
                     `accounts/${account.id}/shifts`,
                     () => loadShifts(),
-                    {
-                        shift_name: tempName,
-                        start_time: tempStartTime,
-                        end_time: tempEndTime,
-                    }
+                    { shift_name: tempName, start_time: tempStartTime, end_time: tempEndTime }
                 ).post()
                 closeModal()
             }
 
             return <>
                 <h1>Add New Shift</h1>
-                <div className='modal-input-div'>
+                <div className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
@@ -165,7 +159,7 @@ export default function Shifts() {
                         maxLength={40}
                     />
                 </div>
-                <div className='modal-input-div'>
+                <div className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>Start Time: </label>
                     <input
                         type='time'
@@ -173,7 +167,7 @@ export default function Shifts() {
                         onChange={handleStartTimeChange}
                     />
                 </div>
-                <div className='modal-input-div'>
+                <div className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>End Time: </label>
                     <input
                         type='time'
@@ -196,19 +190,25 @@ export default function Shifts() {
     }
 
     return <>
+        <header>
+            <section id='header-btns'>
+                <button onClick={openAddModal}>Add New Shift</button>
+            </section>
+        </header>
         {shifts.length > 0 ? (
-            shifts.map((shift) => (
-                <ShiftCard
-                    id={shift.id}
-                    name={shift.name}
-                    startTime={shift.startTime}
-                    endTime={shift.endTime}
-                    key={shift.id}
-                />
-            ))
+            <div id='card-area'>
+                {shifts.map((shift) => (
+                    <ShiftCard
+                        id={shift.id}
+                        name={shift.name}
+                        startTime={shift.startTime}
+                        endTime={shift.endTime}
+                        key={shift.id}
+                    />
+                ))}
+            </div>
         ) : (
-            <p>No shifts registered.</p>
+            <p className='header-msg'>No shifts registered. You could add &quot;Day&quot;, &quot;Evening&quot;, &quot;Night&quot;, or any shift name that you find suitable for your use case.</p>
         )}
-        <button id='add-shift-btn' onClick={openAddModal}>Add New Shift</button>
     </>
 }

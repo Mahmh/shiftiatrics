@@ -26,7 +26,7 @@ const EmployeeCard = ({ id, name }: Employee) => {
 
             return <>
                 <h2>Edit Employee</h2>
-                <div className='modal-input-div'>
+                <div className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
@@ -55,7 +55,7 @@ const EmployeeCard = ({ id, name }: Employee) => {
         }
 
         setModalContent(<>
-            <h2>Remove Employee "{name}"?</h2>
+            <h2>Remove Employee &quot;{name}&quot;?</h2>
             <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
         openModal()
@@ -98,7 +98,7 @@ export default function Employees() {
 
             return <>
                 <h1>Add New Employee</h1>
-                <div className='modal-input-div'>
+                <section className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>Name: </label>
                     <input
                         type='text'
@@ -107,7 +107,7 @@ export default function Employees() {
                         onChange={handleNameChange}
                         maxLength={40}
                     />
-                </div>
+                </section>
                 <button
                     onClick={confirmAdd}
                     disabled={isConfirmDisabled}
@@ -121,11 +121,15 @@ export default function Employees() {
     }
 
     return <>
-            {
-                employees.length > 0 
-                ? employees.map(emp => <EmployeeCard id={emp.id} name={emp.name} key={emp.id} />)
-                : <p>No employees registered.</p>
-            }
-            <button id='add-employee-btn' onClick={openAddModal}>Add New Employee</button>
+        <header>
+            <section id='header-btns'>
+                <button onClick={openAddModal}>Add New Employee</button>
+            </section>
+        </header>
+        {
+            employees.length > 0 
+            ? <div id='card-area'>{employees.map(emp => <EmployeeCard id={emp.id} name={emp.name} key={emp.id} />)}</div>
+            : <p className='header-msg'>No employees registered.</p>
+        }
     </>
 }

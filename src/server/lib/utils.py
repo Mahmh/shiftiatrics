@@ -46,33 +46,6 @@ def parse_time(time_str: str) -> time:
         raise ValueError(f'Invalid time format: "{time_str}". Expected format is "HH:MM".')
 
 
-def parse_schedule(schedule: list[list[str]]) -> list[list[int]]:
-    """Converts the given schedule from being a 2D string array to a 2D integer array."""
-    # Flatten the nested list into a single list of strings
-    flattened = [item for sublist in schedule for item in sublist]
-
-    # Initialize the result and a temporary list to hold each row
-    result, current_row = [], []
-    number_buffer = ''  # Buffer to hold multi-digit numbers
-
-    for token in flattened:
-        if token == '{':  # Start of a new row
-            current_row = []
-        elif token == '}':  # End of the current row
-            if number_buffer:  # Append the last buffered number to the row
-                current_row.append(int(number_buffer))
-                number_buffer = ''
-            if current_row:  # Append the completed row to the result
-                result.append(current_row)
-                current_row = []
-        elif token.isdigit():  # Build the number buffer for multi-digit numbers
-            number_buffer += token
-        elif token == ',' and number_buffer:  # Comma separates numbers
-            current_row.append(int(number_buffer))
-            number_buffer = ''  # Reset the buffer for the next number
-    return result
-
-
 def todict(obj: object):
     """Converts a SQLAlchemy object to a dictionary."""
     return {col.name: getattr(obj, col.name) for col in obj.__table__.columns}

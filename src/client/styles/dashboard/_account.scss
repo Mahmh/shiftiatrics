@@ -1,5 +1,6 @@
 #account-content {
     @include vertical-flex;
+    padding: 20px;
     gap: 15px;
 
     #account-card {
@@ -12,24 +13,34 @@
         h1 { font-size: 2.3rem; margin: 20px 0; }
     }
 
-    button {
-        color: white;
-        padding: 10px;
-        border-radius: 10px;
+    #account-actions-card {
+        @include vertical-flex;
+        gap: 10px;
+        background-color: get-color('alpha-white');
+        box-shadow: $main-box-shadow;
+        padding: 20px 30px;
+        padding-bottom: 25px;
+        border-radius: 20px;
 
-        &#edit-account-btn {
-            background-color: get-color('primary-blue');
-            &:hover { background-color: get-color('primary-blue-hover') }
-        }
-
-        &#log-out-btn {
-            background-color: get-color('gray');
-            &:hover { background-color: get-color('alpha-black-0') }
-        }
-
-        &#delete-account-btn {
-            background-color: get-color('primary-red');
-            &:hover { background-color: get-color('primary-red-hover') }
+        button {
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+    
+            &#edit-account-btn {
+                background-color: get-color('primary-blue');
+                &:hover { background-color: get-color('primary-blue-hover') }
+            }
+    
+            &#log-out-btn {
+                background-color: get-color('gray');
+                &:hover { background-color: get-color('alpha-black-0') }
+            }
+    
+            &#delete-account-btn {
+                background-color: get-color('primary-red');
+                &:hover { background-color: get-color('primary-red-hover') }
+            }
         }
     }
 }

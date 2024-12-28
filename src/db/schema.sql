@@ -23,5 +23,7 @@ CREATE TABLE shifts (
 CREATE TABLE schedules (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     schedule_id SERIAL PRIMARY KEY,
-    schedule INT[][] NOT NULL  -- Array of arrays of employee IDs
+    schedule INT[][] NOT NULL,  -- Array of arrays of employee IDs
+    month INT NOT NULL,
+    year INT NOT NULL
 );

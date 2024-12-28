@@ -25,7 +25,43 @@ input {
 }
 
 .content {
-    padding: 10px;
-    margin-top: 10px;
-    margin-left: 250px;
+    margin-left: 240px;
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        background-color: get-color('primary-blue-hover');
+        padding: 10px 15px;
+
+        #header-btns {
+            display: flex;
+            gap: 10px;
+
+            button {
+                @include compressible(.96);
+                background-color: get-color('secondary-blue');
+                color: get-color('background');
+                padding: 10px 15px;
+                border-radius: 10px;
+                &:hover { background-color: get-color('secondary-blue-hover') }
+            }
+        }
+    }
+
+    .header-msg {
+        background-color: get-color('primary-blue-hover');
+        color: get-color('background');
+        margin: 0;
+        padding: 10px 15px;
+
+        &.invalid-msg { background-color: get-color('primary-red') }
+    }
+
+    #card-area {
+        @include vertical-flex;
+        gap: 15px;
+        padding: 20px;
+    }
 }

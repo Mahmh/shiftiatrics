@@ -50,9 +50,10 @@
         #modal-content {
             @include vertical-flex;
             gap: 20px;
+            margin-bottom: 5px;
         }
 
-        .modal-input-div {
+        .modal-input-sec {
             margin-bottom: 20px;
         }
 

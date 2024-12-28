@@ -1,4 +1,3 @@
 #!/bin/bash
 sh compile.sh
-cd bin
-java server.engine.ShiftScheduler
+java -jar engine.jar

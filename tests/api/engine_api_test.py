@@ -19,16 +19,8 @@ def setup_and_teardown():
 
 
 # Tests
-def test_get_current_month_days():
-    response = client.get('/engine/current_month_days')
-    response_data = response.json()
-    assert response.status_code == 200
-    assert isinstance(response_data, list)
-    assert len(response_data) == 2
-
-
 def test_generate_schedule(setup_and_teardown):
     account_id = setup_and_teardown
-    response = client.post(f'/engine/generate_schedule?account_id={account_id}&num_shifts_per_day=2')
+    response = client.post(f'/engine/generate_schedule?account_id={account_id}&num_shifts_per_day=2&num_days=31')
     assert response.status_code == 200
     assert isinstance(response.json(), list)

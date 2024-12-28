@@ -127,7 +127,7 @@ def read_schedules(account_id: int) -> list[dict] | dict:
 @schedule_router.post('/accounts/{account_id}/schedules')
 @endpoint
 def create_new_schedule(account_id: int, info: ScheduleInfo) -> dict:
-    return create_schedule(account_id=account_id, schedule=info.schedule)
+    return create_schedule(account_id=account_id, schedule=info.schedule, month=info.month, year=info.year)
 
 
 @schedule_router.patch('/schedules/{schedule_id}')

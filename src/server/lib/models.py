@@ -17,3 +17,5 @@ class ShiftInfo(BaseModel):
 
 class ScheduleInfo(BaseModel):
     schedule: list[list[int]]
+    month: int
+    year: int

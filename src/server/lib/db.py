@@ -64,6 +64,8 @@ class Schedule(Base):
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     schedule_id = Column(Integer, primary_key=True, autoincrement=True)
     schedule = Column(ARRAY(Integer, dimensions=2), nullable=False)
+    month = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
 
 
@@ -110,6 +112,11 @@ def _check_schedule(schedule_id: int, *, session: SessionType) -> Schedule:
     if not schedule: raise NonExistent('schedule', schedule_id)
     return schedule
 
+
+def _check_month_and_year(month: int, year: int) -> None:
+    """Checks if a given month & year are valid."""
+    assert 0 <= month <= 11, 'Invalid month'
+    assert 1970 <= year <= 9999, 'Invalid year'
 
 
 # Functional
@@ -248,17 +255,18 @@ def delete_shift(shift_id: int, *, session: SessionType) -> None:
 
 ## Schedule
 @dbsession()
-def get_all_schedules_of_account(account_id: int, *, session: SessionType) -> list[Schedule]:
+def get_all_schedules_of_account(account_id: int, *, session: SessionType, **filter_kwargs) -> list[Schedule]:
     """Returns all schedules associated with the given account ID."""
     _check_account(account_id, session=session)
-    return session.query(Schedule).filter_by(account_id=account_id).all()
+    return session.query(Schedule).filter_by(account_id=account_id, **filter_kwargs).all()
 
 
 @dbsession(commit=True)
-def create_schedule(account_id: int, schedule: list[list[int]], *, session: SessionType) -> Schedule:
+def create_schedule(account_id: int, schedule: list[list[int]], month: int, year: int, *, session: SessionType) -> Schedule:
     """Creates a schedule for the given account ID."""
+    _check_month_and_year(month, year)
     _check_account(account_id, session=session)
-    schedule = Schedule(account_id=account_id, schedule=schedule)
+    schedule = Schedule(account_id=account_id, schedule=schedule, month=month, year=year)
     session.add(schedule)
     log(f'Created schedule: {schedule}', 'db', 'INFO')
     return schedule

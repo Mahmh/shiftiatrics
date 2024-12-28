@@ -1,7 +1,6 @@
 #shifts-content {
     display: flex;
     flex-direction: column;
-    gap: 15px;
 
     .shift-card {
         display: flex;
@@ -29,13 +28,5 @@
                 &:hover { background-color: get-color('light-gray') }
             }
         }
-    }
-
-    #add-shift-btn {
-        background-color: get-color('primary-blue');
-        color: white;
-        padding: 10px;
-        border-radius: 10px;
-        &:hover { background-color: get-color('primary-blue-hover') }
     }
 }

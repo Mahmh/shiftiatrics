@@ -1,0 +1,66 @@
+#schedules-content {
+    padding: 0;
+    margin-top: 0;
+    margin-left: 240px;
+
+    #month-navigators {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 250px;
+
+        span {
+            color: get-color('background');
+            margin: 0 10px;
+        }
+
+        button {
+            @include circle(40px);
+            @include compressible;
+            background-color: get-color('secondary-blue');
+            &:hover { background-color: get-color('secondary-blue-hover') }
+        }
+    }
+
+    #schedule-area {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        padding: 10px 25px;
+        padding-bottom: 60px;
+
+        .day-card {
+            @include vertical-flex;
+            align-items: center;
+            padding: 5px 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            min-width: 10vw;
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 18px;
+                text-align: left;
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: $main-box-shadow;
+
+                th, td {
+                    padding: 12px 15px;
+                }
+
+                thead th {
+                    background-color: get-color('secondary-blue');
+                    font-weight: bold;
+                    color: get-color('background');
+                }
+
+                tbody {
+                    td { color: #555 }
+                    tr:nth-child(even) { background-color: get-color('light-gray') }
+                }
+            }
+        }
+    }
+}

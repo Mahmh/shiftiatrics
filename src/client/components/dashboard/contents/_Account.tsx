@@ -1,47 +1,60 @@
-import { useContext, useState } from 'react'
+import { useCallback, useContext, useState, useMemo } from 'react'
 import { AppContext, nullAccount } from '@context'
 import { Choice, Request } from '@utils'
 import type { Account } from '@types'
 
 export default function Account() {
     const { account, setAccount, employees, shifts, openModal, closeModal, setModalContent } = useContext(AppContext)
+    const employeeCountText = useMemo(
+        () => `${employees.length} employee${employees.length === 1 ? '' : 's'}`,
+        [employees.length]
+    )
+    const shiftCountText = useMemo(
+        () => `${shifts.length} shift${shifts.length === 1 ? '' : 's'} per day`,
+        [shifts.length]
+    )
 
-    const logOut = () =>  setAccount(nullAccount)
+    /** Logs out of the account */
+    const logOut = useCallback(() => setAccount(nullAccount), [setAccount])
 
-    const deleteAccount = async () => {
+    /** Sends an API request to delete the account */
+    const deleteAccount = useCallback(async () => {
         await new Request(
             'accounts',
             () => {},
             { username: account.username, password: account.password }
         ).delete()
         logOut()
-    }
+    }, [account, logOut])
 
-    const openDeleteModal = () => {
+    /** Displays an account deletion modal */
+    const openDeleteModal = useCallback(() => {
         setModalContent(<>
             <h1>Delete Your Account?</h1>
             <Choice onYes={deleteAccount} onNo={closeModal}/>
         </>)
         openModal()
-    }
+    }, [deleteAccount, closeModal, openModal, setModalContent])
 
-    const openLogOutModal = () => {
+    /** Displays a modal for confirming log-out */
+    const openLogOutModal = useCallback(() => {
         setModalContent(<>
             <h1>Log Out?</h1>
             <Choice onYes={logOut} onNo={closeModal}/>
         </>)
         openModal()
-    }
+    }, [logOut, closeModal, openModal, setModalContent])
 
-    const openEditUsernameModal = () => {
+    /** Displays a modal for editing the account's username */
+    const openEditUsernameModal = useCallback(() => {
         const EditUsernameModalContent = () => {
             const [tempUsername, setTempUsername] = useState(account.username)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempUsername.trim().length < 3)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempUsername.trim().length < 3 || account.username === tempUsername)
 
             const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newUsername = e.target.value
                 setTempUsername(newUsername)
-                setConfirmDisabled(newUsername.trim().length < 3)
+                setConfirmDisabled(newUsername.trim().length < 3 || account.username === newUsername)
             }
 
             const confirmEdit = async () => {
@@ -58,7 +71,7 @@ export default function Account() {
 
             return <>
                 <h2>Edit Username</h2>
-                <div style={{ marginBottom: 20 }}>
+                <section style={{ marginBottom: 20 }}>
                     <label style={{ marginRight: 10 }}>Username: </label>
                     <input
                         type='text'
@@ -67,7 +80,7 @@ export default function Account() {
                         onChange={handleUsernameChange}
                         maxLength={40}
                     />
-                </div>
+                </section>
                 <button
                     onClick={confirmEdit}
                     disabled={isConfirmDisabled}
@@ -80,9 +93,10 @@ export default function Account() {
 
         setModalContent(<EditUsernameModalContent/>)
         openModal()
-    }
+    }, [account.username, account.password, setAccount, openModal, closeModal, setModalContent])
 
-    const openChangePasswordModal = () => {
+    /** Displays a modal for creating a new password */
+    const openChangePasswordModal = useCallback(() => {
         const ChangePasswordModalContent = () => {
             const [tempNewPassword, setNewPassword] = useState('')
             const [tempConfirmPassword, setConfirmPassword] = useState('')
@@ -114,7 +128,7 @@ export default function Account() {
 
             return <>
                 <h2>Edit Username</h2>
-                <div className='modal-input-div'>
+                <section className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>New password: </label>
                     <input
                         type='password'
@@ -123,8 +137,8 @@ export default function Account() {
                         onChange={handleNewPasswordChange}
                         maxLength={40}
                     />
-                </div>
-                <div className='modal-input-div'>
+                </section>
+                <section className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>Confirm password: </label>
                     <input
                         type='password'
@@ -133,7 +147,7 @@ export default function Account() {
                         onChange={handleConfirmPasswordChange}
                         maxLength={40}
                     />
-                </div>
+                </section>
                 <button
                     onClick={confirmEdit}
                     disabled={isConfirmDisabled}
@@ -146,17 +160,19 @@ export default function Account() {
 
         setModalContent(<ChangePasswordModalContent/>)
         openModal()
-    }
+    }, [account.username, account.password, setAccount, openModal, closeModal, setModalContent])
 
     return <>
         <div id='account-card'>
             <h1>{account.username}</h1>
-            <div>{`${employees.length} employee${employees.length === 1 ? '' : 's'}`}</div>
-            <div>{`${shifts.length} shift${shifts.length === 1 ? '' : 's'}`}</div>
+            <div>{employeeCountText}</div>
+            <div>{shiftCountText}</div>
         </div>
-        <button id='edit-account-btn' onClick={openEditUsernameModal}>Edit Username</button>
-        <button id='edit-account-btn' onClick={openChangePasswordModal}>Change Password</button>
-        <button id='log-out-btn' onClick={openLogOutModal}>Log Out</button>
-        <button id='delete-account-btn' onClick={openDeleteModal}>Delete Account</button>
+        <div id='account-actions-card'>
+            <button id='edit-account-btn' onClick={openEditUsernameModal}>Edit Username</button>
+            <button id='edit-account-btn' onClick={openChangePasswordModal}>Change Password</button>
+            <button id='log-out-btn' onClick={openLogOutModal}>Log Out</button>
+            <button id='delete-account-btn' onClick={openDeleteModal}>Delete Account</button>
+        </div>
     </>
 }
