@@ -1,12 +1,12 @@
 import { useContext, useState } from 'react'
-import { AppContext } from '@context'
+import { DashboardContext } from '@context'
 import { Employee } from '@types'
 import { Icon, Request, Choice } from '@utils'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const EmployeeCard = ({ id, name }: Employee) => {
-    const { setModalContent, openModal, closeModal, loadEmployees } = useContext(AppContext)
+    const { setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
 
     const openEditModal = () => {
         const EditModalContent = () => {
@@ -74,7 +74,7 @@ const EmployeeCard = ({ id, name }: Employee) => {
 
 
 export default function Employees() {
-    const { account, employees, setModalContent, openModal, closeModal, loadEmployees } = useContext(AppContext)
+    const { account, employees, setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
 
     const openAddModal = () => {
         const AddModalContent = () => {

@@ -4,7 +4,7 @@ import type { SetStateAction, Dispatch, ReactNode } from 'react'
 type SetState<T> = Dispatch<SetStateAction<T>>
 export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December'
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
-export type ContentName = 'schedules' | 'employees' | 'shifts' | 'account' | 'settings' | 'support'
+export type ContentName = 'schedules' | 'employees' | 'shifts' | 'settings' | 'support'
 export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][]
 export type YearToSchedules = Map<number, Schedule[]>

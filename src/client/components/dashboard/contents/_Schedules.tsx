@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { AppContext } from '@context'
-import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth } from '@utils'
+import { DashboardContext } from '@context'
+import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, MIN_YEAR, MAX_YEAR } from '@utils'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
 import prevIcon from '@icons/prev.png'
 import nextIcon from '@icons/next.png'
@@ -10,11 +10,13 @@ export default function Schedules() {
         account, employees, validateEmployeeById, shifts, 
         schedules, setSchedules, setScheduleValidity, getScheduleValidity,
         setModalContent, openModal, closeModal, setContent
-    } = useContext(AppContext)
+    } = useContext(DashboardContext)
     const [isLoading, setIsLoading] = useState(false)
     const today = new Date()
     const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth())
     const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear())
+    const [isLeftChevronActive, setIsLeftChevronActive] = useState(true)
+    const [isRightChevronActive, setIsRightChevronActive] = useState(true)
     const scheduleAvailable = useMemo(
         () => hasScheduleForMonth(schedules, selectedYear, selectedMonth),
         [schedules, selectedYear, selectedMonth]
@@ -110,9 +112,12 @@ export default function Schedules() {
 
     /** Handles traversing between months and years */
     const handleMonthChange = (direction: 'prev' | 'next') => {
+        if (direction === 'prev' && !isLeftChevronActive) return
+        if (direction === 'next' && !isRightChevronActive) return
         setSelectedMonth(prevMonth => {
-            let newMonth = direction === 'prev' ? prevMonth - 1 : prevMonth + 1
+            let newMonth = direction === 'prev' ? prevMonth-1 : prevMonth+1
             let newYear = selectedYear
+
             if (newMonth < 0) {
                 newMonth = 11 // Wrap to December
                 newYear -= 1  // Move to previous year
@@ -120,6 +125,7 @@ export default function Schedules() {
                 newMonth = 0  // Wrap to January
                 newYear += 1  // Move to next year
             }
+
             setSelectedYear(newYear)
             return newMonth
         })
@@ -148,10 +154,8 @@ export default function Schedules() {
             }, [setIsLoading])
 
             useEffect(() => {
-                if (scheduleAvailable && triggerFetch) {
-                    getShiftCounts()
-                }
-            }, [getShiftCounts, triggerFetch]);
+                if (scheduleAvailable && triggerFetch) getShiftCounts()
+            }, [getShiftCounts, triggerFetch])
 
             return scheduleAvailable
             ? <>
@@ -168,7 +172,7 @@ export default function Schedules() {
                 <button onClick={closeModal}>Close</button>
             </>
         }
-        
+
         setModalContent(<DetailsContent triggerFetch={true}/>)
         openModal()
     }
@@ -180,7 +184,7 @@ export default function Schedules() {
             const currentYearSchedules = schedules.get(selectedYear)
             const currentSchedule = currentYearSchedules?.[selectedMonth]
             if (!currentSchedule) { alert('No schedule available to export.'); return }
-            const exporter = new ScheduleExporter(currentSchedule, shifts)
+            const exporter = new ScheduleExporter(currentSchedule.schedule, shifts, selectedYear, selectedMonth)
             switch (format) {
                 case 'xlsx': exporter.exportExcel(); break
                 case 'csv': exporter.exportCSV(); break
@@ -275,7 +279,13 @@ export default function Schedules() {
             setScheduleValidity(false, selectedYear, selectedMonth)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [schedules, selectedMonth, employees.length, selectedYear, shifts.length])
+    }, [employees.length, shifts.length, schedules, selectedMonth, selectedYear])
+
+    useEffect(() => {
+        // Min: January 2023; Max: December 2025
+        setIsLeftChevronActive(!(selectedYear === MIN_YEAR && selectedMonth === 0))
+        setIsRightChevronActive(!(selectedYear === MAX_YEAR && selectedMonth === 11))
+    }, [selectedMonth, selectedYear])
 
     return <>
         <header>
@@ -287,9 +297,15 @@ export default function Schedules() {
                 <button onClick={openExportModal}>Export</button>
             </section>
             <section id='month-navigators'>
-                <button onClick={() => handleMonthChange('prev')}><Icon src={prevIcon} alt='Previous month' size={28}/></button>
+                <button
+                    onClick={() => handleMonthChange('prev')}
+                    className={isLeftChevronActive ? '' : 'disabled-chevron'}
+                ><Icon src={prevIcon} alt='Previous month' size={28}/></button>
                 <span>{getMonthName(selectedMonth)} {selectedYear}</span>
-                <button onClick={() => handleMonthChange('next')}><Icon src={nextIcon} alt='Next month' size={28}/></button>
+                <button
+                    onClick={() => handleMonthChange('next')}
+                    className={isRightChevronActive ? '' : 'disabled-chevron'}
+                ><Icon src={nextIcon} alt='Next month' size={28}/></button>
             </section>
         </header>
         {
@@ -301,7 +317,7 @@ export default function Schedules() {
                 {
                     schedules.get(selectedYear)![selectedMonth].schedule.map((day, dayI) => 
                     <div className='day-card' key={dayI}>
-                        <h3>Day {dayI + 1}</h3>
+                        <h3>Day {dayI+1} <span className='weekday-name'>| {getWeekdayName(selectedYear, selectedMonth, dayI+1).slice(0, 3)}</span></h3>
                         <table>
                             <thead>
                                 <tr><th>Shift</th><th>Employee</th></tr>

@@ -1,22 +1,8 @@
 package server.engine;
-import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.*;
 
 /** Class for generating shift schedules for employees. */
 public class ShiftScheduler {
-    /**
-     * Retrieves the current month and its number of days.
-     * @return An array where the first element is the month and the second is the number of days.
-     */
-    private static final int[] getCurrentMonthDays() {
-        LocalDate now = LocalDate.now();
-        int month = now.getMonthValue();
-        int year = now.getYear();
-        int days = YearMonth.of(year, month).lengthOfMonth();
-        return new int[]{month, days};
-    }
-
     /**
      * Generates a balanced shift schedule for a given number of employees and shifts.
      * @param employees The list of employees.
@@ -67,6 +53,8 @@ public class ShiftScheduler {
         return shiftCounts;
     }
 
+
+
     public static void main(String[] args) {
         List<Employee> employees = new ArrayList<>();
         employees.add(new Employee(1, "John"));
@@ -79,9 +67,6 @@ public class ShiftScheduler {
         employees.add(new Employee(8, "Hank"));
         employees.add(new Employee(9, "Ivy"));
         employees.add(new Employee(10, "Jack"));
-
-        int[] currentMonth = getCurrentMonthDays();
-        System.out.println("Current month: " + currentMonth[0] + ", Days: " + currentMonth[1]);
 
         Employee[][] schedule = generateSchedule(employees, 3, 31);
         System.out.println("\n---- Schedule ----");

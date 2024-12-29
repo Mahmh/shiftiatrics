@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { AppProvider } from '@context'
+import { DashboardProvider } from '@context'
 import '@/styles/main.css'
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export default function RootLayout({ children }: Readonly<{children: React.React
     return (
         <html lang='en'>
             <body>
-                <AppProvider>{children}</AppProvider>
+                <DashboardProvider>{children}</DashboardProvider>
             </body>
         </html>
     )

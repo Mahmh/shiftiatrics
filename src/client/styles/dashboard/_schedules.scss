@@ -9,6 +9,12 @@
         justify-content: space-between;
         width: 250px;
 
+        .disabled-chevron {
+            background-color: get-color('alpha-black-1') !important;
+            scale: 1 !important;
+            cursor: default;
+        }
+
         span {
             color: get-color('background');
             margin: 0 10px;
@@ -37,6 +43,11 @@
             border-radius: 10px;
             min-width: 10vw;
 
+            .weekday-name {
+                font-weight: lighter;
+                color: get-color('');
+            }
+
             table {
                 width: 100%;
                 border-collapse: collapse;
@@ -46,18 +57,17 @@
                 overflow: hidden;
                 box-shadow: $main-box-shadow;
 
-                th, td {
-                    padding: 12px 15px;
-                }
+                td { padding: 12px 15px }
 
                 thead th {
                     background-color: get-color('secondary-blue');
-                    font-weight: bold;
                     color: get-color('background');
+                    font-size: 1rem;
+                    padding: 5px 15px
                 }
 
                 tbody {
-                    td { color: #555 }
+                    td { color: get-color('dark-gray') }
                     tr:nth-child(even) { background-color: get-color('light-gray') }
                 }
             }

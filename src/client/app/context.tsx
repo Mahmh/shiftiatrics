@@ -7,7 +7,7 @@ const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '' }
 export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
-export const AppContext = createContext<ContextProps>({
+export const DashboardContext = createContext<ContextProps>({
     content: defaultContent,
     setContent: () => {},
 
@@ -37,7 +37,7 @@ export const AppContext = createContext<ContextProps>({
     closeModal: () => {}
 })
 
-export function AppProvider({ children }: Readonly<{children: React.ReactNode}>) {
+export function DashboardProvider({ children }: Readonly<{children: React.ReactNode}>) {
     const [content, setContent] = useState<ContentName>(defaultContent)
     const [account, setAccount] = useState<Account>(nullAccount)
     const [employees, setEmployees] = useState<Employee[]>([])
@@ -158,7 +158,7 @@ export function AppProvider({ children }: Readonly<{children: React.ReactNode}>)
     }, [employees, shifts, account])
 
     return (
-        <AppContext.Provider value={{
+        <DashboardContext.Provider value={{
             account, setAccount,
             content, setContent,
             employees, setEmployees, loadEmployees, validateEmployeeById,
@@ -167,6 +167,6 @@ export function AppProvider({ children }: Readonly<{children: React.ReactNode}>)
             modalContent, setModalContent,
             openModal, closeModal,
             schedules, setSchedules, loadSchedules, setScheduleValidity, getScheduleValidity
-        }}>{children}</AppContext.Provider>
+        }}>{children}</DashboardContext.Provider>
     )
 }
