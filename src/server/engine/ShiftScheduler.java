@@ -33,7 +33,6 @@ public class ShiftScheduler {
                 }
             }
         }
-
         return schedule;
     }
 
@@ -44,12 +43,10 @@ public class ShiftScheduler {
      */
     public static HashMap<Integer, Integer> getShiftCountsOfEmployees(int[][] schedule) {
         HashMap<Integer, Integer> shiftCounts = new HashMap<>();
-
         // Flatten the 2D schedule array and count shifts in one pass
         for (int[] day : schedule) for (int employeeID : day) {
             if (employeeID > 0) shiftCounts.merge(employeeID, 1, Integer::sum);
         }
-
         return shiftCounts;
     }
 

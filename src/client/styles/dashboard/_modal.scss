@@ -4,7 +4,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, .6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -24,7 +24,7 @@
     }
 
     #modal {
-        background: get-color('background');
+        @include themed-bgcolor('background', 'primary-blue');
         border-radius: 16px;
         padding: 20px 40px;
         max-width: 700px;
@@ -53,32 +53,36 @@
             margin-bottom: 5px;
         }
 
+        h1, h2, p, li, b, label {
+            @include themed-color('primary-text');
+        }
+
         .modal-input-sec {
             margin-bottom: 20px;
         }
 
         button {
-            background-color: get-color('primary-blue');
-            color: get-color('background');
+            @include themed-bgcolor('primary-blue', 'secondary-blue-hover');
+            @include themed-color('background', 'primary-text');
             padding: 10px 15px;
             border-radius: 12px;
             transition: background-color 250ms ease, color 250ms ease;
-            &:hover { background-color: get-color('primary-blue-hover') }
+            &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue') }
 
             &#close-modal-btn {
                 @include circle(50px);
                 @include compressible;
-                background-color: get-color('alpha-black-2');
+                @include themed-bgcolor('alpha-black-2', 'primary-text');
                 position: absolute;
                 top: 15px;
                 right: 15px;
                 padding: 12px;
-                &:hover { background-color: get-color('alpha-black-1') }
+                &:hover { @include themed-bgcolor('alpha-black-1', 'alpha-white') }
             }
 
             &#disabled-confirm-btn {
-                background-color: get-color('light-gray');
-                color: get-color('alpha-black-1');
+                @include themed-bgcolor('light-gray', 'primary-blue-hover');
+                @include themed-color('alpha-black-1', 'secondary-blue');
                 cursor: default;
             }
         }

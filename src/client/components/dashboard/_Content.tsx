@@ -8,10 +8,10 @@ import Settings from './contents/_Settings'
 import Support from './contents/_Support'
 
 export default function Content() {
-    const { content } = useContext(DashboardContext)
+    const { content, darkThemeClassName } = useContext(DashboardContext)
 
     const wrapContent = (name: ContentName, contentElement: ReactNode) => (
-        <main id={`${name}-content`} className='content'>{contentElement}</main>
+        <main id={`${name}-content`} className={`content ${darkThemeClassName}`}>{contentElement}</main>
     )
 
     switch (content) {

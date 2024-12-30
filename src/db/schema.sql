@@ -27,3 +27,8 @@ CREATE TABLE schedules (
     month INT NOT NULL,
     year INT NOT NULL
 );
+
+CREATE TABLE settings (
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    dark_theme_enabled BOOLEAN NOT NULL
+);

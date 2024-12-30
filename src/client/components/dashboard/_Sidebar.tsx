@@ -10,7 +10,7 @@ import settingsIcon from '@icons/settings.png'
 import { ContentName } from '@/app/types'
 
 export default function Sidebar() {
-    const { content, setContent } = useContext(DashboardContext)
+    const { content, setContent, darkThemeClassName } = useContext(DashboardContext)
 
     const SidebarButton = ({ name, src, contentName=name }: { name: string, src: StaticImageData, contentName?: string }) => (
         <button onClick={() => setContent(contentName.toLowerCase() as ContentName)} className={content === contentName.toLowerCase() ? 'active-content-btn' : ''}>
@@ -19,7 +19,7 @@ export default function Sidebar() {
     )
 
     return (
-        <nav id='sidebar'>
+        <nav id='sidebar' className={darkThemeClassName}>
             <section id='sidebar-upper'>
                 <SidebarButton name='Schedules' src={scheduleIcon}/>
                 <SidebarButton name='Employees' src={employeeIcon}/>

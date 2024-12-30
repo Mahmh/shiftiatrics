@@ -13,12 +13,12 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             const [tempName, setTempName] = useState(name)
             const [tempStartTime, setStartTime] = useState(startTime)
             const [tempEndTime, setEndTime] = useState(endTime)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3 || tempName === name)
 
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 3 || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length < 3 || newName === name || !tempStartTime || !tempEndTime)
             }
 
             const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,8 +97,8 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
         <div className='shift-card'>
             <div className='shift-details'>
                 <h1>{name}</h1>
-                <span><strong>Starts:</strong> {formatTimeToAMPM(startTime)}</span>
-                <span><strong>Ends:</strong> {formatTimeToAMPM(endTime)}</span>
+                <span><b>Starts:</b> {formatTimeToAMPM(startTime)}</span>
+                <span><b>Ends:</b> {formatTimeToAMPM(endTime)}</span>
             </div>
             <div>
                 <button onClick={openEditModal}>
@@ -191,12 +191,15 @@ export default function Shifts() {
 
     return <>
         <header>
-            <section id='header-btns'>
-                <button onClick={openAddModal}>Add New Shift</button>
+            <section id='header-upper'>
+                <section id='header-btns'>
+                    <button onClick={openAddModal}>Add New Shift</button>
+                </section>
             </section>
+            {shifts.length === 0 && <p className='header-msg'>No shifts registered. You could add &quot;Day&quot;, &quot;Evening&quot;, &quot;Night&quot;, or any shift name that you find suitable for your use case.</p>}
         </header>
-        {shifts.length > 0 ? (
-            <div id='card-area'>
+        {shifts.length > 0 && (
+            <div className='card-container'>
                 {shifts.map((shift) => (
                     <ShiftCard
                         id={shift.id}
@@ -207,8 +210,6 @@ export default function Shifts() {
                     />
                 ))}
             </div>
-        ) : (
-            <p className='header-msg'>No shifts registered. You could add &quot;Day&quot;, &quot;Evening&quot;, &quot;Night&quot;, or any shift name that you find suitable for your use case.</p>
         )}
     </>
 }

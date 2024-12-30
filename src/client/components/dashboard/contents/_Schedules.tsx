@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { DashboardContext } from '@context'
 import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, MIN_YEAR, MAX_YEAR } from '@utils'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
+import closeIcon from '@icons/close.png'
 import prevIcon from '@icons/prev.png'
 import nextIcon from '@icons/next.png'
 
@@ -79,19 +80,19 @@ export default function Schedules() {
         setModalContent(
             employees.length <= 0 ?
             <>
-                <h2>Invalid Input</h2>
+                <h1>Invalid Input</h1>
                 <label>Please register employees first in the &quot;Employees&quot; section.</label>
                 <button onClick={() => { setContent('employees'); closeModal() }}>Register Employees</button>
             </>
             : shifts.length <= 0 ?
             <>
-                <h2>Invalid Input</h2>
+                <h1>Invalid Input</h1>
                 <p>Please register shifts first in the &quot;Shifts Per Day&quot; section.</p>
                 <button onClick={() => { setContent('shifts'); closeModal() }}>Register Shifts</button>
             </>
             : employees.length < shifts.length ?
             <>
-                <h2>Invalid Input</h2>
+                <h1>Invalid Input</h1>
                 <p>
                     The number of employees is not sufficient for the number of shifts per day.
                     To generate a schedule, each employee must work only one shift per day.
@@ -167,7 +168,7 @@ export default function Schedules() {
                 </section>
             </>
             : <>
-                <h2>Invalid Input</h2>
+                <h1>Invalid Input</h1>
                 <p>Please generate a schedule for this month to show details.</p>
                 <button onClick={closeModal}>Close</button>
             </>
@@ -289,31 +290,40 @@ export default function Schedules() {
 
     return <>
         <header>
-            <section id='header-btns'>
-                <button onClick={scheduleAvailable ? regenerateSchedule : generateSchedule}>
-                    {scheduleAvailable ? 'Regenerate Schedule' : 'Generate Schedule'}
-                </button>
-                <button onClick={openDetailsModal}>Details</button>
-                <button onClick={openExportModal}>Export</button>
+            <section id='header-upper'>
+                <section id='header-btns'>
+                    <button onClick={scheduleAvailable ? regenerateSchedule : generateSchedule}>
+                        {scheduleAvailable ? 'Regenerate Schedule' : 'Generate Schedule'}
+                    </button>
+                    <button onClick={openDetailsModal}>Details</button>
+                    <button onClick={openExportModal}>Export</button>
+                </section>
+                <section id='month-navigators'>
+                    <button
+                        onClick={() => handleMonthChange('prev')}
+                        className={isLeftChevronActive ? '' : 'disabled-chevron'}
+                    ><Icon src={prevIcon} alt='Previous month' size={28}/></button>
+                    <span>{getMonthName(selectedMonth)} {selectedYear}</span>
+                    <button
+                        onClick={() => handleMonthChange('next')}
+                        className={isRightChevronActive ? '' : 'disabled-chevron'}
+                    ><Icon src={nextIcon} alt='Next month' size={28}/></button>
+                </section>
             </section>
-            <section id='month-navigators'>
-                <button
-                    onClick={() => handleMonthChange('prev')}
-                    className={isLeftChevronActive ? '' : 'disabled-chevron'}
-                ><Icon src={prevIcon} alt='Previous month' size={28}/></button>
-                <span>{getMonthName(selectedMonth)} {selectedYear}</span>
-                <button
-                    onClick={() => handleMonthChange('next')}
-                    className={isRightChevronActive ? '' : 'disabled-chevron'}
-                ><Icon src={nextIcon} alt='Next month' size={28}/></button>
-            </section>
+            {
+                !getScheduleValidity(selectedYear, selectedMonth) 
+                    ? <p className='header-msg invalid-msg'>
+                        <span>This schedule seems to be invalid or outdated. Please try to regenerate it.</span>
+                        <button onClick={() => setScheduleValidity(true, selectedYear, selectedMonth)}><Icon src={closeIcon} alt='Close'/></button>
+                      </p>
+                    : !scheduleAvailable &&
+                        <p className='header-msg'>
+                            {isLoading ? 'Generating...' : 'No schedule generated yet for this month. Click "Generate Schedule" to create one.'}
+                        </p>
+            }
         </header>
-        {
-            !getScheduleValidity(selectedYear, selectedMonth) &&
-            <p className='header-msg invalid-msg'>This schedule seems to be invalid or outdated. Please try to regenerate it.</p>
-        }
-        {scheduleAvailable ? (
-            <div id='schedule-area'>
+        {scheduleAvailable && (
+            <div className='card-container'>
                 {
                     schedules.get(selectedYear)![selectedMonth].schedule.map((day, dayI) => 
                     <div className='day-card' key={dayI}>
@@ -334,9 +344,6 @@ export default function Schedules() {
                     </div>
                 )}
             </div>
-        ) : isLoading ? <p className='header-msg'>Generating...</p> : (
-            <p className='header-msg'>No schedule generated yet for this month. Click &quot;Generate Schedule&quot; to create one.</p>
         )}
-        
     </>
 }

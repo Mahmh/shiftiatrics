@@ -3,10 +3,10 @@
     flex-direction: column;
 
     .shift-card {
+        @include themed-bgcolor('pale-blue', 'secondary-blue');
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: get-color('pale-blue');
         padding: 10px 25px;
         border-radius: 20px;
         box-shadow: $main-box-shadow;
@@ -17,6 +17,8 @@
         }
 
         h1 { font-size: 1.5rem }
+        h1, span, b { @include themed-color('primary-text') }
+
         div {
             display: flex;
             gap: 10px;

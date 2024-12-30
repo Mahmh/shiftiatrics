@@ -23,17 +23,16 @@
         button {
             @include circle(40px);
             @include compressible;
-            background-color: get-color('secondary-blue');
-            &:hover { background-color: get-color('secondary-blue-hover') }
+            @include themed-bgcolor('secondary-blue');
+            &:hover { @include themed-bgcolor('secondary-blue-hover') }
         }
     }
 
-    #schedule-area {
-        display: flex;
+    .card-container {
+        @include themed-bgcolor('background');
+        flex-direction: row;
         flex-wrap: wrap;
-        gap: 15px;
-        padding: 10px 25px;
-        padding-bottom: 60px;
+        padding: 70px 15px 60px 30px;
 
         .day-card {
             @include vertical-flex;
@@ -43,9 +42,12 @@
             border-radius: 10px;
             min-width: 10vw;
 
-            .weekday-name {
-                font-weight: lighter;
-                color: get-color('');
+            h3 {
+                @include themed-color('primary-text', 'light-gray');
+                .weekday-name {
+                    @include themed-color('primary-text', 'light-gray');
+                    font-weight: lighter;
+                }
             }
 
             table {
@@ -60,15 +62,16 @@
                 td { padding: 12px 15px }
 
                 thead th {
-                    background-color: get-color('secondary-blue');
+                    @include themed-bgcolor('secondary-blue-hover');
                     color: get-color('background');
                     font-size: 1rem;
                     padding: 5px 15px
                 }
 
                 tbody {
-                    td { color: get-color('dark-gray') }
-                    tr:nth-child(even) { background-color: get-color('light-gray') }
+                    @include themed-bgcolor('background', 'primary-blue');
+                    td { @include themed-color('dark-gray', 'primary-text') }
+                    tr:nth-child(even) { @include themed-bgcolor('light-gray', 'secondary-blue') }
                 }
             }
         }

@@ -3,11 +3,12 @@ from fastapi import APIRouter
 from src.server.lib.models import Credentials, EmployeeInfo, ShiftInfo, ScheduleInfo
 from src.server.lib.utils import todict, todicts
 from src.server.lib.db import (
-    Account, Employee, Shift, Schedule,
+    Account, Employee, Shift, Schedule, Settings,
     get_all_accounts, log_in_account, create_account, update_account, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
-    get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule
+    get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
+    get_settings_of_account, toggle_dark_theme 
 )
 
 # Init
@@ -15,13 +16,14 @@ account_router = APIRouter()
 employee_router = APIRouter()
 shift_router = APIRouter()
 schedule_router = APIRouter()
+setting_router = APIRouter()
 
 def endpoint(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
-            if type(result) in (Account, Employee, Shift, Schedule):
+            if type(result) in (Account, Employee, Shift, Schedule, Settings):
                 return todict(result)
             elif type(result) is list:
                 try: return todicts(result)
@@ -141,3 +143,17 @@ def update_existing_schedule(schedule_id: int, updates: dict) -> dict:
 def delete_existing_schedule(schedule_id: int) -> dict:
     delete_schedule(schedule_id=schedule_id)
     return {'detail': 'Schedule deleted successfully'}
+
+
+## Setting
+@schedule_router.get('/accounts/{account_id}/settings')
+@endpoint
+def read_settings(account_id: int) -> dict:
+    res = get_settings_of_account(account_id=account_id)
+    return res if res is not None else {'detail': res}
+
+
+@schedule_router.get('/accounts/{account_id}/settings/toggle_dark_theme')
+@endpoint
+def switch_between_themes(account_id: int) -> dict:
+    return {'detail': toggle_dark_theme(account_id=account_id)}

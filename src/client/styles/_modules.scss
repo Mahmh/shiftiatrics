@@ -1,0 +1,110 @@
+$color-palette: (
+    'background': #f8f9fa,
+    'primary-text': #343a40,
+    'primary-blue': #4a90e2,
+    'primary-blue-hover': #357abd,
+    'primary-red': #e24a4a,
+    'primary-red-hover': #bd3535,
+    'secondary-blue': #1b4b7a,
+    'secondary-blue-hover': #163c62,
+    'pale-blue': #bed4eb,
+    'gray': #959595,
+    'dark-gray': #555555d1,
+    'light-gray': #e6e6e6df,
+    'alpha-white': #ffffff33,
+    'alpha-black-0': #00000053,
+    'alpha-black-1': #0000002d,
+    'alpha-black-2':#00000016,
+
+    'dt.background': #111d28,
+    'dt.primary-text': #f8f9fa,
+    'dt.primary-blue': #1f5489,
+    'dt.primary-blue-hover': #163c62,
+    'dt.primary-red': #9d3838,
+    'dt.primary-red-hover': #7a2626,
+    'dt.secondary-blue': #2c659f,
+    'dt.secondary-blue-hover': #3d77b2,
+    'dt.gray': #5a6676,
+    'dt.dark-gray': #3f3f3fd1,
+    'dt.light-gray': #78889c,
+    'dt.alpha-white': #ffffffa9
+);
+$main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
+
+
+// Fonts
+@font-face {
+    font-family: Lato;
+    src: url('../public/fonts/Lato-Light.ttf') format('truetype');
+    font-weight: lighter;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: Lato;
+    src: url('../public/fonts/Lato-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: Lato;
+    src: url('../public/fonts/Lato-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+
+// Functions & Mixins
+@function get-color($name, $dark-theme: false) {
+    @if $dark-theme {
+        @return map-get($color-palette, 'dt.#{$name}');
+    } @else {
+        @return map-get($color-palette, $name);
+    }
+}
+
+@mixin themed-color($name, $alt-color-for-dt: null) {
+    $parent: selector-nest('.dark-theme', &);
+    color: get-color($name, false);
+
+    @if $alt-color-for-dt == null {
+        &.dark-theme { color: get-color($name, true) }
+        @at-root #{$parent} { color: get-color($name, true) }
+    } @else {
+        &.dark-theme { color: get-color($alt-color-for-dt, true) }
+        @at-root #{$parent} { color: get-color($alt-color-for-dt, true) }
+    }
+}
+
+@mixin themed-bgcolor($name, $alt-color-for-dt: null) {
+    $parent: selector-nest('.dark-theme', &);
+    background-color: get-color($name, false);
+
+    @if $alt-color-for-dt == null {
+        &.dark-theme { background-color: get-color($name, true) }
+        @at-root #{$parent} { background-color: get-color($name, true) }
+    } @else {
+        &.dark-theme { background-color: get-color($alt-color-for-dt, true) }
+        @at-root #{$parent} { background-color: get-color($alt-color-for-dt, true) }
+    }
+}
+
+@mixin vertical-flex {
+    display: flex;
+    flex-direction: column;
+}
+
+@mixin circle($diameter) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    width: $diameter;
+    height: $diameter;
+}
+
+@mixin compressible($min-scale: .93) {
+    transition: background-color .2s ease, scale 150ms ease;
+    &:active { scale: $min-scale }
+}

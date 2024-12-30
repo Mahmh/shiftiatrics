@@ -2,12 +2,16 @@
     color: get-color('primary-text');
     font-family: Lato, sans-serif;
     font-size: 1.1rem;
+    transition: background-color 250ms ease-in-out;
 }
 
 html, body {
-    background-color: get-color('background');
+    @include themed-bgcolor('background');
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
+    transition: background-color 250ms ease;
 }
 
 button {
@@ -26,42 +30,71 @@ input {
 
 .content {
     margin-left: 240px;
+    transition: background-color 250ms ease;
 
     header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        background-color: get-color('primary-blue-hover');
-        padding: 10px 15px;
+        @include vertical-flex;
+        position: fixed;
+        left: 240px;
+        right: 0;
 
-        #header-btns {
+        #header-upper {
+            @include themed-bgcolor('primary-blue-hover');
             display: flex;
+            height: 50px;
+            justify-content: space-between;
+            align-items: center;
             gap: 10px;
+            padding: 10px 15px;
 
-            button {
-                @include compressible(.96);
-                background-color: get-color('secondary-blue');
-                color: get-color('background');
-                padding: 10px 15px;
-                border-radius: 10px;
-                &:hover { background-color: get-color('secondary-blue-hover') }
+            #header-btns {
+                display: flex;
+                gap: 10px;
+    
+                button {
+                    @include compressible(.96);
+                    @include themed-bgcolor('secondary-blue');
+                    color: get-color('background');
+                    padding: 10px 15px;
+                    border-radius: 10px;
+                    &:hover { @include themed-bgcolor('secondary-blue-hover') }
+                }
+            }
+        }
+
+        .header-msg {
+            @include themed-bgcolor('primary-blue-hover');
+            color: get-color('background');
+            margin: 0;
+            padding: 10px 15px;
+            margin-bottom: 200px;
+
+            &.invalid-msg {
+                @include themed-bgcolor('primary-red');
+                display: flex;
+                justify-content: space-between;
+                padding: 0;
+
+                span {
+                    color: get-color('background');
+                    padding: 10px 15px;
+                }
+
+                button {
+                    @include themed-bgcolor('background', 'primary-text');
+                    @include circle(25px);
+                    padding: 5px;
+                    margin: 9px;
+                    &:hover { @include themed-bgcolor('background', 'alpha-white') }
+                }
             }
         }
     }
-
-    .header-msg {
-        background-color: get-color('primary-blue-hover');
-        color: get-color('background');
-        margin: 0;
-        padding: 10px 15px;
-
-        &.invalid-msg { background-color: get-color('primary-red') }
-    }
-
-    #card-area {
+    
+    .card-container {
         @include vertical-flex;
         gap: 15px;
         padding: 20px;
+        padding-top: 90px;
     }
 }

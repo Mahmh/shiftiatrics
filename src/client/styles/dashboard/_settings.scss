@@ -1,16 +1,17 @@
 #settings-content {
     @include vertical-flex;
     padding: 25px;
-    gap: 40px;
+    gap: 35px;
 
     .settings-card {
-        background-color: get-color('alpha-white');
+        @include themed-bgcolor('alpha-white', 'primary-blue-hover');
         box-shadow: $main-box-shadow;
         border-radius: 10px;
         overflow: hidden;
+        transition: background-color 250ms ease;
 
         .settings-title {
-            background-color: get-color('primary-blue-hover');
+            @include themed-bgcolor('primary-blue');
             color: get-color('background');
             font-weight: bold;
             padding: 10px 15px;
@@ -18,24 +19,28 @@
         }
     }
 
-    #account-card {
+    .card-content {
         padding: 20px 30px;
         padding-bottom: 25px;
+        transition: background-color 250ms ease;
     
         h1 {
+            @include themed-color('primary-text');
             font-size: 2.3rem;
             margin-top: 10px;
             margin-bottom: 20px;
+            transition: color 250ms ease;
         }
 
-        p {
+        label, ul li {
+            @include themed-color('primary-text');
             margin: 5px 0;
+            transition: color 250ms ease;
         }
 
         #account-actions-card {
             @include vertical-flex;
             gap: 10px;
-            background-color: get-color('alpha-white');
             margin-top: 30px;
             border-radius: 20px;
     
@@ -44,19 +49,54 @@
                 padding: 10px;
                 border-radius: 10px;
         
-                &#edit-account-btn {
-                    background-color: get-color('primary-blue');
-                    &:hover { background-color: get-color('primary-blue-hover') }
+                &.edit-account-btn {
+                    @include themed-bgcolor('primary-blue', 'secondary-blue');
+                    &:hover { @include themed-bgcolor('primary-blue-hover', 'primary-blue') }
                 }
         
                 &#log-out-btn {
-                    background-color: get-color('gray');
-                    &:hover { background-color: get-color('alpha-black-0') }
+                    @include themed-bgcolor('gray');
+                    &:hover { @include themed-bgcolor('alpha-black-0', 'light-gray') }
                 }
         
                 &#delete-account-btn {
-                    background-color: get-color('primary-red');
-                    &:hover { background-color: get-color('primary-red-hover') }
+                    @include themed-bgcolor('primary-red');
+                    &:hover { @include themed-bgcolor('primary-red-hover') }
+                }
+            }
+        }
+
+        .switch-div {
+            display: flex;
+            justify-content: space-between;
+            &, label { cursor: pointer }
+
+            button {
+                @include themed-bgcolor('gray');
+                display: inline-block;
+                position: relative;
+                width: 55px;
+                height: 25px;
+                border-radius: 25px;
+                padding: 4px;
+                transition: background-color 0.3s ease;
+
+                .switch-circle {
+                    position: absolute;
+                    top: 50%;
+                    left: 4px;
+                    transform: translateX(0) translateY(-50%);
+                    width: 20px;
+                    height: 20px;
+                    background: #fff;
+                    border-radius: 50%;
+                    box-shadow: $main-box-shadow;
+                    transition: transform 200ms ease;
+                }
+
+                &.switch-btn-enabled {
+                    background: get-color('primary-blue');
+                    .switch-circle{ transform: translateX(26px) translateY(-50%) }
                 }
             }
         }

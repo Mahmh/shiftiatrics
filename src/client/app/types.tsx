@@ -34,6 +34,10 @@ export interface ContextProps {
     setScheduleValidity: (validity: boolean, year: number, month: number) => void
     getScheduleValidity: (year: number, month: number) => boolean | undefined
 
+    settings: Settings
+    setSettings: SetState<Settings>
+    darkThemeClassName: string
+
     isModalOpen: boolean
     setIsModalOpen: SetState<boolean>
     modalContent: ReactNode,
@@ -65,4 +69,8 @@ export interface Shift {
 export interface Schedule {
     id: number
     schedule: Employee[][]
+}
+
+export interface Settings {
+    darkThemeEnabled: boolean
 }

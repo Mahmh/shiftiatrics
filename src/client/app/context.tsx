@@ -1,10 +1,11 @@
 'use client'
-import { useState, createContext, ReactNode, useEffect, useCallback } from 'react'
-import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs } from '@types'
+import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
+import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs } from '@types'
 import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth } from '@utils'
 
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '' }
+const nullSettings: Settings = { darkThemeEnabled: false }
 export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
 export const DashboardContext = createContext<ContextProps>({
@@ -29,6 +30,10 @@ export const DashboardContext = createContext<ContextProps>({
     setScheduleValidity: () => {},
     getScheduleValidity: () => undefined,
 
+    settings: nullSettings,
+    setSettings: () => {},
+    darkThemeClassName: '',
+
     isModalOpen: false,
     setIsModalOpen: () => {},
     modalContent: null,
@@ -44,8 +49,10 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
     const [schedulesValidity, setSchedulesValidity] = useState<YearToSchedulesValidity>(new Map())
+    const [settings, setSettings] = useState(nullSettings)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalContent, setModalContent] = useState<ReactNode>(null)
+    const darkThemeClassName = useMemo(() => settings.darkThemeEnabled ? 'dark-theme' : '', [settings.darkThemeEnabled])
 
     const openModal = useCallback(() => setIsModalOpen(true), [])
     const closeModal = useCallback(() => setIsModalOpen(false), [])
@@ -136,12 +143,25 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         }).get()
     }, [account.id, schedulesValidity, validateEmployeeById, setScheduleValidity])
 
+    const loadSettings = useCallback(async () => {
+        await new Request(
+            `accounts/${account.id}/settings`,
+            (data: { dark_theme_enabled: boolean } | { detail: null }) => {
+                if ('detail' in data) return
+                setSettings({
+                    darkThemeEnabled: data.dark_theme_enabled
+                })
+            }
+        ).get()
+    }, [account.id, setSettings])
+
     useEffect(() => {
         const fetchAllData = async () => {
             if (isLoggedIn(account)) {
                 const loadedEmployees = await loadEmployees()
                 await loadShifts()
                 await loadSchedules(loadedEmployees)
+                await loadSettings()
             }
         }
         fetchAllData()
@@ -157,6 +177,14 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [employees, shifts, account])
 
+
+    useEffect(() => {
+        if (darkThemeClassName) {
+            document.body.classList.add('dark-theme');
+            return () => { document.body.classList.remove('dark-theme') };
+        }
+      }, [darkThemeClassName])
+
     return (
         <DashboardContext.Provider value={{
             account, setAccount,
@@ -166,7 +194,8 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
             isModalOpen, setIsModalOpen,
             modalContent, setModalContent,
             openModal, closeModal,
-            schedules, setSchedules, loadSchedules, setScheduleValidity, getScheduleValidity
+            schedules, setSchedules, loadSchedules, setScheduleValidity, getScheduleValidity,
+            settings, setSettings, darkThemeClassName
         }}>{children}</DashboardContext.Provider>
     )
 }

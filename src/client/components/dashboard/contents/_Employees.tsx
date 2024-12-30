@@ -11,12 +11,12 @@ const EmployeeCard = ({ id, name }: Employee) => {
     const openEditModal = () => {
         const EditModalContent = () => {
             const [tempName, setTempName] = useState(name)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3 || tempName === name)
 
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 3)
+                setConfirmDisabled(newName.trim().length < 3 || newName === name)
             }
 
             const confirmEdit = async () => {
@@ -122,14 +122,16 @@ export default function Employees() {
 
     return <>
         <header>
-            <section id='header-btns'>
-                <button onClick={openAddModal}>Add New Employee</button>
+            <section id='header-upper'>
+                <section id='header-btns'>
+                    <button onClick={openAddModal}>Add New Employee</button>
+                </section>
             </section>
+            {employees.length === 0 && <p className='header-msg'>No employees registered.</p>}
         </header>
         {
-            employees.length > 0 
-            ? <div id='card-area'>{employees.map(emp => <EmployeeCard id={emp.id} name={emp.name} key={emp.id} />)}</div>
-            : <p className='header-msg'>No employees registered.</p>
+            employees.length > 0 && 
+            <div className='card-container'>{employees.map(emp => <EmployeeCard id={emp.id} name={emp.name} key={emp.id} />)}</div>
         }
     </>
 }

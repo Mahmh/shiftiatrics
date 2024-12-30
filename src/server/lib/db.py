@@ -1,7 +1,7 @@
 from typing import Any
 from datetime import time
 from functools import wraps
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Time
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Time, Boolean
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base, Session as SessionType
 from src.server.lib.constants import ENGINE_URL
@@ -68,6 +68,11 @@ class Schedule(Base):
     year = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
 
+class Settings(Base):
+    __tablename__ = 'settings'
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    dark_theme_enabled = Column(Boolean, nullable=False)
+    __repr__ = lambda self: f'Settings({self.account_id})'
 
 
 # Utils not meant to be called directly
@@ -292,3 +297,23 @@ def delete_schedule(schedule_id: int, *, session: SessionType) -> None:
     schedule = _check_schedule(schedule_id, session=session)
     session.delete(schedule)
     log(f'Deleted schedule: {schedule}', 'db', 'INFO')
+
+
+## Setting
+@dbsession()
+def get_settings_of_account(account_id: int, *, session: SessionType) -> Settings | None:
+    """Returns all settings of an account."""
+    return session.query(Settings).filter_by(account_id=account_id).first()
+
+
+@dbsession(commit=True)
+def toggle_dark_theme(account_id: int, *, session: SessionType) -> bool:
+    """Switches between light & dark themes of an account."""
+    _check_account(account_id, session=session)
+    settings = session.query(Settings).filter_by(account_id=account_id).first()
+    if settings is None:
+        session.add(Settings(account_id=account_id, dark_theme_enabled=True))
+        return True
+    else:
+        settings.dark_theme_enabled = not settings.dark_theme_enabled
+        return settings.dark_theme_enabled
