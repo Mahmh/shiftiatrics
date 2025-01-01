@@ -8,7 +8,7 @@ from src.server.lib.db import (
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
-    get_settings_of_account, toggle_dark_theme 
+    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, toggle_multi_emps_in_shift
 )
 
 # Init
@@ -16,7 +16,7 @@ account_router = APIRouter()
 employee_router = APIRouter()
 shift_router = APIRouter()
 schedule_router = APIRouter()
-setting_router = APIRouter()
+settings_router = APIRouter()
 
 def endpoint(func):
     @wraps(func)
@@ -77,7 +77,7 @@ def read_employees(account_id: int) -> list[dict] | dict:
 @employee_router.post('/accounts/{account_id}/employees')
 @endpoint
 def create_new_employee(account_id: int, info: EmployeeInfo) -> dict:
-    return create_employee(account_id=account_id, employee_name=info.employee_name)
+    return create_employee(account_id=account_id, employee_name=info.employee_name, min_work_hours=info.min_work_hours, max_work_hours=info.max_work_hours)
 
 
 @employee_router.patch('/employees/{employee_id}')
@@ -146,14 +146,26 @@ def delete_existing_schedule(schedule_id: int) -> dict:
 
 
 ## Setting
-@schedule_router.get('/accounts/{account_id}/settings')
+@settings_router.get('/accounts/{account_id}/settings')
 @endpoint
 def read_settings(account_id: int) -> dict:
     res = get_settings_of_account(account_id=account_id)
     return res if res is not None else {'detail': res}
 
 
-@schedule_router.get('/accounts/{account_id}/settings/toggle_dark_theme')
+@settings_router.get('/accounts/{account_id}/settings/toggle_dark_theme')
 @endpoint
-def switch_between_themes(account_id: int) -> dict:
+def toggle_dark_theme_(account_id: int) -> dict:
     return {'detail': toggle_dark_theme(account_id=account_id)}
+
+
+@settings_router.get('/accounts/{account_id}/settings/toggle_min_max_work_hours')
+@endpoint
+def toggle_min_max_work_hours_(account_id: int) -> dict:
+    return {'detail': toggle_min_max_work_hours(account_id=account_id)}
+
+
+@settings_router.get('/accounts/{account_id}/settings/toggle_multi_emps_in_shift')
+@endpoint
+def toggle_multi_emps_in_shift_(account_id: int) -> dict:
+    return {'detail': toggle_multi_emps_in_shift(account_id=account_id)}

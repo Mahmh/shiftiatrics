@@ -7,7 +7,7 @@ CRED = {'username': 'testuser', 'password': 'testpass'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
 delete_account = lambda cred: client.request('DELETE', '/accounts', json=cred)
 
-SCHEDULE_DATA = {'schedule': [[1, 2], [3, 4]], 'month': 11, 'year': 2024}
+SCHEDULE_DATA = {'schedule': [[[1, 2], [3, 4]]], 'month': 11, 'year': 2024}
 create_schedule = lambda account_id, schedule_data: client.post(f'/accounts/{account_id}/schedules', json=schedule_data)
 delete_schedule = lambda schedule_id: client.request('DELETE', f'/schedules/{schedule_id}')
 
@@ -32,7 +32,7 @@ def test_read_schedules(setup_and_teardown):
 
 def test_create_new_schedule(setup_and_teardown):
     account_id, _ = setup_and_teardown
-    new_schedule_data = {'schedule': [[5, 6], [7, 8]], 'month': 7, 'year': 2025}
+    new_schedule_data = {'schedule': [[[5, 6], [7]]], 'month': 7, 'year': 2025}
     response = create_schedule(account_id, new_schedule_data)
     assert response.status_code == 200
 
@@ -45,7 +45,7 @@ def test_create_new_schedule(setup_and_teardown):
 
 def test_update_existing_schedule(setup_and_teardown):
     _, schedule_id = setup_and_teardown
-    updates = {'schedule': [[9, 10], [11, 12]]}
+    updates = {'schedule': [[[9], [11, 12]]]}
     response = client.patch(f'/schedules/{schedule_id}', json=updates)
     assert response.status_code == 200
     assert response.json()['schedule'] == updates['schedule']

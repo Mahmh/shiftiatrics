@@ -4,8 +4,6 @@ from src.server.lib.db import Session, create_account, delete_account, create_sc
 from src.server.lib.models import Credentials
 from src.server.lib.exceptions import UsernameTaken, NonExistent
 
-ACCOUNT_ID = 1
-SCHEDULE_ID = 1
 CRED = Credentials(username='testuser', password='testpass')
 SCHEDULE_DATA = {'schedule': [[1, 2], [3, 4]], 'month': 11, 'year': 2024}
 
@@ -13,15 +11,18 @@ SCHEDULE_DATA = {'schedule': [[1, 2], [3, 4]], 'month': 11, 'year': 2024}
 def setup_and_teardown():
     # Setup: Create a schedule
     try:
-        create_account(CRED)
-        create_schedule(ACCOUNT_ID, **SCHEDULE_DATA)
-    except UsernameTaken: pass
-    yield  # Run the test
+        account_id = create_account(CRED).account_id
+        schedule_id = create_schedule(account_id, **SCHEDULE_DATA).schedule_id
+        yield account_id, schedule_id
+    except UsernameTaken:
+        yield 1, 1
+        pass
     # Teardown: Delete the schedule & reset the schedule_id serial sequence
-    try:
-        delete_account(CRED)
-        delete_schedule(SCHEDULE_ID)
+    delete_account(CRED)
+    try: delete_schedule(schedule_id)
     except NonExistent: pass
+    except UnboundLocalError: delete_schedule(1)
+
     with Session() as session:
         session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE schedules_schedule_id_seq RESTART WITH 1;'))
@@ -29,27 +30,31 @@ def setup_and_teardown():
 
 
 # Tests
-def test_create_schedule():
-    schedule = create_schedule(ACCOUNT_ID, **SCHEDULE_DATA)
+def test_create_schedule(setup_and_teardown):
+    account_id, _ = setup_and_teardown
+    schedule = create_schedule(account_id, **SCHEDULE_DATA)
     assert schedule.schedule == SCHEDULE_DATA['schedule']
 
 
-def test_get_all_schedules():
-    schedules = get_all_schedules_of_account(ACCOUNT_ID)
+def test_get_all_schedules(setup_and_teardown):
+    account_id, _ = setup_and_teardown
+    schedules = get_all_schedules_of_account(account_id)
     assert len(schedules) == 1
     assert schedules[0].schedule == SCHEDULE_DATA['schedule']
 
 
-def test_update_schedule():
-    schedule = create_schedule(ACCOUNT_ID, **SCHEDULE_DATA)
+def test_update_schedule(setup_and_teardown):
+    account_id, _ = setup_and_teardown
+    schedule = create_schedule(account_id, **SCHEDULE_DATA)
     updates = {'schedule': [[5, 6], [7, 8]]}
     updated_schedule = update_schedule(schedule.schedule_id, updates)
     assert updated_schedule.schedule == updates['schedule']
 
 
-def test_delete_schedule():
-    schedule = create_schedule(ACCOUNT_ID, **SCHEDULE_DATA)
+def test_delete_schedule(setup_and_teardown):
+    account_id, schedule_id = setup_and_teardown
+    schedule = create_schedule(account_id, **SCHEDULE_DATA)
     delete_schedule(schedule.schedule_id)
-    delete_schedule(SCHEDULE_ID)
-    schedules = get_all_schedules_of_account(ACCOUNT_ID)
+    delete_schedule(schedule_id)
+    schedules = get_all_schedules_of_account(account_id)
     assert len(schedules) == 0

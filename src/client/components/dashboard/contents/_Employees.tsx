@@ -1,53 +1,141 @@
 import { useContext, useState } from 'react'
 import { DashboardContext } from '@context'
 import { Employee } from '@types'
-import { Icon, Request, Choice } from '@utils'
+import { Icon, Request, Choice, MAX_WORK_HOURS } from '@utils'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
-const EmployeeCard = ({ id, name }: Employee) => {
-    const { setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
+const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
+    const { settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
 
+    /** Displays a modal for editing employee details */
     const openEditModal = () => {
         const EditModalContent = () => {
             const [tempName, setTempName] = useState(name)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3 || tempName === name)
-
+            const [tempMinWorkHours, setTempMinWorkHours] = useState<number>(minWorkHours ?? 0)
+            const [tempMaxWorkHours, setTempMaxWorkHours] = useState<number>(maxWorkHours ?? 0)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(
+                tempName.trim().length < 3 ||
+                (settings.minMaxWorkHoursEnabled && (
+                    (minWorkHours !== undefined && tempMinWorkHours <= 0) ||
+                    (maxWorkHours !== undefined && tempMaxWorkHours <= 0) ||
+                    (tempMinWorkHours > tempMaxWorkHours) ||
+                    (tempMinWorkHours > 168) ||
+                    (tempMaxWorkHours > 168)
+                ))
+            )
+    
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 3 || newName === name)
+                setConfirmDisabled(
+                    newName.trim().length < 3 ||
+                    (settings.minMaxWorkHoursEnabled && (
+                        (minWorkHours !== undefined && tempMinWorkHours <= 0) ||
+                        (maxWorkHours !== undefined && tempMaxWorkHours <= 0) ||
+                        (tempMinWorkHours > tempMaxWorkHours) ||
+                        (tempMinWorkHours > 168) ||
+                        (tempMaxWorkHours > 168)
+                    ))
+                )
             }
-
+    
+            const handleMinWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const minHours = parseInt(e.target.value) || minWorkHours || 0
+                setTempMinWorkHours(minHours)
+                setConfirmDisabled(
+                    tempName.trim().length < 3 ||
+                    (settings.minMaxWorkHoursEnabled && (
+                        (minHours <= 0) ||
+                        (tempMaxWorkHours <= 0) ||
+                        (minHours > tempMaxWorkHours) ||
+                        (minHours > 168) ||
+                        (tempMaxWorkHours > 168)
+                    ))
+                )
+            }
+    
+            const handleMaxWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const maxHours = parseInt(e.target.value) || maxWorkHours || 0
+                setTempMaxWorkHours(maxHours)
+                setConfirmDisabled(
+                    tempName.trim().length < 3 ||
+                    (settings.minMaxWorkHoursEnabled && (
+                        (tempMinWorkHours <= 0) ||
+                        (maxHours <= 0) ||
+                        (tempMinWorkHours > maxHours) ||
+                        (tempMinWorkHours > 168) ||
+                        (maxHours > 168)
+                    ))
+                )
+            }
+    
             const confirmEdit = async () => {
-                await new Request(`employees/${id}`, () => loadEmployees(), { employee_name: tempName }).patch()
+                await new Request(
+                    `employees/${id}`,
+                    () => loadEmployees(),
+                    {
+                        employee_name: tempName,
+                        min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
+                        max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
+                    }
+                ).patch()
                 closeModal()
             }
-
-            return <>
-                <h2>Edit Employee</h2>
-                <div className='modal-input-sec'>
-                    <label style={{ marginRight: 10 }}>Name: </label>
-                    <input
-                        type='text'
-                        placeholder='New name'
-                        value={tempName}
-                        onChange={handleNameChange}
-                        maxLength={40}
-                    />
-                </div>
-                <button
-                    onClick={confirmEdit}
-                    disabled={isConfirmDisabled}
-                    id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
-                >Confirm</button>
-            </>
+    
+            return (
+                <>
+                    <h2>Edit Employee</h2>
+                    <div className='modal-input-sec'>
+                        <label style={{ marginRight: 10 }}>Name: </label>
+                        <input
+                            type='text'
+                            placeholder='New name'
+                            value={tempName}
+                            onChange={handleNameChange}
+                            maxLength={40}
+                        />
+                    </div>
+                    {settings.minMaxWorkHoursEnabled && (
+                        <>
+                            <div className='modal-input-sec'>
+                                <label style={{ marginRight: 10 }}>Minimum work hours per week: </label>
+                                <input
+                                    type='number'
+                                    value={tempMinWorkHours}
+                                    onChange={handleMinWorkHoursChange}
+                                    min={0}
+                                    max={168}
+                                />
+                            </div>
+                            <div className='modal-input-sec'>
+                                <label style={{ marginRight: 10 }}>Maximum work hours per week: </label>
+                                <input
+                                    type='number'
+                                    value={tempMaxWorkHours}
+                                    onChange={handleMaxWorkHoursChange}
+                                    min={0}
+                                    max={168}
+                                />
+                            </div>
+                        </>
+                    )}
+                    <button
+                        onClick={confirmEdit}
+                        disabled={isConfirmDisabled}
+                        id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+                    >
+                        Confirm
+                    </button>
+                </>
+            )
         }
-
-        setModalContent(<EditModalContent/>)
+    
+        setModalContent(<EditModalContent />)
         openModal()
     }
 
+    /** Displays a modal for confirmation of employee deletion  */
     const openDeleteModal = () => {
         const confirmDelete = async () => {
             await new Request(`employees/${id}`, () => loadEmployees()).delete()
@@ -55,7 +143,7 @@ const EmployeeCard = ({ id, name }: Employee) => {
         }
 
         setModalContent(<>
-            <h2>Remove Employee &quot;{name}&quot;?</h2>
+            <h2>Remove Employee &quot{name}&quot?</h2>
             <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
         openModal()
@@ -74,49 +162,123 @@ const EmployeeCard = ({ id, name }: Employee) => {
 
 
 export default function Employees() {
-    const { account, employees, setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
+    const { account, employees, settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
 
+    /** Displays a modal for adding an employee */
     const openAddModal = () => {
         const AddModalContent = () => {
             const [tempName, setTempName] = useState('')
+            const [tempMinWorkHours, setTempMinWorkHours] = useState<number>(0)
+            const [tempMaxWorkHours, setTempMaxWorkHours] = useState<number>(0)
             const [isConfirmDisabled, setConfirmDisabled] = useState(true)
 
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 3)
+                setConfirmDisabled(
+                    newName.trim().length < 3 ||
+                    (settings.minMaxWorkHoursEnabled && (
+                        tempMinWorkHours <= 0 ||
+                        tempMaxWorkHours <= 0 ||
+                        tempMinWorkHours > tempMaxWorkHours ||
+                        tempMinWorkHours > MAX_WORK_HOURS ||
+                        tempMaxWorkHours > MAX_WORK_HOURS
+                    ))
+                )
             }
-
+    
+            const handleMinWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const minHours = parseInt(e.target.value) || 0
+                setTempMinWorkHours(minHours)
+                setConfirmDisabled(
+                    tempName.trim().length < 3 ||
+                    (settings.minMaxWorkHoursEnabled && (
+                        minHours <= 0 ||
+                        tempMaxWorkHours <= 0 ||
+                        minHours > tempMaxWorkHours ||
+                        minHours > MAX_WORK_HOURS ||
+                        tempMaxWorkHours > MAX_WORK_HOURS
+                    ))
+                )
+            }
+    
+            const handleMaxWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const maxHours = parseInt(e.target.value) || 0
+                setTempMaxWorkHours(maxHours)
+                setConfirmDisabled(
+                    tempName.trim().length < 3 ||
+                    (settings.minMaxWorkHoursEnabled && (
+                        tempMinWorkHours <= 0 ||
+                        maxHours <= 0 ||
+                        tempMinWorkHours > maxHours ||
+                        tempMinWorkHours > MAX_WORK_HOURS ||
+                        maxHours > MAX_WORK_HOURS
+                    ))
+                )
+            }
+    
             const confirmAdd = async () => {
                 await new Request(
                     `accounts/${account.id}/employees`,
                     () => loadEmployees(),
-                    { employee_name: tempName }
+                    {
+                        employee_name: tempName,
+                        min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
+                        max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
+                    }
                 ).post()
                 closeModal()
             }
-
-            return <>
-                <h1>Add New Employee</h1>
-                <section className='modal-input-sec'>
-                    <label style={{ marginRight: 10 }}>Name: </label>
-                    <input
-                        type='text'
-                        placeholder='Employee name'
-                        value={tempName}
-                        onChange={handleNameChange}
-                        maxLength={40}
-                    />
-                </section>
-                <button
-                    onClick={confirmAdd}
-                    disabled={isConfirmDisabled}
-                    id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
-                >Add Employee</button>
-            </>
+    
+            return (
+                <>
+                    <h1>Add New Employee</h1>
+                    <section className='modal-input-sec'>
+                        <label style={{ marginRight: 10 }}>Name: </label>
+                        <input
+                            type='text'
+                            placeholder='Employee name'
+                            value={tempName}
+                            onChange={handleNameChange}
+                            maxLength={40}
+                        />
+                    </section>
+                    {settings.minMaxWorkHoursEnabled && (
+                        <>
+                            <section className='modal-input-sec'>
+                                <label style={{ marginRight: 10 }}>Minimum work hours per week: </label>
+                                <input
+                                    type='number'
+                                    value={tempMinWorkHours}
+                                    onChange={handleMinWorkHoursChange}
+                                    min={0}
+                                    max={MAX_WORK_HOURS}
+                                />
+                            </section>
+                            <section className='modal-input-sec'>
+                                <label style={{ marginRight: 10 }}>Maximum work hours per week: </label>
+                                <input
+                                    type='number'
+                                    value={tempMaxWorkHours}
+                                    onChange={handleMaxWorkHoursChange}
+                                    min={0}
+                                    max={MAX_WORK_HOURS}
+                                />
+                            </section>
+                        </>
+                    )}
+                    <button
+                        onClick={confirmAdd}
+                        disabled={isConfirmDisabled}
+                        id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+                    >
+                        Add Employee
+                    </button>
+                </>
+            )
         }
-
-        setModalContent(<AddModalContent/>)
+    
+        setModalContent(<AddModalContent />)
         openModal()
     }
 
@@ -131,7 +293,9 @@ export default function Employees() {
         </header>
         {
             employees.length > 0 && 
-            <div className='card-container'>{employees.map(emp => <EmployeeCard id={emp.id} name={emp.name} key={emp.id} />)}</div>
+            <div className='card-container'>{employees.map(emp => 
+                <EmployeeCard id={emp.id} name={emp.name} key={emp.id} minWorkHours={emp.minWorkHours} maxWorkHours={emp.maxWorkHours}
+            />)}</div>
         }
     </>
 }

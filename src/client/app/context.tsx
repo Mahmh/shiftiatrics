@@ -4,8 +4,8 @@ import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Set
 import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth } from '@utils'
 
 const defaultContent: ContentName = 'schedules'
-const nullEmployee: Employee = { id: -Infinity, name: '' }
-const nullSettings: Settings = { darkThemeEnabled: false }
+const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
+const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: false, multiEmpsInShiftEnabled: false }
 export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
 export const DashboardContext = createContext<ContextProps>({
@@ -77,19 +77,32 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
     /** Helper function for showing an invalid message if any employee is missing */
     const validateEmployeeById = useCallback((id: number, employees: Employee[], year: number, month: number): Employee => {
         if (employees.length === 0) return nullEmployee
-        let name = getEmployeeById(id, employees)?.name
+        const employee = getEmployeeById(id, employees)
+        let name = employee?.name
+        const minWorkHours = employee?.minWorkHours
+        const maxWorkHours = employee?.maxWorkHours
         if (typeof name === 'undefined') {
             name = 'Unknown'
             setScheduleValidity(false, year, month)
         }
-        return { id, name }
+        return { id, name, minWorkHours, maxWorkHours }
     }, [setScheduleValidity])
 
     const loadEmployees = useCallback(async (): Promise<Employee[]> => {
         return new Promise(async (resolve) => {
-            type Response = { employee_id: Employee['id'], employee_name: Employee['name'] }[];
+            type Response = {
+                employee_id: Employee['id'],
+                employee_name: Employee['name'],
+                min_work_hours: Employee['minWorkHours'],
+                max_work_hours: Employee['maxWorkHours']
+            }[];
             await new Request(`accounts/${account.id}/employees`, (data: Response) => {
-                const loadedEmployees = data.map(emp => ({ id: emp.employee_id, name: emp.employee_name }))
+                const loadedEmployees = data.map(emp => ({
+                    id: emp.employee_id,
+                    name: emp.employee_name,
+                    minWorkHours: emp.min_work_hours,
+                    maxWorkHours: emp.max_work_hours
+                }))
                 setEmployees(loadedEmployees)
                 resolve(loadedEmployees)
             }).get()
@@ -108,48 +121,59 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         }).get()
     }, [account.id])
 
+
     const loadSchedules = useCallback(async (employees: Employee[]) => {
         type Response = { account_id: Account['id'], schedule_id: Schedule['id'], month: number, year: number, schedule: ScheduleOfIDs }[];
         await new Request(`accounts/${account.id}/schedules`, (data: Response) => {
-            const parsedSchedules = new Map<number, Schedule[]>()
-    
+            const parsedSchedules = new Map<number, Schedule[]>();
+
             data.forEach(scheduleData => {
-                const { schedule_id: scheduleId, month, year } = scheduleData
-    
+                const { schedule_id: scheduleId, month, year } = scheduleData;
+
                 // Initialize validity for this schedule as true
-                setScheduleValidity(true, year, month)
-    
-                // Transform schedule data to match Employee[][]
-                const parsedSchedule = scheduleData.schedule.map((day: number[]) =>
-                    day.map(empId => validateEmployeeById(empId, employees, year, month))
-                )
-    
+                setScheduleValidity(true, year, month);
+
+                // Transform schedule data to match Employee['id'][][][]
+                const parsedSchedule = scheduleData.schedule.map((day: number[][]) =>
+                    day.map((shift: number[]) =>
+                        shift.map(empId => validateEmployeeById(empId, employees, year, month))
+                    )
+                );
+
                 // Ensure the year exists in the maps
-                if (!parsedSchedules.has(year)) parsedSchedules.set(year, [])
+                if (!parsedSchedules.has(year)) parsedSchedules.set(year, []);
                 if (!schedulesValidity.has(year)) {
-                    const map = new Map<number, boolean>()
-                    for (let i = 0; i < 12; i++) map.set(i, true)
-                    schedulesValidity.set(year, map)
+                    const map = new Map<number, boolean>();
+                    for (let i = 0; i < 12; i++) map.set(i, true);
+                    schedulesValidity.set(year, map);
                 }
-    
-                const yearSchedules = parsedSchedules.get(year)!
+
+                const yearSchedules = parsedSchedules.get(year)!;
                 yearSchedules[month] = {
                     id: scheduleId,
                     schedule: parsedSchedule,
-                }
-            })
+                };
+            });
 
-            setSchedules(parsedSchedules)
-        }).get()
+            setSchedules(parsedSchedules);
+        }).get();
     }, [account.id, schedulesValidity, validateEmployeeById, setScheduleValidity])
 
+
     const loadSettings = useCallback(async () => {
+        type Response = { detail: null } | {
+            dark_theme_enabled: boolean,
+            min_max_work_hours_enabled: boolean
+            multi_emps_in_shift_enabled: boolean
+        };
         await new Request(
             `accounts/${account.id}/settings`,
-            (data: { dark_theme_enabled: boolean } | { detail: null }) => {
+            (data: Response) => {
                 if ('detail' in data) return
                 setSettings({
-                    darkThemeEnabled: data.dark_theme_enabled
+                    darkThemeEnabled: data.dark_theme_enabled,
+                    minMaxWorkHoursEnabled: data.min_max_work_hours_enabled,
+                    multiEmpsInShiftEnabled: data.multi_emps_in_shift_enabled
                 })
             }
         ).get()

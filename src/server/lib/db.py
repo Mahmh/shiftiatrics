@@ -1,12 +1,12 @@
-from typing import Any
+from typing import Any, Optional
 from datetime import time
 from functools import wraps
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Time, Boolean
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker, declarative_base, Session as SessionType
 from src.server.lib.constants import ENGINE_URL
 from src.server.lib.utils import log, err_log, parse_time
-from src.server.lib.models import Credentials
+from src.server.lib.models import Credentials, ScheduleType
 from src.server.lib.exceptions import UsernameTaken, NonExistent, InvalidCredentials
 
 # Init
@@ -48,6 +48,8 @@ class Employee(Base):
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     employee_id = Column(Integer, primary_key=True, autoincrement=True)
     employee_name = Column(String(100), nullable=False)
+    min_work_hours = Column(Integer, nullable=True)
+    max_work_hours = Column(Integer, nullable=True)
     __repr__ = lambda self: f'Employee({self.employee_id})'
 
 class Shift(Base):
@@ -63,7 +65,7 @@ class Schedule(Base):
     __tablename__ = 'schedules'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     schedule_id = Column(Integer, primary_key=True, autoincrement=True)
-    schedule = Column(ARRAY(Integer, dimensions=2), nullable=False)
+    schedule = Column(JSONB, nullable=False)
     month = Column(Integer, nullable=False)
     year = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
@@ -72,6 +74,8 @@ class Settings(Base):
     __tablename__ = 'settings'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False, primary_key=True)
     dark_theme_enabled = Column(Boolean, nullable=False)
+    min_max_work_hours_enabled = Column(Boolean, nullable=False)
+    multi_emps_in_shift_enabled = Column(Boolean, nullable=False)
     __repr__ = lambda self: f'Settings({self.account_id})'
 
 
@@ -102,6 +106,13 @@ def _check_employee(employee_id: int, *, session: SessionType) -> Employee:
     employee = session.query(Employee).filter_by(employee_id=employee_id).first()
     if not employee: raise NonExistent('employee', employee_id)
     return employee
+
+
+def _check_work_hours(min_work_hours: Optional[int] = None, max_work_hours: Optional[int] = None) -> tuple[Optional[int], Optional[int]]:
+    """Checks & returns valid work hours."""
+    if (not (min_work_hours and max_work_hours)) or (min_work_hours <= 0) or (max_work_hours <= 0): return None, None
+    assert (min_work_hours > 0) and (max_work_hours > 0)
+    return min_work_hours, max_work_hours
 
 
 def _check_shift(shift_id: int, *, session: SessionType) -> Shift:
@@ -183,10 +194,18 @@ def get_all_employees_of_account(account_id: int, *, session: SessionType) -> li
 
 
 @dbsession(commit=True)
-def create_employee(account_id: int, employee_name: str, *, session: SessionType) -> Employee:
+def create_employee(
+        account_id: int, 
+        employee_name: str, 
+        min_work_hours: Optional[int] = None,
+        max_work_hours: Optional[int] = None,
+        *,
+        session: SessionType
+    ) -> Employee:
     """Creates an employee for the given account ID."""
     _check_account(account_id, session=session)
-    employee = Employee(account_id=account_id, employee_name=employee_name)
+    min_work_hours, max_work_hours = _check_work_hours(min_work_hours, max_work_hours)
+    employee = Employee(account_id=account_id, employee_name=employee_name, min_work_hours=min_work_hours, max_work_hours=max_work_hours)
     session.add(employee)
     log(f'Created employee: {employee}', 'db', 'INFO')
     return employee
@@ -197,9 +216,10 @@ def update_employee(employee_id: int, updates: dict, *, session: SessionType) ->
     """Updates an employee's attributes based on their ID and the updates."""
     employee = _check_employee(employee_id, session=session)
 
-    ALLOWED_FIELDS = {'employee_name'}
+    ALLOWED_FIELDS = {'employee_name', 'min_work_hours', 'max_work_hours'}
     for key, value in updates.items():
         if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        if key in ['min_work_hours', 'max_work_hours']: assert value > 0, 'Non-positive value for work hours was given'
         setattr(employee, key, value)
 
     log(f'Updated employee: {employee}, updates: {updates}', 'db', 'INFO')
@@ -267,7 +287,7 @@ def get_all_schedules_of_account(account_id: int, *, session: SessionType, **fil
 
 
 @dbsession(commit=True)
-def create_schedule(account_id: int, schedule: list[list[int]], month: int, year: int, *, session: SessionType) -> Schedule:
+def create_schedule(account_id: int, schedule: ScheduleType, month: int, year: int, *, session: SessionType) -> Schedule:
     """Creates a schedule for the given account ID."""
     _check_month_and_year(month, year)
     _check_account(account_id, session=session)
@@ -299,7 +319,7 @@ def delete_schedule(schedule_id: int, *, session: SessionType) -> None:
     log(f'Deleted schedule: {schedule}', 'db', 'INFO')
 
 
-## Setting
+## Settings
 @dbsession()
 def get_settings_of_account(account_id: int, *, session: SessionType) -> Settings | None:
     """Returns all settings of an account."""
@@ -312,8 +332,49 @@ def toggle_dark_theme(account_id: int, *, session: SessionType) -> bool:
     _check_account(account_id, session=session)
     settings = session.query(Settings).filter_by(account_id=account_id).first()
     if settings is None:
-        session.add(Settings(account_id=account_id, dark_theme_enabled=True))
+        session.add(Settings(
+            account_id=account_id,
+            dark_theme_enabled=True,
+            min_max_work_hours_enabled=False,
+            multi_emps_in_shift_enabled=False
+        ))
         return True
     else:
         settings.dark_theme_enabled = not settings.dark_theme_enabled
         return settings.dark_theme_enabled
+
+
+@dbsession(commit=True)
+def toggle_min_max_work_hours(account_id: int, *, session: SessionType) -> bool:
+    """Switches between light & dark themes of an account."""
+    _check_account(account_id, session=session)
+    settings = session.query(Settings).filter_by(account_id=account_id).first()
+    if settings is None:
+        session.add(Settings(
+            account_id=account_id,
+            dark_theme_enabled=False,
+            min_max_work_hours_enabled=True,
+            multi_emps_in_shift_enabled=False
+        ))
+        return True
+    else:
+        settings.min_max_work_hours_enabled = not settings.min_max_work_hours_enabled
+        return settings.min_max_work_hours_enabled
+
+
+@dbsession(commit=True)
+def toggle_multi_emps_in_shift(account_id: int, *, session: SessionType) -> bool:
+    """Toggles whether multiple employees can be assigned to a single shift."""
+    _check_account(account_id, session=session)
+    settings = session.query(Settings).filter_by(account_id=account_id).first()
+    if settings is None:
+        session.add(Settings(
+            account_id=account_id,
+            dark_theme_enabled=False,
+            min_max_work_hours_enabled=False,
+            multi_emps_in_shift_enabled=True
+        ))
+        return True
+    else:
+        settings.multi_emps_in_shift_enabled = not settings.multi_emps_in_shift_enabled
+        return settings.multi_emps_in_shift_enabled

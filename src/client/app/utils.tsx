@@ -1,11 +1,11 @@
 import ExcelJS from 'exceljs'
 import Image, { StaticImageData } from 'next/image'
-import type { Account, MonthName, YearToSchedules, Employee, Shift, SupportedExportFormat } from '@types'
+import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat } from '@types'
 
 // Constants
 export const MIN_YEAR = 2023
 export const MAX_YEAR = 2025
-
+export const MAX_WORK_HOURS = 168 // hours per week
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -13,12 +13,23 @@ export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, 
 )
 
 
-/** Component for Yes and No buttons in the modal */
+/** Component for including Yes & No buttons in the modal */
 export const Choice = ({ onYes, onNo }: { onYes: () => void, onNo: () => void }) => (
     <section style={{ display: 'flex', gap: 10 }}>
         <button style={{ width: '100%' }} onClick={onYes}>Yes</button>
         <button style={{ width: '100%' }} onClick={onNo}>No</button>
     </section>
+)
+
+
+/** Component for toggling switches in settings */
+export const Switch = ({ label, handleClick, enabled }: { label: string, handleClick: () => void, enabled: boolean }) => (
+    <div className='switch-div' onClick={handleClick}>
+        <label>{label}</label>
+        <button className={enabled ? 'switch-btn-enabled' : ''}>
+            <div className='switch-circle'></div>
+        </button>
+    </div>
 )
 
 
@@ -177,12 +188,12 @@ export class Request {
 
 /** Collection of functions that export a given schedule in supported formats */
 export class ScheduleExporter {
-    private readonly scheduleToExport: Employee[][]
+    private readonly scheduleToExport: Schedule['schedule']
     private readonly shifts: Shift[]
     private readonly year: number
     private readonly month: number
-
-    constructor(scheduleToExport: Employee[][], shifts: Shift[], year: number, month: number) {
+    
+    constructor(scheduleToExport: Schedule['schedule'], shifts: Shift[], year: number, month: number) {
         this.scheduleToExport = scheduleToExport
         this.shifts = shifts
         this.year = year
@@ -191,227 +202,267 @@ export class ScheduleExporter {
 
     /** Exports the given schedule as an Excel spreadsheet */
     public async exportExcel(): Promise<void> {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet(`Schedule`);
+        const workbook = new ExcelJS.Workbook()
+        const worksheet = workbook.addWorksheet(`Schedule`)
 
         // Get the number of days in the month
-        const daysInMonth = new Date(this.year, this.month + 1, 0).getDate();
+        const daysInMonth = new Date(this.year, this.month + 1, 0).getDate()
 
-        // Get unique shift names
-        const uniqueShifts = [...new Set(this.shifts.map(shift => shift.name))];
+        // Define unique shift names
+        const uniqueShifts = [...new Set(this.shifts.map(shift => shift.name))]
 
         // Add a title row spanning all columns
         const monthNameOfSchedule = getMonthName(this.month)
-        const title = `${monthNameOfSchedule} ${this.year}`;
-        worksheet.mergeCells(1, 1, 1, daysInMonth + uniqueShifts.length + 2); // Merge across all columns including shift count and total columns
-        const titleCell = worksheet.getCell(1, 1);
-        titleCell.value = title;
-        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-        titleCell.font = { bold: true, size: 14, name: 'Calibri', color: { argb: 'FF000000' } }; // Bold and larger font
-        titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } }; // Light blue background
+        const title = `${monthNameOfSchedule} ${this.year}`
+        const totalColumns = daysInMonth + uniqueShifts.length + 2
+        worksheet.mergeCells(1, 1, 1, totalColumns) // Merge across all day columns, shift count columns, and total column
+        const titleCell = worksheet.getCell(1, 1)
+        titleCell.value = title
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+        titleCell.font = { bold: true, size: 14, name: 'Calibri', color: { argb: 'FF000000' } } // Bold and larger font
+        titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } } // Light blue background
+
 
         // Add the Employee column header spanning two rows
-        worksheet.mergeCells('A2:A3');
-        const employeeHeaderCell = worksheet.getCell('A2');
-        employeeHeaderCell.value = 'Employee';
-        employeeHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' };
-        employeeHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00FFFF' } }; // Cyan background
-        employeeHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }; // Black text
+        worksheet.mergeCells('A2:A3')
+        const employeeHeaderCell = worksheet.getCell('A2')
+        employeeHeaderCell.value = 'Employee'
+        employeeHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' }
+        employeeHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00FFFF' } } // Cyan background
+        employeeHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 } // Black text
 
         // Adjust Employee column width
-        worksheet.getColumn(1).width = 30;
+        worksheet.getColumn(1).width = 30
 
         // Add day number and weekday name headers
         for (let dayIndex = 0; dayIndex < daysInMonth; dayIndex++) {
-            const dayNumber = dayIndex + 1;
-            const weekdayName = getWeekdayName(this.year, this.month, dayNumber);
+            const dayNumber = dayIndex + 1
+            const weekdayName = getWeekdayName(this.year, this.month, dayNumber)
 
-            const isWeekend = weekdayName === 'Friday' || weekdayName === 'Saturday';
+            const isWeekend = weekdayName === 'Friday' || weekdayName === 'Saturday'
 
             // Day number (Row 2)
-            const dayNumberCell = worksheet.getCell(2, dayIndex + 2);
-            dayNumberCell.value = dayNumber;
-            dayNumberCell.alignment = { horizontal: 'center' };
-            dayNumberCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }; // Black text with custom font
+            const dayNumberCell = worksheet.getCell(2, dayIndex + 2)
+            dayNumberCell.value = dayNumber
+            dayNumberCell.alignment = { horizontal: 'center' }
+            dayNumberCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 } // Black text with custom font
             dayNumberCell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: isWeekend ? 'FF92D050' : 'FFFFFF00' }, // Updated green for weekends, Yellow for weekdays
-            };
+                fgColor: { argb: isWeekend ? 'FF92D050' : 'FFFFFF00' }, // Green for weekends, Yellow for weekdays
+            }
             dayNumberCell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
                 bottom: { style: 'thin' },
                 right: { style: 'thin' },
-            };
+            }
 
             // Weekday name (Row 3)
-            const weekdayCell = worksheet.getCell(3, dayIndex + 2);
-            weekdayCell.value = weekdayName.slice(0, 3).toUpperCase();
-            weekdayCell.alignment = { horizontal: 'center' };
-            weekdayCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }; // Black text with custom font
+            const weekdayCell = worksheet.getCell(3, dayIndex + 2)
+            weekdayCell.value = weekdayName.slice(0, 3).toUpperCase()
+            weekdayCell.alignment = { horizontal: 'center' }
+            weekdayCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 } // Black text with custom font
             weekdayCell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: isWeekend ? 'FF92D050' : 'FFFFFF00' }, // Updated green for weekends, Yellow for weekdays
-            };
+                fgColor: { argb: isWeekend ? 'FF92D050' : 'FFFFFF00' }, // Green for weekends, Yellow for weekdays
+            }
             weekdayCell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
                 bottom: { style: 'thin' },
                 right: { style: 'thin' },
-            };
+            }
         }
+
+        // Prepare data structure to store employees and their shifts for each day
+        const employeeShiftMap = new Map<string, Record<string, string | number>>()
+
+        this.scheduleToExport.forEach((day, dayIndex) => {
+            day.forEach((shift, shiftIndex) => {
+                const shiftName = this.shifts[shiftIndex]?.name || 'Unknown'
+                shift.forEach(employee => {
+                    const employeeName = employee.name
+                    if (!employeeShiftMap.has(employeeName)) {
+                        const record: Record<string, string | number> = { employee: employeeName }
+                        for (let i = 1; i <= daysInMonth; i++) {
+                            record[`day${i}`] = '' // Initialize empty shifts for all days
+                        }
+                        uniqueShifts.forEach(shift => {
+                            record[shift] = 0 // Initialize count for each shift
+                        })
+                        record['Total'] = 0 // Initialize total column
+                        employeeShiftMap.set(employeeName, record)
+                    }
+                    const record = employeeShiftMap.get(employeeName)!
+                    record[`day${dayIndex + 1}`] = record[`day${dayIndex + 1}`]
+                        ? `${record[`day${dayIndex + 1}`]}, ${shiftName}`
+                        : shiftName // Append or set shift name
+                    record[shiftName] = (record[shiftName] as number) + 1 // Increment shift count for this shift
+                    record['Total'] = (record['Total'] as number) + 1 // Increment total count
+                })
+            })
+        })        
 
         // Add shift count headers for each unique shift
         uniqueShifts.forEach((shift, index) => {
-            const shiftColumnIndex = daysInMonth + 2 + index;
+            const shiftColumnIndex = daysInMonth + 2 + index
 
             // Header cell for shift name (Row 2)
-            const shiftHeaderCell = worksheet.getCell(2, shiftColumnIndex);
-            worksheet.mergeCells(2, shiftColumnIndex, 3, shiftColumnIndex);
-            shiftHeaderCell.value = shift;
-            shiftHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' };
-            shiftHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 };
-            shiftHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } }; // Light blue background
+            if (!worksheet.getCell(2, shiftColumnIndex).isMerged) {
+                worksheet.mergeCells(2, shiftColumnIndex, 3, shiftColumnIndex)
+            }
+            const shiftHeaderCell = worksheet.getCell(2, shiftColumnIndex)
+            shiftHeaderCell.value = shift
+            shiftHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' }
+            shiftHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }
+            shiftHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } } // Light blue background
             shiftHeaderCell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
                 bottom: { style: 'thin' },
                 right: { style: 'thin' },
-            };
-        });
+            }
+        })
 
-        // Add Total header
-        const totalColumnIndex = daysInMonth + uniqueShifts.length + 2;
-        const totalHeaderCell = worksheet.getCell(2, totalColumnIndex);
-        worksheet.mergeCells(2, totalColumnIndex, 3, totalColumnIndex);
-        totalHeaderCell.value = 'Total';
-        totalHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' };
-        totalHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 };
-        totalHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } }; // Light blue background
+        // Add "Total" column header
+        const totalColumnIndex = daysInMonth + uniqueShifts.length + 2
+        if (!worksheet.getCell(2, totalColumnIndex).isMerged) {
+            worksheet.mergeCells(2, totalColumnIndex, 3, totalColumnIndex)
+        }
+        const totalHeaderCell = worksheet.getCell(2, totalColumnIndex)
+        totalHeaderCell.value = "Total"
+        totalHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' }
+        totalHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }
+        totalHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } } // Light blue background
         totalHeaderCell.border = {
             top: { style: 'thin' },
             left: { style: 'thin' },
             bottom: { style: 'thin' },
             right: { style: 'thin' },
-        };
+        }
 
-        // Prepare data structure to store employees and their shifts for each day
-        const employeeShiftMap = new Map<string, Record<string, string | number>>();
-
-        this.scheduleToExport.forEach((day, dayIndex) => {
-            day.forEach((employee, shiftIndex) => {
-                const employeeName = employee.name;
-                const shiftName = this.shifts[shiftIndex].name;
-
-                if (!employeeShiftMap.has(employeeName)) {
-                    const record: Record<string, string | number> = { employee: employeeName };
-                    for (let i = 1; i <= daysInMonth; i++) {
-                        record[`day${i}`] = ''; // Initialize empty shifts for all days
-                    }
-                    uniqueShifts.forEach(shift => {
-                        record[shift] = 0; // Initialize shift count columns
-                    });
-                    record['Total'] = 0; // Initialize total column
-                    employeeShiftMap.set(employeeName, record);
-                }
-
-                employeeShiftMap.get(employeeName)![`day${dayIndex + 1}`] = shiftName;
-                employeeShiftMap.get(employeeName)![shiftName] = (employeeShiftMap.get(employeeName)![shiftName] as number) + 1; // Increment shift count
-                employeeShiftMap.get(employeeName)!['Total'] = (employeeShiftMap.get(employeeName)!['Total'] as number) + 1; // Increment total count
-            });
-        });
-
-        // Add rows for each employee with their shifts per day, shift counts, and total
+        // Fill rows with data
         employeeShiftMap.forEach((record) => {
-            const row = worksheet.addRow(record);
+            const row = worksheet.addRow(record)
 
             // Apply background color for employee names
-            const employeeCell = row.getCell(1);
-            employeeCell.value = record.employee; // Add employee name to the Employee column
-            employeeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00FFFF' } }; // Cyan background
-            employeeCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }; // Black text with custom font
+            const employeeCell = row.getCell(1)
+            employeeCell.value = record.employee // Add employee name(s) to the Employee column
+            employeeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00FFFF' } } // Cyan background
+            employeeCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 } // Black text with custom font
             employeeCell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
                 bottom: { style: 'thin' },
                 right: { style: 'thin' },
-            };
+            }
 
             // Fill shift names for each day and color them based on the day column
             for (let dayIndex = 1; dayIndex <= daysInMonth; dayIndex++) {
-                const shiftCell = row.getCell(dayIndex + 1);
-                const dayNumber = dayIndex;
-                const weekdayName = getWeekdayName(this.year, this.month, dayNumber);
+                const shiftCell = row.getCell(dayIndex + 1)
+                const dayNumber = dayIndex
+                const weekdayName = getWeekdayName(this.year, this.month, dayNumber)
 
-                const isWeekend = weekdayName === 'Friday' || weekdayName === 'Saturday';
+                const isWeekend = weekdayName === 'Friday' || weekdayName === 'Saturday'
 
-                shiftCell.value = record[`day${dayIndex}`] || '-'; // Hyphen for empty cells
-                shiftCell.alignment = { horizontal: 'center' };
-                shiftCell.font = { name: 'Calibri', size: 12 }; // Custom font
-                shiftCell.fill = {
-                    type: 'pattern',
-                    pattern: 'solid',
-                    fgColor: { argb: record[`day${dayIndex}`] ? (isWeekend ? 'FF92D050' : 'FFFFFF00') : 'FFB2B2B2' }, // Gray for empty cells, else match the day column color
-                };
+                shiftCell.value = record[`day${dayIndex}`] || '-' // Hyphen for empty cells
+                shiftCell.alignment = { horizontal: 'center' }
+                shiftCell.font = { name: 'Calibri', size: 12 } // Custom font
+
+                if (isWeekend && shiftCell.value !== '-') {
+                    shiftCell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FF92D050' }, // Green for valid weekend cells
+                    }
+                } else if (!isWeekend && shiftCell.value !== '-') {
+                    shiftCell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFFFF00' }, // Yellow for valid weekday cells
+                    }
+                } else {
+                    shiftCell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFB2B2B2' }, // Gray for empty cells
+                    }
+                }
+
                 shiftCell.border = {
                     top: { style: 'thin' },
                     left: { style: 'thin' },
                     bottom: { style: 'thin' },
                     right: { style: 'thin' },
-                };
+                }
             }
 
-            // Fill shift count columns
+            // Fill shift count columns for each unique shift
             uniqueShifts.forEach((shift, index) => {
-                const shiftCountCell = row.getCell(daysInMonth + 2 + index);
-                shiftCountCell.value = record[shift];
-                shiftCountCell.alignment = { horizontal: 'center' };
-                shiftCountCell.font = { name: 'Calibri', size: 12 };
+                const shiftColumnIndex = daysInMonth + 2 + index
+                const shiftCountCell = row.getCell(shiftColumnIndex)
+                shiftCountCell.value = record[shift] || 0 // Fetch or default to 0
+                shiftCountCell.alignment = { horizontal: 'center' }
+                shiftCountCell.font = { name: 'Calibri', size: 12 }
                 shiftCountCell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
                     fgColor: { argb: 'FF93CDDD' }, // Light blue for shift count columns
-                };
+                }
                 shiftCountCell.border = {
                     top: { style: 'thin' },
                     left: { style: 'thin' },
                     bottom: { style: 'thin' },
                     right: { style: 'thin' },
-                };
-            });
+                }
+            })
 
             // Fill total column
-            const totalCell = row.getCell(totalColumnIndex);
-            totalCell.value = record['Total'];
-            totalCell.alignment = { horizontal: 'center' };
-            totalCell.font = { name: 'Calibri', size: 12 };
+            const totalCell = row.getCell(totalColumnIndex)
+            totalCell.value = record['Total'] || 0
+            totalCell.alignment = { horizontal: 'center' }
+            totalCell.font = { name: 'Calibri', size: 12 }
             totalCell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
                 fgColor: { argb: 'FF93CDDD' }, // Light blue for total column
-            };
+            }
             totalCell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
                 bottom: { style: 'thin' },
                 right: { style: 'thin' },
-            };
+            }
+        })
+
+        // Adjust column widths dynamically based on content, including the "Employee" column
+        worksheet.columns.forEach((column, colIndex) => {
+            if (column && typeof column.eachCell === 'function') { // Ensure the column and its method are defined
+                let maxWidth = 10; // Default minimum width
+                column.eachCell({ includeEmpty: true }, (cell) => {
+                    const cellValue = cell.value ? cell.value.toString() : '';
+                    if (cellValue.length > maxWidth) {
+                        maxWidth = cellValue.length + 2; // Add padding
+                    }
+                });
+                worksheet.getColumn(colIndex + 1).width = maxWidth; // Apply calculated width
+            }
         });
 
         // Write the workbook to a buffer and trigger download
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${monthNameOfSchedule.slice(0, 3)}_${this.year}_schedule.xlsx`;
-        link.click();
+        const buffer = await workbook.xlsx.writeBuffer()
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `${monthNameOfSchedule.slice(0, 3)}_${this.year}_schedule.xlsx`
+        link.click()
     }
 
     /** Exports the given schedule in JSON format */
     public exportJSON(): void {
-        let fileContent = 'data:application/json;charset=utf-8,' 
+        let fileContent = 'data:application/jsoncharset=utf-8,' 
         fileContent += encodeURIComponent(JSON.stringify(this.scheduleToExport, null, 2))
 
         const link = document.createElement('a')
@@ -430,20 +481,22 @@ export class ScheduleExporter {
 
     /**
      * Generic function to export the given schedule in a delimited format
-     * @param schedules - Array of schedules
-     * @param selectedMonth - The selected month index
      * @param delimiter - The delimiter for the format (e.g., ',' for CSV, '\t' for TSV)
      * @param extension - The file extension (e.g., 'csv', 'tsv')
      */
     private exportDelimited(delimiter: string, extension: SupportedExportFormat): void {
-        const columnHeaders = ['Day', 'Shift', 'Employee']
-        let fileContent = 'data:text/plain;charset=utf-8,'
+        const columnHeaders = ['Day', 'Shift', 'Employee Name', 'Employee ID']
+        let fileContent = 'data:text/plaincharset=utf-8,'
         // Adds the column headers as the first row
         fileContent += [
-            columnHeaders.join(delimiter), ...this.scheduleToExport.map((day, dayI) =>
-                day.map((employee, shiftI) => `${dayI + 1}${delimiter}${this.shifts[shiftI].name}${delimiter}${employee.name}`).join('\n')
+            columnHeaders.join(delimiter),
+            ...this.scheduleToExport.map((day, dayI) =>
+                day.map((shift, shiftI) =>
+                    shift.map(emp => `${dayI + 1}${delimiter}${this.shifts[shiftI].name}${delimiter}${emp.name}${delimiter}${emp.id}`).join('\n')
+                ).join('\n')
             )
         ].join('\n')
+
         const encodedUri = encodeURI(fileContent)
 
         const link = document.createElement('a')

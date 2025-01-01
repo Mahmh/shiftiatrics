@@ -83,6 +83,7 @@ input {
                 button {
                     @include themed-bgcolor('background', 'primary-text');
                     @include circle(25px);
+                    @include compressible;
                     padding: 5px;
                     margin: 9px;
                     &:hover { @include themed-bgcolor('background', 'alpha-white') }

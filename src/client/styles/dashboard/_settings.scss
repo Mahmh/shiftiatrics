@@ -72,7 +72,7 @@
             &, label { cursor: pointer }
 
             button {
-                @include themed-bgcolor('gray');
+                @include themed-bgcolor('gray', 'light-gray');
                 display: inline-block;
                 position: relative;
                 width: 55px;

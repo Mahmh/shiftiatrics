@@ -1,7 +1,6 @@
 import { useCallback, useContext, useState, useMemo } from 'react'
 import { DashboardContext, nullAccount } from '@context'
-import { Choice, Request, MIN_YEAR, MAX_YEAR } from '@utils'
-
+import { Choice, Switch, Request, MIN_YEAR, MAX_YEAR } from '@utils'
 
 const Account = () => {
     const { account, setAccount, employees, shifts, schedules, openModal, closeModal, setModalContent } = useContext(DashboardContext)
@@ -17,6 +16,7 @@ const Account = () => {
         return count
     }, [schedules])
 
+    // Memoized account stats
     const employeeCountText = useMemo(() => `${employees.length} employee${employees.length === 1 ? '' : 's'} registered`, [employees.length])
     const shiftCountText = useMemo(() => `${shifts.length} shift${shifts.length === 1 ? '' : 's'} per day`,[shifts.length])
     const scheduleCountText = useMemo(
@@ -197,7 +197,7 @@ const Account = () => {
 }
 
 
-const Preferences = () => {
+const PreferencesAndFunctionality = () => {
     const { account, settings, setSettings } = useContext(DashboardContext)
 
     /** Switches between light & dark themes */
@@ -208,16 +208,29 @@ const Preferences = () => {
         ).get()
     }
 
+    /** Turns on/off advanced mode */
+    const toggleMinMaxWorkHours = async () => {
+        await new Request(
+            `accounts/${account.id}/settings/toggle_min_max_work_hours`,
+            (data: { detail: boolean|null }) => setSettings(prev => ({...prev, minMaxWorkHoursEnabled: data['detail'] ? true : false }))
+        ).get()
+    }
+
+    /** Allows/Disallows multiple employees to be in a single shift */
+    const toggleMultiEmpsInShift = async () => {
+        await new Request(
+            `accounts/${account.id}/settings/toggle_multi_emps_in_shift`,
+            (data: { detail: boolean|null }) => setSettings(prev => ({...prev, multiEmpsInShiftEnabled: data['detail'] ? true : false }))
+        ).get()
+    }
+
     return (
         <section id='pref-card' className='settings-card'>
-            <h3 className='settings-title'>Preferences</h3>
+            <h3 className='settings-title'>Preferences & Functionality</h3>
             <div className='card-content'>
-                <div className='switch-div'>
-                    <label>Dark Theme</label>
-                    <button onClick={toggleDarkTheme} className={settings.darkThemeEnabled ? 'switch-btn-enabled' : ''}>
-                        <div className='switch-circle'></div>
-                    </button>
-                </div>
+                <Switch label='Dark theme' handleClick={toggleDarkTheme} enabled={settings.darkThemeEnabled}/>
+                <Switch label='Use minimum & maximum work hours for employees' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
+                <Switch label='Allow multiple employees to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
             </div>
         </section>
     )
@@ -227,6 +240,6 @@ const Preferences = () => {
 export default function Settings() {
     return <>
         <Account/>
-        <Preferences/>
+        <PreferencesAndFunctionality/>
     </>
 }

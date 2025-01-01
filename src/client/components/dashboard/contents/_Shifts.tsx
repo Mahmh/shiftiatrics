@@ -125,17 +125,17 @@ export default function Shifts() {
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 3 || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length === 0 || !tempStartTime || !tempEndTime)
             }
 
             const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 setStartTime(e.target.value)
-                setConfirmDisabled(tempName.trim().length < 3 || !e.target.value || !tempEndTime)
+                setConfirmDisabled(tempName.trim().length === 0 || !e.target.value || !tempEndTime)
             }
 
             const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 setEndTime(e.target.value)
-                setConfirmDisabled(tempName.trim().length < 3 || !tempStartTime || !e.target.value)
+                setConfirmDisabled(tempName.trim().length === 0 || !tempStartTime || !e.target.value)
             }
 
             const confirmAdd = async () => {

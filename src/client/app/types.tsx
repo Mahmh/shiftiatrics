@@ -6,7 +6,7 @@ export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'Jun
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
 export type ContentName = 'schedules' | 'employees' | 'shifts' | 'settings' | 'support'
 export type ShiftCounts = Map<Employee, number>
-export type ScheduleOfIDs = Employee['id'][][]
+export type ScheduleOfIDs = Employee['id'][][][]
 export type YearToSchedules = Map<number, Schedule[]>
 export type YearToSchedulesValidity = Map<number, Map<number, boolean>>
 
@@ -40,7 +40,7 @@ export interface ContextProps {
 
     isModalOpen: boolean
     setIsModalOpen: SetState<boolean>
-    modalContent: ReactNode,
+    modalContent: ReactNode
     setModalContent: SetState<ReactNode>
     openModal: () => void
     closeModal: () => void
@@ -57,6 +57,8 @@ export interface Account {
 export interface Employee {
     id: number
     name: string
+    minWorkHours?: number
+    maxWorkHours?: number
 }
 
 export interface Shift {
@@ -68,9 +70,11 @@ export interface Shift {
 
 export interface Schedule {
     id: number
-    schedule: Employee[][]
+    schedule: Employee[][][]
 }
 
 export interface Settings {
     darkThemeEnabled: boolean
+    minMaxWorkHoursEnabled: boolean
+    multiEmpsInShiftEnabled: boolean
 }

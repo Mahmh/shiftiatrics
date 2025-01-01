@@ -23,6 +23,7 @@ export default function Schedules() {
         [schedules, selectedYear, selectedMonth]
     )
 
+
     /** Stores the schedule in DB */
     const storeSchedule = useCallback(async (schedule: ScheduleOfIDs) => {
         if (schedule.length <= 0) return
@@ -37,8 +38,10 @@ export default function Schedules() {
 
                     yearSchedules[data.month] = {
                         id: data.schedule_id,
-                        schedule: data.schedule.map(row => 
-                            row.map(id => validateEmployeeById(id, employees, data.month, data.year))
+                        schedule: data.schedule.map(day =>
+                            day.map(shift =>
+                                shift.map(id => validateEmployeeById(id, employees, data.month, data.year))
+                            )
                         )
                     }
                     return updatedSchedules
@@ -47,7 +50,6 @@ export default function Schedules() {
             { year: selectedYear, month: selectedMonth, schedule }
         ).post()
     }, [account.id, employees, selectedMonth, selectedYear, setSchedules, validateEmployeeById])
-
 
     /** Overwrites the previously generated schedule in DB */
     const updateSchedule = useCallback(async (scheduleId: number, schedule: ScheduleOfIDs) => {
@@ -63,8 +65,10 @@ export default function Schedules() {
     
                     yearSchedules[data.month] = {
                         id: data.schedule_id,
-                        schedule: data.schedule.map(row => 
-                            row.map(id => validateEmployeeById(id, employees, data.month, data.year))
+                        schedule: data.schedule.map(day =>
+                            day.map(shift =>
+                                shift.map(id => validateEmployeeById(id, employees, data.month, data.year))
+                            )
                         )
                     }
                     return updatedSchedules
@@ -110,7 +114,6 @@ export default function Schedules() {
         openModal()
     }, [employees.length, isLoading, openModal, closeModal, setContent, setModalContent, shifts.length])
 
-
     /** Handles traversing between months and years */
     const handleMonthChange = (direction: 'prev' | 'next') => {
         if (direction === 'prev' && !isLeftChevronActive) return
@@ -132,11 +135,11 @@ export default function Schedules() {
         })
     }
 
-
     /** Displays a modal for showing additional info about the schedule */
     const openDetailsModal = () => {
         const DetailsContent = ({ triggerFetch }: { triggerFetch: boolean }) => {
             const [shiftCounts, setShiftCounts] = useState<ShiftCounts>(new Map())
+            const [workHours, setWorkHours] = useState<ShiftCounts>(new Map())
             const [isLoading, setIsLoading] = useState(true)
 
             const getShiftCounts = useCallback(async () => {
@@ -151,19 +154,40 @@ export default function Schedules() {
                         setShiftCounts(newShiftCounts)
                         setIsLoading(false)
                     }
-                ).post()
+                ).get()
+            }, [setIsLoading])
+
+            const getTotalWorkHours = useCallback(async () => {
+                await new Request(
+                    `engine/get_work_hours_of_employees?account_id=${account.id}&year=${selectedYear}&month=${selectedMonth}`,
+                    (data: Record<number, number>) => {
+                        const newWorkHours = new Map<Employee, number>()
+                        for (const [employeeId, workHours] of Object.entries(data)) {
+                            const employee = getEmployeeById(Number(employeeId), employees)!
+                            newWorkHours.set(employee, workHours)
+                        }
+                        setWorkHours(newWorkHours)
+                        setIsLoading(false)
+                    }
+                ).get()
             }, [setIsLoading])
 
             useEffect(() => {
-                if (scheduleAvailable && triggerFetch) getShiftCounts()
-            }, [getShiftCounts, triggerFetch])
+                if (scheduleAvailable && triggerFetch) {
+                    getShiftCounts()
+                    getTotalWorkHours()
+                }
+            }, [getShiftCounts, getTotalWorkHours, triggerFetch])
 
             return scheduleAvailable
             ? <>
-                <h2>Total Shifts per Employee This Month</h2>
+                <h2>Total Shifts and Work Hours per Employee This Month</h2>
                 <section id='modal-content'>
                     {!isLoading ? Array.from(shiftCounts.entries()).map(([emp, numShifts], i) => (
-                        <li key={i}><b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts</li>
+                        <li key={i}>
+                            <b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts 
+                            ({workHours.get(emp) || 0} hours)
+                        </li>
                     )) : <p>Loading...</p>}
                 </section>
             </>
@@ -177,7 +201,6 @@ export default function Schedules() {
         setModalContent(<DetailsContent triggerFetch={true}/>)
         openModal()
     }
-
 
     /** Displays a modal for exporting the schedule */
     const openExportModal = () => {
@@ -235,13 +258,12 @@ export default function Schedules() {
         // Send a request to generate a schedule
         await new Request(
             `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}`,
-            (data: number[][]) => { newSchedule = data }
-        ).post()
+            (data: Employee['id'][][][]) => { newSchedule = data }
+        ).get()
     
         await storeSchedule(newSchedule)
         setIsLoading(false)
     }, [account.id, employees.length, isLoading, openGenerateScheduleModal, selectedMonth, selectedYear, shifts.length, storeSchedule])
-
 
     /** Generates the schedule again then overwrites the old one in DB */
     const regenerateSchedule = useCallback(async () => {
@@ -265,12 +287,13 @@ export default function Schedules() {
         // Send a request to regenerate the schedule
         await new Request(
             `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}`,
-            (data: number[][]) => { newSchedule = data }
-        ).post()
+            (data: Employee['id'][][][]) => { newSchedule = data }
+        ).get()
 
         await updateSchedule(scheduleId, newSchedule)
         setIsLoading(false)
     }, [account.id, employees.length, isLoading, schedules, selectedMonth, selectedYear, setScheduleValidity, shifts.length, updateSchedule, openGenerateScheduleModal])
+
 
     useEffect(() => {
         const shiftsPerDayInSchedule = schedules.get(selectedYear)?.[selectedMonth]?.schedule[0].length
@@ -333,10 +356,10 @@ export default function Schedules() {
                                 <tr><th>Shift</th><th>Employee</th></tr>
                             </thead>
                             <tbody>
-                                {day.map((employee, shiftI) => (
+                                {day.map((shift, shiftI) => (
                                     <tr key={shiftI}>
                                         <td>{shifts[shiftI]?.name}</td>
-                                        <td>{employee.name || 'Unknown'}</td>
+                                        <td>{shift.map(employee => employee.name).join(', ') || 'Unknown'}</td>
                                     </tr>
                                 ))}
                             </tbody>
