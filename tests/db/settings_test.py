@@ -1,12 +1,14 @@
 from sqlalchemy import text
 import pytest
+from src.server.lib.constants import LIST_OF_WEEKEND_DAYS
+from src.server.lib.models import Credentials
+from src.server.lib.exceptions import UsernameTaken, NonExistent
 from src.server.lib.db import (
     Session, Settings,
     create_account, delete_account,
-    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp
+    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, 
+    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days
 )
-from src.server.lib.models import Credentials
-from src.server.lib.exceptions import UsernameTaken, NonExistent
 
 CRED = Credentials(username='testuser', password='testpass')
 ACCOUNT_ID = 1
@@ -99,3 +101,10 @@ def test_disable_multi_shifts_one_emp():
     toggle_multi_shifts_one_emp(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
     _assert_all_false(settings)
+
+
+def test_update_weekend_days():
+    update_weekend_days(ACCOUNT_ID, LIST_OF_WEEKEND_DAYS[1])
+    settings = get_settings_of_account(ACCOUNT_ID)
+    _assert_all_false(settings)
+    assert settings.weekend_days == LIST_OF_WEEKEND_DAYS[1]

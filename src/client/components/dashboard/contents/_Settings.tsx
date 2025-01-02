@@ -1,6 +1,7 @@
 import { useCallback, useContext, useState, useMemo } from 'react'
 import { DashboardContext, nullAccount } from '@context'
-import { Choice, Switch, Request, MIN_YEAR, MAX_YEAR } from '@utils'
+import { Choice, Switch, Dropdown, Request, MIN_YEAR, MAX_YEAR } from '@utils'
+import type { WeekendDays } from '@types'
 
 const Account = () => {
     const { account, setAccount, employees, shifts, schedules, openModal, closeModal, setModalContent } = useContext(DashboardContext)
@@ -199,6 +200,7 @@ const Account = () => {
 
 const PreferencesAndFunctionality = () => {
     const { account, settings, setSettings } = useContext(DashboardContext)
+    const [selectedWeekendDays, setSelectedWeekendDays] = useState<WeekendDays>(settings.weekendDays)
 
     /** Switches between light & dark themes */
     const toggleDarkTheme = async () => {
@@ -232,6 +234,17 @@ const PreferencesAndFunctionality = () => {
         ).get()
     }
 
+    /** Changes the weekend days of the account */
+    const changeWeekendDays = async (option: string) => {
+        console.log(option)
+        setSelectedWeekendDays(option as WeekendDays)
+        await new Request(
+            `accounts/${account.id}/settings/update_weekend_days`,
+            (data: { detail: WeekendDays }) => setSettings(prev => ({...prev, weekendDays: data['detail'] })),
+            { weekend_days: option }
+        ).patch()
+    }
+
     return (
         <section id='pref-card' className='settings-card'>
             <h3 className='settings-title'>Preferences & Functionality</h3>
@@ -240,6 +253,12 @@ const PreferencesAndFunctionality = () => {
                 <Switch label='Use minimum & maximum work hours for employees' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
                 <Switch label='Allow multiple employees to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
                 <Switch label='Allow employees to take multiple shifts in a day' handleClick={toggleMultiShiftsOneEmpEnabled} enabled={settings.multiShiftsOneEmpEnabled}/>
+                <Dropdown
+                    label='Weekend days'
+                    options={['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']}
+                    onSelect={changeWeekendDays}
+                    selected={selectedWeekendDays}
+                />
             </div>
         </section>
     )

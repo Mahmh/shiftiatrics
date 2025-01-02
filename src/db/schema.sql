@@ -35,5 +35,6 @@ CREATE TABLE settings (
     dark_theme_enabled BOOLEAN NOT NULL,
     min_max_work_hours_enabled BOOLEAN NOT NULL,
     multi_emps_in_shift_enabled BOOLEAN NOT NULL,
-    multi_shifts_one_emp_enabled BOOLEAN NOT NULL
+    multi_shifts_one_emp_enabled BOOLEAN NOT NULL,
+    weekend_days VARCHAR(17) NOT NULL
 );

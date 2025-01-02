@@ -4,7 +4,7 @@ from functools import wraps
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Time, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker, declarative_base, Session as SessionType
-from src.server.lib.constants import ENGINE_URL
+from src.server.lib.constants import ENGINE_URL, LIST_OF_WEEKEND_DAYS
 from src.server.lib.utils import log, err_log, parse_time
 from src.server.lib.models import Credentials, ScheduleType
 from src.server.lib.exceptions import UsernameTaken, NonExistent, InvalidCredentials
@@ -77,6 +77,7 @@ class Settings(Base):
     min_max_work_hours_enabled = Column(Boolean, nullable=False)
     multi_emps_in_shift_enabled = Column(Boolean, nullable=False)
     multi_shifts_one_emp_enabled = Column(Boolean, nullable=False)
+    weekend_days = Column(String(17), nullable=False)
     __repr__ = lambda self: f'Settings({self.account_id})'
 
 
@@ -136,7 +137,7 @@ def _check_month_and_year(month: int, year: int) -> None:
     assert 1970 <= year <= 9999, 'Invalid year'
 
 
-def _get_default_settings_kwargs(account_id: int, enabled_setting: str) -> dict:
+def _get_default_settings_kwargs(account_id: int, enabled_setting: str, value: bool|str = True) -> dict:
     """Returns initial settings."""
     assert type(enabled_setting) is str, 'Invalid setting'
     kwargs = dict(
@@ -144,9 +145,10 @@ def _get_default_settings_kwargs(account_id: int, enabled_setting: str) -> dict:
         dark_theme_enabled=False,
         min_max_work_hours_enabled=False,
         multi_emps_in_shift_enabled=False,
-        multi_shifts_one_emp_enabled=False
+        multi_shifts_one_emp_enabled=False,
+        weekend_days=LIST_OF_WEEKEND_DAYS[0]
     )
-    kwargs[enabled_setting] = True
+    kwargs[enabled_setting] = value
     return kwargs
 
 
@@ -391,3 +393,17 @@ def toggle_multi_shifts_one_emp(account_id: int, *, session: SessionType) -> boo
     else:
         settings.multi_shifts_one_emp_enabled = not settings.multi_shifts_one_emp_enabled
     return settings.multi_shifts_one_emp_enabled
+
+
+@dbsession(commit=True)
+def update_weekend_days(account_id: int, weekend_days: str, *, session: SessionType) -> str:
+    """Updates the weekend days of an account."""
+    _check_account(account_id, session=session)
+    settings = session.query(Settings).filter_by(account_id=account_id).first()
+    if settings is None:
+        settings = Settings(**_get_default_settings_kwargs(account_id, 'weekend_days', weekend_days))
+        session.add(settings)
+    else:
+        if weekend_days not in LIST_OF_WEEKEND_DAYS: raise ValueError(f'Invalid weekend days passed: "{weekend_days}"')
+        settings.weekend_days = weekend_days
+    return settings.weekend_days

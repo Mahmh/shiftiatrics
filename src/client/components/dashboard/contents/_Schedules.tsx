@@ -10,7 +10,7 @@ export default function Schedules() {
     const {
         account, employees, validateEmployeeById, shifts, 
         schedules, setSchedules, setScheduleValidity, getScheduleValidity,
-        setModalContent, openModal, closeModal, setContent
+        setModalContent, openModal, closeModal, setContent, settings
     } = useContext(DashboardContext)
     const [isLoading, setIsLoading] = useState(false)
     const today = new Date()
@@ -208,7 +208,7 @@ export default function Schedules() {
             const currentYearSchedules = schedules.get(selectedYear)
             const currentSchedule = currentYearSchedules?.[selectedMonth]
             if (!currentSchedule) { alert('No schedule available to export.'); return }
-            const exporter = new ScheduleExporter(currentSchedule.schedule, shifts, selectedYear, selectedMonth)
+            const exporter = new ScheduleExporter(currentSchedule.schedule, shifts, selectedYear, selectedMonth, settings.weekendDays)
             switch (format) {
                 case 'xlsx': exporter.exportExcel(); break
                 case 'csv': exporter.exportCSV(); break

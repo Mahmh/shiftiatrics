@@ -1,3 +1,4 @@
+from typing import Literal
 from functools import wraps
 from fastapi import APIRouter
 from src.server.lib.models import Credentials, EmployeeInfo, ShiftInfo, ScheduleInfo
@@ -8,7 +9,8 @@ from src.server.lib.db import (
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
-    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp
+    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours,
+    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days
 )
 
 # Init
@@ -175,3 +177,9 @@ def toggle_multi_emps_in_shift_(account_id: int) -> dict:
 @endpoint
 def toggle_multi_shifts_one_emp_(account_id: int) -> dict:
     return {'detail': toggle_multi_shifts_one_emp(account_id=account_id)}
+
+
+@settings_router.patch('/accounts/{account_id}/settings/update_weekend_days')
+@endpoint
+def update_weekend_days_(account_id: int, info: dict[Literal['weekend_days'], str]) -> dict:
+    return {'detail': update_weekend_days(account_id=account_id, weekend_days=info['weekend_days'])}

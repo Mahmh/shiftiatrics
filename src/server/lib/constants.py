@@ -13,6 +13,7 @@ PSQL_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 ENGINE_URL = f'postgresql+psycopg2://{PSQL_USER}:{PSQL_PASSWORD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
 
 # Misc
+LIST_OF_WEEKEND_DAYS = ['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']
 ENABLE_LOGGING = (os.getenv('ENABLE_LOGGING', 'true').lower() == 'true')
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # path with respect to this file
 locate = lambda x: os.path.join(CURRENT_DIR, x)

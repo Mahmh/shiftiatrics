@@ -3,6 +3,7 @@ import type { SetStateAction, Dispatch, ReactNode } from 'react'
 // Types
 type SetState<T> = Dispatch<SetStateAction<T>>
 export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December'
+export type WeekendDays =  'Saturday & Sunday' | 'Friday & Saturday' | 'Sunday & Monday'
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
 export type ContentName = 'schedules' | 'employees' | 'shifts' | 'settings' | 'support'
 export type ShiftCounts = Map<Employee, number>
@@ -78,4 +79,5 @@ export interface Settings {
     minMaxWorkHoursEnabled: boolean
     multiEmpsInShiftEnabled: boolean
     multiShiftsOneEmpEnabled: boolean
+    weekendDays: WeekendDays
 }

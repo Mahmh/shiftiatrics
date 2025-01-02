@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
+from src.server.lib.constants import LIST_OF_WEEKEND_DAYS
 
 # Init
 client = TestClient(app)
@@ -83,3 +84,10 @@ def test_disable_multi_shifts_one_emp(setup_and_teardown):
     response2 = client.get(f'/accounts/{account_id}/settings/toggle_multi_shifts_one_emp')
     assert response1.status_code == response2.status_code == 200
     assert response2.json()['detail'] is False
+
+
+def test_update_weekend_days(setup_and_teardown):
+    account_id = setup_and_teardown
+    response = client.patch(f'/accounts/{account_id}/settings/update_weekend_days', json={'weekend_days': LIST_OF_WEEKEND_DAYS[1]})
+    assert response.status_code == 200
+    assert response.json()['detail'] == LIST_OF_WEEKEND_DAYS[1]

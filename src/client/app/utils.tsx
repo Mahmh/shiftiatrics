@@ -1,11 +1,14 @@
 import ExcelJS from 'exceljs'
+import ReactDOM from 'react-dom'
+import { useState, useEffect, useRef } from 'react'
 import Image, { StaticImageData } from 'next/image'
-import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat } from '@types'
+import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays } from '@types'
 
 // Constants
 export const MIN_YEAR = 2023
 export const MAX_YEAR = 2025
 export const MAX_WORK_HOURS = 240 // hours per week
+
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -31,6 +34,68 @@ export const Switch = ({ label, handleClick, enabled }: { label: string, handleC
         </button>
     </div>
 )
+
+
+/** Component for selecting an option from a dropdown list */
+export const Dropdown = ({ label, options, onSelect, selected }: { label?: string, options: string[], onSelect: (option: string) => void, selected: string }) => {
+    const [isOpen, setIsOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement | null>(null)
+    const dropdownButtonRef = useRef<HTMLDivElement | null>(null)
+    const [dropdownPosition, setDropdownPosition] = useState<{ top: number, left: number, width: number }>({ top: 0, left: 0, width: 0 })
+
+    const handleOptionClick = (option: string) => {
+        onSelect(option)
+        setIsOpen(false)
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsOpen(false)
+    }
+
+    const updateDropdownPosition = () => {
+        if (dropdownButtonRef.current) {
+            const rect = dropdownButtonRef.current.getBoundingClientRect()
+            setDropdownPosition({
+                top: rect.bottom + 5, // Small gap between the button and menu
+                left: rect.left,
+                width: rect.width, // Match the width of the button
+            })
+        }
+    }
+
+    useEffect(() => {
+        if (isOpen) { updateDropdownPosition(); document.addEventListener('mousedown', handleClickOutside) }
+        else document.removeEventListener('mousedown', handleClickOutside)
+        return () => { document.removeEventListener('mousedown', handleClickOutside) }
+    }, [isOpen])
+
+    return <>
+        <div className='dropdown-container' ref={dropdownRef}>
+            {label && <label className='dropdown-label'>{label}</label>}
+            <div
+                className={`dropdown ${isOpen ? 'dropdown-open' : ''}`}
+                ref={dropdownButtonRef}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <div className='dropdown-selected'>{selected || 'Select an option'}</div>
+                <div className='dropdown-arrow'>▼</div>
+            </div>
+        </div>
+        {isOpen &&
+            ReactDOM.createPortal(
+                <ul
+                    className='dropdown-options'
+                    style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: dropdownPosition.width }}
+                    onMouseDown={e => e.stopPropagation()}
+                >
+                    {options.map(option => 
+                        <li key={option} className='dropdown-option' onClick={() => handleOptionClick(option)}>{option}</li>
+                    )}
+                </ul>,
+                document.body // Render the dropdown options in the body
+            )}
+    </>
+}
 
 
 /**
@@ -186,18 +251,27 @@ export class Request {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 
-/** Collection of functions that export a given schedule in supported formats */
+/**
+ * Collection of functions that export a given schedule in supported formats
+ * ### Constructor
+ * @param scheduleToExport The schedule to export
+ * @param shifts Shifts per day in the schedule
+ * @param year The year of the schedule
+ * @param month The month of the schedule
+ */
 export class ScheduleExporter {
     private readonly scheduleToExport: Schedule['schedule']
     private readonly shifts: Shift[]
     private readonly year: number
     private readonly month: number
+    private readonly weekendDays: WeekendDays
     
-    constructor(scheduleToExport: Schedule['schedule'], shifts: Shift[], year: number, month: number) {
+    constructor(scheduleToExport: Schedule['schedule'], shifts: Shift[], year: number, month: number, weekendDays: WeekendDays) {
         this.scheduleToExport = scheduleToExport
         this.shifts = shifts
         this.year = year
         this.month = month
+        this.weekendDays = weekendDays
     }
 
     /** Exports the given schedule as an Excel spreadsheet */
@@ -238,8 +312,7 @@ export class ScheduleExporter {
         for (let dayIndex = 0; dayIndex < daysInMonth; dayIndex++) {
             const dayNumber = dayIndex + 1
             const weekdayName = getWeekdayName(this.year, this.month, dayNumber)
-
-            const isWeekend = weekdayName === 'Friday' || weekdayName === 'Saturday'
+            const isWeekend = this.weekendDays.split(' & ').includes(weekdayName)
 
             // Day number (Row 2)
             const dayNumberCell = worksheet.getCell(2, dayIndex + 2)
@@ -364,8 +437,7 @@ export class ScheduleExporter {
                 const shiftCell = row.getCell(dayIndex + 1)
                 const dayNumber = dayIndex
                 const weekdayName = getWeekdayName(this.year, this.month, dayNumber)
-
-                const isWeekend = weekdayName === 'Friday' || weekdayName === 'Saturday'
+                const isWeekend = this.weekendDays.split(' & ').includes(weekdayName)
 
                 shiftCell.value = record[`day${dayIndex}`] || '-' // Hyphen for empty cells
                 shiftCell.alignment = { horizontal: 'center' }
