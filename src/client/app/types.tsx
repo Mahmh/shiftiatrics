@@ -77,4 +77,5 @@ export interface Settings {
     darkThemeEnabled: boolean
     minMaxWorkHoursEnabled: boolean
     multiEmpsInShiftEnabled: boolean
+    multiShiftsOneEmpEnabled: boolean
 }

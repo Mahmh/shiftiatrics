@@ -13,12 +13,12 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             const [tempName, setTempName] = useState(name)
             const [tempStartTime, setStartTime] = useState(startTime)
             const [tempEndTime, setEndTime] = useState(endTime)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3 || tempName === name)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3)
 
             const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 3 || newName === name || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length < 3 || !tempStartTime || !tempEndTime)
             }
 
             const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {

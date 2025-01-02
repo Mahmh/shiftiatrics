@@ -3,9 +3,7 @@ import server.engine.*;
 import java.util.*;
 
 public class ShiftSchedulerTest {
-    /**
-     * Test that employees do not exceed max work hours.
-     */
+    /** Test that employees do not exceed max work hours. */
     public static void testMaxWorkHoursConstraint() {
         List<Employee> employees = new ArrayList<>();
         employees.add(new Employee(1, "Alice", 40 * 4, 160 * 4));
@@ -16,10 +14,8 @@ public class ShiftSchedulerTest {
         shifts.add(new Shift("16:00", "00:00"));
 
         int numDays = 10;
-        boolean useWorkHours = true;
-        boolean multiEmpOneShift = false;
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpOneShift);
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, true, true, false);
 
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -32,9 +28,7 @@ public class ShiftSchedulerTest {
         }
     }
 
-    /**
-     * Test that employees meet minimum work hours when shifts are sufficient.
-     */
+    /** Test that employees meet minimum work hours when shifts are sufficient. */
     public static void testMinWorkHoursConstraint() {
         List<Employee> employees = new ArrayList<>();
         employees.add(new Employee(1, "Alice", 40 * 4, 160 * 4));
@@ -46,9 +40,9 @@ public class ShiftSchedulerTest {
 
         int numDays = 20;
         boolean useWorkHours = true;
-        boolean multiEmpOneShift = false;
+        boolean multiEmpsOneShift = false;
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpOneShift);
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpsOneShift, false);
 
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -61,9 +55,7 @@ public class ShiftSchedulerTest {
         }
     }
 
-    /**
-     * Test that no employees are assigned shifts when the list of shifts is empty.
-     */
+    /** Test that no employees are assigned shifts when the list of shifts is empty. */
     public static void testNoShiftsAvailable() {
         List<Employee> employees = new ArrayList<>();
         employees.add(new Employee(1, "Alice", 40 * 4, 160 * 4));
@@ -73,9 +65,9 @@ public class ShiftSchedulerTest {
 
         int numDays = 5;
         boolean useWorkHours = true;
-        boolean multiEmpOneShift = true;
+        boolean multiEmpsOneShift = true;
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpOneShift);
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpsOneShift, false);
 
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -88,10 +80,8 @@ public class ShiftSchedulerTest {
         }
     }
 
-     /**
-     * Test that all employees have equal shifts when multiEmpOneShift is true.
-     */
-    public static void testEqualShiftsWithMultiEmpOneShift() {
+    /** Test that all employees have equal shifts when multiEmpsOneShift is true. */
+    public static void testEqualShiftsWithMultiEmpsOneShift() {
         List<Employee> employees = new ArrayList<>();
         employees.add(new Employee(1, "Alice", 40 * 4, 160 * 4));
         employees.add(new Employee(2, "Bob", 40 * 4, 160 * 4));
@@ -105,9 +95,9 @@ public class ShiftSchedulerTest {
 
         int numDays = 5;
         boolean useWorkHours = true;
-        boolean multiEmpOneShift = true;
+        boolean multiEmpsOneShift = true;
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpOneShift);
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpsOneShift, false);
 
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -121,9 +111,7 @@ public class ShiftSchedulerTest {
         }
     }
 
-    /**
-     * Test that all employees have equal shifts when multiEmpOneShift is true and rebalancing occurs randomly.
-     */
+    /** Test that all employees have equal shifts when multiEmpsOneShift is true and rebalancing occurs randomly. */
     public static void testRandomRebalancing() {
         List<Employee> employees = new ArrayList<>();
         employees.add(new Employee(1, "Alice", 40 * 4, 160 * 4));
@@ -138,9 +126,9 @@ public class ShiftSchedulerTest {
 
         int numDays = 5;
         boolean useWorkHours = false;
-        boolean multiEmpOneShift = true;
+        boolean multiEmpsOneShift = true;
 
-        Employee[][][] employeeSchedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpOneShift);
+        Employee[][][] employeeSchedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpsOneShift, false);
 
         // Convert schedule to int[][][]
         int[][][] schedule = convertToIdSchedule(employeeSchedule);
@@ -155,9 +143,7 @@ public class ShiftSchedulerTest {
         }
     }
 
-    /**
-     * Test that monthly work hours are correctly calculated.
-     */
+    /** Test that monthly work hours are correctly calculated. */
     public static void testTotalWorkHoursCalculation() {
         List<Employee> employees = new ArrayList<>();
         employees.add(new Employee(1, "Alice", 40 * 4, 160 * 4));
@@ -169,9 +155,9 @@ public class ShiftSchedulerTest {
     
         int numDays = 5;
         boolean useWorkHours = false;
-        boolean multiEmpOneShift = false;
+        boolean multiEmpsOneShift = false;
     
-        Employee[][][] employeeSchedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpOneShift);
+        Employee[][][] employeeSchedule = ShiftScheduler.generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpsOneShift, false);
     
         // Convert schedule to int[][][]
         int[][][] schedule = convertToIdSchedule(employeeSchedule);
@@ -196,7 +182,62 @@ public class ShiftSchedulerTest {
             }
         }
     }
-    
+
+    /** Test that an employee may have more than one shift per day */
+    public static void testAllowMultipleShiftsPerDayTrue() {
+        List<Employee> employees = Arrays.asList(
+            new Employee(1, "Alice"),
+            new Employee(2, "Bob"),
+            new Employee(3, "Charlie")
+        );
+
+        List<Shift> shifts = Arrays.asList(
+            new Shift("08:00", "12:00"),
+            new Shift("13:00", "17:00"),
+            new Shift("18:00", "22:00")
+        );
+
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, 1, false, false, true);
+
+        // Validate that employees can appear in multiple shifts in a single day
+        Set<Employee> employeesAssigned = new HashSet<>();
+        for (int shiftIndex = 0; shiftIndex < shifts.size(); shiftIndex++) {
+            for (Employee e : schedule[0][shiftIndex]) {
+                employeesAssigned.add(e);
+            }
+        }
+        if (employeesAssigned.size() < employees.size()) {
+            throw new AssertionError("Test failed: Not all employees were assigned to multiple shifts when allowed.");
+        }
+    }
+
+    /** Test that an employee may not have more than one shift per day */
+    public static void testAllowMultipleShiftsPerDayFalse() {
+        List<Employee> employees = Arrays.asList(
+            new Employee(1, "Alice"),
+            new Employee(2, "Bob"),
+            new Employee(3, "Charlie")
+        );
+
+        List<Shift> shifts = Arrays.asList(
+            new Shift("08:00", "12:00"),
+            new Shift("13:00", "17:00"),
+            new Shift("18:00", "22:00")
+        );
+
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, 1, false, false, false);
+
+        // Validate that no employee appears in more than one shift in a single day
+        Set<Employee> employeesAssigned = new HashSet<>();
+        for (int shiftIndex = 0; shiftIndex < shifts.size(); shiftIndex++) {
+            for (Employee e : schedule[0][shiftIndex]) {
+                if (!employeesAssigned.add(e)) {
+                    throw new AssertionError("Test failed: Employee " + e.getName() + " was assigned to multiple shifts in a single day when not allowed.");
+                }
+            }
+        }
+    }
+
     /**
      * Utility method to convert Employee[][][] schedule to int[][][] schedule with Employee IDs.
      * @param schedule The schedule with Employee objects.
@@ -220,8 +261,8 @@ public class ShiftSchedulerTest {
     public static void main(String[] args) {
         byte numPassed = 0;
         try {
-            testEqualShiftsWithMultiEmpOneShift();
-            System.out.println("[PASSED] testEqualShiftsWithMultiEmpOneShift");
+            testEqualShiftsWithMultiEmpsOneShift();
+            System.out.println("[PASSED] testEqualShiftsWithMultiEmpsOneShift");
             numPassed += 1;
 
             testMaxWorkHoursConstraint();
@@ -242,6 +283,14 @@ public class ShiftSchedulerTest {
 
             testTotalWorkHoursCalculation();
             System.out.println("[PASSED] testMonthlyWorkHoursCalculation");
+            numPassed += 1;
+
+            testAllowMultipleShiftsPerDayTrue();
+            System.out.println("[PASSED] testAllowMultipleShiftsPerDayTrue");
+            numPassed += 1;
+
+            testAllowMultipleShiftsPerDayFalse();
+            System.out.println("[PASSED] testAllowMultipleShiftsPerDayFalse");
             numPassed += 1;
 
             System.out.println("All " + numPassed + " tests have passed.");

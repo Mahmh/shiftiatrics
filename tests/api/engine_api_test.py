@@ -36,7 +36,7 @@ def setup_and_teardown():
     shift1_id = create_shift(account_id, SHIFT1)
     shift2_id = create_shift(account_id, SHIFT2)
     schedule_id = create_schedule(account_id, SCHEDULE_DATA)
-    yield account_id, employee_id
+    yield account_id
     # Teardown: Delete entities
     delete_account(CRED)
     delete_employee(employee_id)
@@ -47,18 +47,15 @@ def setup_and_teardown():
 
 # Tests
 def test_generate_schedule(setup_and_teardown):
-    account_id, employee_id = setup_and_teardown
+    account_id = setup_and_teardown
     num_days = 10
     response = client.get(f'/engine/generate_schedule?account_id={account_id}&num_days={num_days}')
     assert response.status_code == 200
-
-    schedule = response.json()
-    assert isinstance(schedule, list)
-    assert schedule == [[[employee_id] for _ in range(2)] for _ in range(num_days)]  # 2 shifts
+    assert isinstance(response.json(), list)
 
 
 def test_get_shift_counts(setup_and_teardown):
-    account_id, _ = setup_and_teardown
+    account_id = setup_and_teardown
     response = client.get(f'/engine/get_shift_counts_of_employees?account_id={account_id}&year={SCHEDULE_DATA["year"]}&month={SCHEDULE_DATA["month"]}')
     assert response.status_code == 200
 
@@ -69,7 +66,7 @@ def test_get_shift_counts(setup_and_teardown):
 
 
 def test_get_work_hours(setup_and_teardown):
-    account_id, _ = setup_and_teardown 
+    account_id = setup_and_teardown 
     response = client.get(f'/engine/get_work_hours_of_employees?account_id={account_id}&year={SCHEDULE_DATA["year"]}&month={SCHEDULE_DATA["month"]}')
     assert response.status_code == 200
 

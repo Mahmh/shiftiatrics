@@ -20,8 +20,8 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                     (minWorkHours !== undefined && tempMinWorkHours <= 0) ||
                     (maxWorkHours !== undefined && tempMaxWorkHours <= 0) ||
                     (tempMinWorkHours > tempMaxWorkHours) ||
-                    (tempMinWorkHours > 168) ||
-                    (tempMaxWorkHours > 168)
+                    (tempMinWorkHours > MAX_WORK_HOURS) ||
+                    (tempMaxWorkHours > MAX_WORK_HOURS)
                 ))
             )
     
@@ -34,8 +34,8 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                         (minWorkHours !== undefined && tempMinWorkHours <= 0) ||
                         (maxWorkHours !== undefined && tempMaxWorkHours <= 0) ||
                         (tempMinWorkHours > tempMaxWorkHours) ||
-                        (tempMinWorkHours > 168) ||
-                        (tempMaxWorkHours > 168)
+                        (tempMinWorkHours > MAX_WORK_HOURS) ||
+                        (tempMaxWorkHours > MAX_WORK_HOURS)
                     ))
                 )
             }
@@ -49,8 +49,8 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                         (minHours <= 0) ||
                         (tempMaxWorkHours <= 0) ||
                         (minHours > tempMaxWorkHours) ||
-                        (minHours > 168) ||
-                        (tempMaxWorkHours > 168)
+                        (minHours > MAX_WORK_HOURS) ||
+                        (tempMaxWorkHours > MAX_WORK_HOURS)
                     ))
                 )
             }
@@ -64,8 +64,8 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                         (tempMinWorkHours <= 0) ||
                         (maxHours <= 0) ||
                         (tempMinWorkHours > maxHours) ||
-                        (tempMinWorkHours > 168) ||
-                        (maxHours > 168)
+                        (tempMinWorkHours > MAX_WORK_HOURS) ||
+                        (maxHours > MAX_WORK_HOURS)
                     ))
                 )
             }
@@ -99,23 +99,23 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                     {settings.minMaxWorkHoursEnabled && (
                         <>
                             <div className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Minimum work hours per week: </label>
+                                <label style={{ marginRight: 10 }}>Minimum work hours per month: </label>
                                 <input
                                     type='number'
                                     value={tempMinWorkHours}
                                     onChange={handleMinWorkHoursChange}
                                     min={0}
-                                    max={168}
+                                    max={MAX_WORK_HOURS}
                                 />
                             </div>
                             <div className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Maximum work hours per week: </label>
+                                <label style={{ marginRight: 10 }}>Maximum work hours per month: </label>
                                 <input
                                     type='number'
                                     value={tempMaxWorkHours}
                                     onChange={handleMaxWorkHoursChange}
                                     min={0}
-                                    max={168}
+                                    max={MAX_WORK_HOURS}
                                 />
                             </div>
                         </>
@@ -246,7 +246,7 @@ export default function Employees() {
                     {settings.minMaxWorkHoursEnabled && (
                         <>
                             <section className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Minimum work hours per week: </label>
+                                <label style={{ marginRight: 10 }}>Minimum work hours per month: </label>
                                 <input
                                     type='number'
                                     value={tempMinWorkHours}
@@ -256,7 +256,7 @@ export default function Employees() {
                                 />
                             </section>
                             <section className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Maximum work hours per week: </label>
+                                <label style={{ marginRight: 10 }}>Maximum work hours per month: </label>
                                 <input
                                     type='number'
                                     value={tempMaxWorkHours}

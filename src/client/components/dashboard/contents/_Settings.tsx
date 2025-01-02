@@ -224,6 +224,14 @@ const PreferencesAndFunctionality = () => {
         ).get()
     }
 
+    /** Allows/Disallows one employee to take multiple shifts in the same day */
+    const toggleMultiShiftsOneEmpEnabled = async () => {
+        await new Request(
+            `accounts/${account.id}/settings/toggle_multi_shifts_one_emp`,
+            (data: { detail: boolean|null }) => setSettings(prev => ({...prev, multiShiftsOneEmpEnabled: data['detail'] ? true : false }))
+        ).get()
+    }
+
     return (
         <section id='pref-card' className='settings-card'>
             <h3 className='settings-title'>Preferences & Functionality</h3>
@@ -231,6 +239,7 @@ const PreferencesAndFunctionality = () => {
                 <Switch label='Dark theme' handleClick={toggleDarkTheme} enabled={settings.darkThemeEnabled}/>
                 <Switch label='Use minimum & maximum work hours for employees' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
                 <Switch label='Allow multiple employees to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
+                <Switch label='Allow employees to take multiple shifts in a day' handleClick={toggleMultiShiftsOneEmpEnabled} enabled={settings.multiShiftsOneEmpEnabled}/>
             </div>
         </section>
     )

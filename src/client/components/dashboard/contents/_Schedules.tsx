@@ -192,7 +192,7 @@ export default function Schedules() {
                 </section>
             </>
             : <>
-                <h1>Invalid Input</h1>
+                <h1>No Schedule Available</h1>
                 <p>Please generate a schedule for this month to show details.</p>
                 <button onClick={closeModal}>Close</button>
             </>

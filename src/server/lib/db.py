@@ -76,6 +76,7 @@ class Settings(Base):
     dark_theme_enabled = Column(Boolean, nullable=False)
     min_max_work_hours_enabled = Column(Boolean, nullable=False)
     multi_emps_in_shift_enabled = Column(Boolean, nullable=False)
+    multi_shifts_one_emp_enabled = Column(Boolean, nullable=False)
     __repr__ = lambda self: f'Settings({self.account_id})'
 
 
@@ -133,6 +134,20 @@ def _check_month_and_year(month: int, year: int) -> None:
     """Checks if a given month & year are valid."""
     assert 0 <= month <= 11, 'Invalid month'
     assert 1970 <= year <= 9999, 'Invalid year'
+
+
+def _get_default_settings_kwargs(account_id: int, enabled_setting: str) -> dict:
+    """Returns initial settings."""
+    assert type(enabled_setting) is str, 'Invalid setting'
+    kwargs = dict(
+        account_id=account_id,
+        dark_theme_enabled=False,
+        min_max_work_hours_enabled=False,
+        multi_emps_in_shift_enabled=False,
+        multi_shifts_one_emp_enabled=False
+    )
+    kwargs[enabled_setting] = True
+    return kwargs
 
 
 # Functional
@@ -332,16 +347,11 @@ def toggle_dark_theme(account_id: int, *, session: SessionType) -> bool:
     _check_account(account_id, session=session)
     settings = session.query(Settings).filter_by(account_id=account_id).first()
     if settings is None:
-        session.add(Settings(
-            account_id=account_id,
-            dark_theme_enabled=True,
-            min_max_work_hours_enabled=False,
-            multi_emps_in_shift_enabled=False
-        ))
-        return True
+        settings = Settings(**_get_default_settings_kwargs(account_id, 'dark_theme_enabled'))
+        session.add(settings)
     else:
         settings.dark_theme_enabled = not settings.dark_theme_enabled
-        return settings.dark_theme_enabled
+    return settings.dark_theme_enabled
 
 
 @dbsession(commit=True)
@@ -350,16 +360,11 @@ def toggle_min_max_work_hours(account_id: int, *, session: SessionType) -> bool:
     _check_account(account_id, session=session)
     settings = session.query(Settings).filter_by(account_id=account_id).first()
     if settings is None:
-        session.add(Settings(
-            account_id=account_id,
-            dark_theme_enabled=False,
-            min_max_work_hours_enabled=True,
-            multi_emps_in_shift_enabled=False
-        ))
-        return True
+        settings = Settings(**_get_default_settings_kwargs(account_id, 'min_max_work_hours_enabled'))
+        session.add(settings)
     else:
         settings.min_max_work_hours_enabled = not settings.min_max_work_hours_enabled
-        return settings.min_max_work_hours_enabled
+    return settings.min_max_work_hours_enabled
 
 
 @dbsession(commit=True)
@@ -368,13 +373,21 @@ def toggle_multi_emps_in_shift(account_id: int, *, session: SessionType) -> bool
     _check_account(account_id, session=session)
     settings = session.query(Settings).filter_by(account_id=account_id).first()
     if settings is None:
-        session.add(Settings(
-            account_id=account_id,
-            dark_theme_enabled=False,
-            min_max_work_hours_enabled=False,
-            multi_emps_in_shift_enabled=True
-        ))
-        return True
+        settings = Settings(**_get_default_settings_kwargs(account_id, 'multi_emps_in_shift_enabled'))
+        session.add(settings)
     else:
         settings.multi_emps_in_shift_enabled = not settings.multi_emps_in_shift_enabled
-        return settings.multi_emps_in_shift_enabled
+    return settings.multi_emps_in_shift_enabled
+
+
+@dbsession(commit=True)
+def toggle_multi_shifts_one_emp(account_id: int, *, session: SessionType) -> bool:
+    """Toggles whether an employee can be assigned to multiple shifts in a single day."""
+    _check_account(account_id, session=session)
+    settings = session.query(Settings).filter_by(account_id=account_id).first()
+    if settings is None:
+        settings = Settings(**_get_default_settings_kwargs(account_id, 'multi_shifts_one_emp_enabled'))
+        session.add(settings)
+    else:
+        settings.multi_shifts_one_emp_enabled = not settings.multi_shifts_one_emp_enabled
+    return settings.multi_shifts_one_emp_enabled

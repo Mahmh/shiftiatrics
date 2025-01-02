@@ -5,7 +5,7 @@ import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, Su
 // Constants
 export const MIN_YEAR = 2023
 export const MAX_YEAR = 2025
-export const MAX_WORK_HOURS = 168 // hours per week
+export const MAX_WORK_HOURS = 240 // hours per week
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -292,7 +292,7 @@ export class ScheduleExporter {
                         uniqueShifts.forEach(shift => {
                             record[shift] = 0 // Initialize count for each shift
                         })
-                        record['Total'] = 0 // Initialize total column
+                        record['(Total)'] = 0 // Initialize total column
                         employeeShiftMap.set(employeeName, record)
                     }
                     const record = employeeShiftMap.get(employeeName)!
@@ -300,7 +300,7 @@ export class ScheduleExporter {
                         ? `${record[`day${dayIndex + 1}`]}, ${shiftName}`
                         : shiftName // Append or set shift name
                     record[shiftName] = (record[shiftName] as number) + 1 // Increment shift count for this shift
-                    record['Total'] = (record['Total'] as number) + 1 // Increment total count
+                    record['(Total)'] = (record['(Total)'] as number) + 1 // Increment total count
                 })
             })
         })        
@@ -332,7 +332,7 @@ export class ScheduleExporter {
             worksheet.mergeCells(2, totalColumnIndex, 3, totalColumnIndex)
         }
         const totalHeaderCell = worksheet.getCell(2, totalColumnIndex)
-        totalHeaderCell.value = "Total"
+        totalHeaderCell.value = "(Total)"
         totalHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' }
         totalHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }
         totalHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } } // Light blue background
@@ -421,7 +421,7 @@ export class ScheduleExporter {
 
             // Fill total column
             const totalCell = row.getCell(totalColumnIndex)
-            totalCell.value = record['Total'] || 0
+            totalCell.value = record['(Total)'] || 0
             totalCell.alignment = { horizontal: 'center' }
             totalCell.font = { name: 'Calibri', size: 12 }
             totalCell.fill = {

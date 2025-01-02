@@ -3,7 +3,7 @@ import pytest
 from src.server.lib.db import (
     Session, Settings,
     create_account, delete_account,
-    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, toggle_multi_emps_in_shift
+    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp
 )
 from src.server.lib.models import Credentials
 from src.server.lib.exceptions import UsernameTaken, NonExistent
@@ -25,6 +25,25 @@ def setup_and_teardown():
         session.commit()
 
 
+def _assert_all_false(settings: Settings):
+    assert isinstance(settings, Settings)
+    assert settings.account_id == ACCOUNT_ID
+    assert settings.dark_theme_enabled is False
+    assert settings.min_max_work_hours_enabled is False
+    assert settings.multi_emps_in_shift_enabled is False
+    assert settings.multi_shifts_one_emp_enabled is False
+
+
+def _assert_one_true(setting: str, settings: Settings):
+    assert isinstance(settings, Settings)
+    assert settings.account_id == ACCOUNT_ID
+    assert getattr(settings, setting) is True
+
+    other_settings = {'dark_theme_enabled', 'min_max_work_hours_enabled', 'multi_emps_in_shift_enabled', 'multi_shifts_one_emp_enabled'} - {setting}
+    for s in other_settings:
+        if s != setting: assert getattr(settings, s) is False
+
+
 # Tests
 def test_no_settings():
     assert get_settings_of_account(ACCOUNT_ID) is None
@@ -33,61 +52,50 @@ def test_no_settings():
 def test_enable_dark_theme():
     toggle_dark_theme(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
-    assert isinstance(settings, Settings)
-    assert settings.account_id == ACCOUNT_ID
-    assert settings.dark_theme_enabled == True
-    assert settings.min_max_work_hours_enabled == False
-    assert settings.multi_emps_in_shift_enabled == False
+    _assert_one_true('dark_theme_enabled', settings)
 
 
 def test_disable_dark_theme():
     toggle_dark_theme(ACCOUNT_ID)
     toggle_dark_theme(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
-    assert isinstance(settings, Settings)
-    assert settings.account_id == ACCOUNT_ID
-    assert settings.dark_theme_enabled == False
-    assert settings.min_max_work_hours_enabled == False
-    assert settings.multi_emps_in_shift_enabled == False
+    _assert_all_false(settings)
 
 
 def test_enable_min_max_work_hours():
     toggle_min_max_work_hours(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
-    assert isinstance(settings, Settings)
-    assert settings.account_id == ACCOUNT_ID
-    assert settings.dark_theme_enabled == False
-    assert settings.min_max_work_hours_enabled == True
-    assert settings.multi_emps_in_shift_enabled == False
+    _assert_one_true('min_max_work_hours_enabled', settings)
 
 
 def test_disable_min_max_work_hours():
     toggle_min_max_work_hours(ACCOUNT_ID)
     toggle_min_max_work_hours(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
-    assert isinstance(settings, Settings)
-    assert settings.account_id == ACCOUNT_ID
-    assert settings.dark_theme_enabled == False
-    assert settings.min_max_work_hours_enabled == False
-    assert settings.multi_emps_in_shift_enabled == False
+    _assert_all_false(settings)
 
 
-def test_enable_min_max_work_hours():
+def test_enable_multi_emps_in_shift():
     toggle_multi_emps_in_shift(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
-    assert isinstance(settings, Settings)
-    assert settings.account_id == ACCOUNT_ID
-    assert settings.dark_theme_enabled == False
-    assert settings.min_max_work_hours_enabled == False
-    assert settings.multi_emps_in_shift_enabled == True
+    _assert_one_true('multi_emps_in_shift_enabled', settings)
 
 
-def test_disable_min_max_work_hours():
+def test_disable_multi_emps_in_shift():
     toggle_multi_emps_in_shift(ACCOUNT_ID)
     toggle_multi_emps_in_shift(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
-    assert isinstance(settings, Settings)
-    assert settings.account_id == ACCOUNT_ID
-    assert settings.dark_theme_enabled == False
-    assert settings.min_max_work_hours_enabled == False
-    assert settings.multi_emps_in_shift_enabled == False
+    _assert_all_false(settings)
+
+
+def test_enable_multi_shifts_one_emp():
+    toggle_multi_shifts_one_emp(ACCOUNT_ID)
+    settings = get_settings_of_account(ACCOUNT_ID)
+    _assert_one_true('multi_shifts_one_emp_enabled', settings)
+
+
+def test_disable_multi_shifts_one_emp():
+    toggle_multi_shifts_one_emp(ACCOUNT_ID)
+    toggle_multi_shifts_one_emp(ACCOUNT_ID)
+    settings = get_settings_of_account(ACCOUNT_ID)
+    _assert_all_false(settings)

@@ -32,10 +32,10 @@ With all of that information, I can design an effective system for automating sc
 - Database:
     - **PostgreSQL** for running SQL queries and the database server.
 
-    | Table Name  | Fields                                          |
-    |-------------|-------------------------------------------------|
-    | Accounts    | Account ID, Username, Password                  |
-    | Employees   | Account ID, Employee ID, Employee name          |
-    | Shifts      | Account ID, Shift ID, Shift name, Time range    |
-    | Schedules   | Account ID, Schedule ID, Schedule               |
-    | Settings    | Account ID, ...                                 |
+    | Table Name  | Fields                                                                                   |
+    |-------------|------------------------------------------------------------------------------------------|
+    | Accounts    | Account ID, Username, Password                                                          |
+    | Employees   | Account ID, Employee ID, Employee Name, Min Work Hours, Max Work Hours                  |
+    | Shifts      | Account ID, Shift ID, Shift Name, Start Time, End Time                                  |
+    | Schedules   | Account ID, Schedule ID, Schedule (JSONB), Month, Year                                  |
+    | Settings    | Account ID, Dark Theme Enabled, Min Max Work Hours Enabled, Multi Emps in Shift Enabled, Multi Shifts One Emp Enabled |

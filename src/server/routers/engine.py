@@ -32,9 +32,11 @@ def generate_schedule(account_id: int, num_days: int) -> ScheduleType | dict[str
     if settings is None:
         min_max_work_hours_enabled = False
         multi_emps_in_shift_enabled = False
+        multi_shifts_one_emp_enabled = False
     else:
         min_max_work_hours_enabled = settings.min_max_work_hours_enabled
         multi_emps_in_shift_enabled = settings.multi_emps_in_shift_enabled
+        multi_shifts_one_emp_enabled = settings.multi_shifts_one_emp_enabled
 
     engine = Engine()
 
@@ -64,7 +66,8 @@ def generate_schedule(account_id: int, num_days: int) -> ScheduleType | dict[str
 
     # Generate the schedule using the Java Engine
     raw_schedule = engine.ShiftScheduler.generateSchedule(
-        java_employee_list, java_shift_list, num_days, min_max_work_hours_enabled, multi_emps_in_shift_enabled
+        java_employee_list, java_shift_list, num_days,
+        min_max_work_hours_enabled, multi_emps_in_shift_enabled, multi_shifts_one_emp_enabled
     )
 
     # Convert the Java 3D array into a Python-native structure

@@ -5,7 +5,7 @@ import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth } from '@util
 
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: false, multiEmpsInShiftEnabled: false }
+const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: false, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false }
 export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
 export const DashboardContext = createContext<ContextProps>({
@@ -165,6 +165,7 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
             dark_theme_enabled: boolean,
             min_max_work_hours_enabled: boolean
             multi_emps_in_shift_enabled: boolean
+            multi_shifts_one_emp_enabled: boolean
         };
         await new Request(
             `accounts/${account.id}/settings`,
@@ -173,7 +174,8 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
                 setSettings({
                     darkThemeEnabled: data.dark_theme_enabled,
                     minMaxWorkHoursEnabled: data.min_max_work_hours_enabled,
-                    multiEmpsInShiftEnabled: data.multi_emps_in_shift_enabled
+                    multiEmpsInShiftEnabled: data.multi_emps_in_shift_enabled,
+                    multiShiftsOneEmpEnabled: data.multi_shifts_one_emp_enabled
                 })
             }
         ).get()

@@ -5,15 +5,22 @@ import java.util.*;
 public class ShiftScheduler {
     /**
      * Generates a balanced shift schedule for a given list of shifts and employees.
-     *
      * @param employees The list of employees.
      * @param shifts The list of shifts.
      * @param numDays The number of days to include in the schedule (i.e., its extent).
      * @param useWorkHours Whether or not to regard employees' min & max work hours.
      * @param multiEmpOneShift Whether or not to put more than one employee in a shift to compensate for work hours. Works only if `useWorkHours` is already true.
+     * @param multiShiftsOneEmp Whether or not employees can be assigned to more than one shift per day.
      * @return A 3D array where each row represents a day, and each column represents a shift, containing a list of employees assigned to that shift.
      */
-    public static Employee[][][] generateSchedule(List<Employee> employees,  List<Shift> shifts, int numDays, boolean useWorkHours, boolean multiEmpOneShift) {
+    public static Employee[][][] generateSchedule(
+        List<Employee> employees, 
+        List<Shift> shifts,
+        int numDays,
+        boolean useWorkHours,
+        boolean multiEmpOneShift,
+        boolean multiShiftsOneEmp
+    ) {
         Employee[][][] schedule = new Employee[numDays][shifts.size()][];
         HashMap<Employee, Integer> totalWorkMinutes = new HashMap<>();
         HashMap<Employee, Integer> totalShiftsAssigned = new HashMap<>();
@@ -39,22 +46,35 @@ public class ShiftScheduler {
 
                 for (Employee employee : availableEmployees) {
                     if (remainingMinutes <= 0) break;
-
+                
                     int currentTotalMinutes = totalWorkMinutes.get(employee);
                     boolean withinLimits = (!useWorkHours || (
                         (employee.getMaxWorkHours() == -1 || (currentTotalMinutes + shift.getLength()) / 60 <= employee.getMaxWorkHours())
                     ));
-
-                    if (!withinLimits) continue;
-
+                
+                    // Check if the employee is already assigned to another shift on the same day
+                    boolean alreadyAssigned = false;
+                
+                    if (!multiShiftsOneEmp) {
+                        for (int otherShiftIndex = 0; otherShiftIndex < shifts.size(); otherShiftIndex++) {
+                            Employee[] otherShiftEmployees = schedule[day][otherShiftIndex];
+                            if (otherShiftEmployees != null && Arrays.asList(otherShiftEmployees).contains(employee)) {
+                                alreadyAssigned = true;
+                                break;
+                            }
+                        }
+                    }
+                
+                    if (!withinLimits || alreadyAssigned) continue;
+                
                     assignedEmployees.add(employee);
                     totalWorkMinutes.put(employee, currentTotalMinutes + shift.getLength());
                     totalShiftsAssigned.put(employee, totalShiftsAssigned.get(employee) + 1);
                     remainingMinutes -= shift.getLength();
-
+                
                     // Only assign one employee if multiple employees per shift is not allowed.
                     if (!multiEmpOneShift) break; 
-                }
+                }                        
 
                 schedule[day][shiftIndex] = assignedEmployees.toArray(new Employee[0]);
             }
@@ -76,11 +96,26 @@ public class ShiftScheduler {
 
                         // Ensure the employee is not already in this shift
                         if (!currentShift.contains(employee)) {
-                            currentShift.add(employee);
-                            schedule[randomDay][randomShift] = currentShift.toArray(new Employee[0]);
-                            totalShiftsAssigned.put(employee, totalShiftsAssigned.get(employee) + 1);
-                            assignedShifts++;
-                        }
+                            // Check if the employee is already assigned to another shift on the same day
+                            boolean alreadyAssigned = false;
+                        
+                            if (!multiShiftsOneEmp) {
+                                for (int otherShiftIndex = 0; otherShiftIndex < shifts.size(); otherShiftIndex++) {
+                                    Employee[] otherShiftEmployees = schedule[randomDay][otherShiftIndex];
+                                    if (otherShiftEmployees != null && Arrays.asList(otherShiftEmployees).contains(employee)) {
+                                        alreadyAssigned = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        
+                            if (!alreadyAssigned) {
+                                currentShift.add(employee);
+                                schedule[randomDay][randomShift] = currentShift.toArray(new Employee[0]);
+                                totalShiftsAssigned.put(employee, totalShiftsAssigned.get(employee) + 1);
+                                assignedShifts++;
+                            }
+                        }                                         
                     }
                 }
             }
@@ -147,12 +182,9 @@ public class ShiftScheduler {
         shifts.add(new Shift("08:00", "16:00")); // 8 hours
         shifts.add(new Shift("16:00", "00:00")); // 8 hours
 
-        int numDays = 30;
-        boolean useWorkHours = false;
-        boolean multiEmpOneShift = false;
-
         // Generate the schedule
-        Employee[][][] employeeSchedule = generateSchedule(employees, shifts, numDays, useWorkHours, multiEmpOneShift);
+        int numDays = 30;
+        Employee[][][] employeeSchedule = generateSchedule(employees, shifts, numDays, true, true, false);
 
         // Convert the schedule to int[][][] with employee IDs
         int[][][] schedule = new int[numDays][shifts.size()][];
@@ -185,10 +217,7 @@ public class ShiftScheduler {
             }
         }
 
-        // Print total shift counts for each employee
         System.out.println("Shift counts: " + getShiftCountsOfEmployees(schedule));
-
-        // Print total work hours for each employee
         System.out.println("Work hours: " + getWorkHoursOfEmployees(schedule, shifts, numDays));
     }
 }
