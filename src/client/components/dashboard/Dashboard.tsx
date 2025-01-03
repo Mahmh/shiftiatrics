@@ -1,4 +1,4 @@
-import Sidebar from './_Sidebar'
+import Sidebar, { MenuButton } from './_Sidebar'
 import Content from './_Content'
 import Modal from './_Modal'
 
@@ -8,6 +8,7 @@ export default function Dashboard() {
             <Sidebar/>
             <Content/>
             <Modal/>
+            <MenuButton/>
         </>
     )
 }

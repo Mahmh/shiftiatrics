@@ -32,6 +32,15 @@ input {
     margin-left: 240px;
     transition: background-color 250ms ease;
 
+    @include breakpoint(950px) {
+        & { margin-left: 0 }
+        header { left: 0 !important }
+        #sidebar {
+            display: block;
+            width: 100%;
+        }
+    }
+
     header {
         @include vertical-flex;
         position: fixed;
@@ -40,8 +49,8 @@ input {
 
         #header-upper {
             @include themed-bgcolor('primary-blue-hover');
+            @include breakpoint(1100px) { flex-direction: column }
             display: flex;
-            height: 50px;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
@@ -98,4 +107,18 @@ input {
         padding: 20px;
         padding-top: 90px;
     }
+}
+
+#dashboard-menu-btn {
+    @include circle(70px);
+    @include compressible;
+    @include themed-bgcolor('primary-blue-hover');
+    @include breakpoint(950px) { display: flex }
+    display: none;
+    position: fixed;
+    z-index: 10;
+    bottom: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    box-shadow: $main-box-shadow;
 }

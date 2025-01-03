@@ -2,6 +2,7 @@ import { useCallback, useContext, useState, useMemo } from 'react'
 import { DashboardContext, nullAccount } from '@context'
 import { Choice, Switch, Dropdown, Request, MIN_YEAR, MAX_YEAR } from '@utils'
 import type { WeekendDays } from '@types'
+import Sidebar from '../_Sidebar'
 
 const Account = () => {
     const { account, setAccount, employees, shifts, schedules, openModal, closeModal, setModalContent } = useContext(DashboardContext)
@@ -267,6 +268,7 @@ const PreferencesAndFunctionality = () => {
 
 export default function Settings() {
     return <>
+        <Sidebar/>
         <Account/>
         <PreferencesAndFunctionality/>
     </>

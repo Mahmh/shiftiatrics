@@ -1,4 +1,6 @@
 #schedules-content {
+    @include themed-bgcolor('background');
+    @include breakpoint(950px) { margin-left: 0 }
     padding: 0;
     margin-top: 0;
     margin-left: 240px;
@@ -30,17 +32,31 @@
 
     .card-container {
         @include themed-bgcolor('background');
+        @include breakpoint(2500px) { margin-left: 130px }
+        @include breakpoint(2000px) { margin-left: 70px }
+        @include breakpoint(1822px) { margin-left: 50px }
+        @include breakpoint(1100px) { padding-top: 130px }
+        @include breakpoint(950px) { margin: 0; justify-content: center }
         flex-direction: row;
         flex-wrap: wrap;
-        padding: 70px 15px 60px 30px;
+        margin: 0 auto;
+        margin-left: 50px;
+        padding-top: 70px;
+        padding-bottom: 40px;
+        align-items: stretch;
 
         .day-card {
             @include vertical-flex;
+            @include minmax-width(12vw);
+            @include breakpoint(1700px) { @include minmax-width(20vw) }
+            @include breakpoint(1330px) { @include minmax-width(25vw) }
+            @include breakpoint(1100px) { @include minmax-width(53vw) }
+            @include breakpoint(950px) { @include minmax-width(70vw) }
             align-items: center;
             padding: 5px 20px;
-            margin-bottom: 10px;
             border-radius: 10px;
-            min-width: 10vw;
+            flex: 1;
+            margin: 5px;
 
             h3 {
                 @include themed-color('primary-text', 'light-gray');
@@ -51,6 +67,7 @@
             }
 
             table {
+                height: 100%;
                 width: 100%;
                 border-collapse: collapse;
                 font-size: 18px;

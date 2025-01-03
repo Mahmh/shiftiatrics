@@ -1,5 +1,7 @@
 $color-palette: (
+    // Default theme
     'background': #f8f9fa,
+    'transparent-menu': #4a91e2f7,
     'primary-text': #343a40,
     'primary-blue': #4a90e2,
     'primary-blue-hover': #357abd,
@@ -15,8 +17,9 @@ $color-palette: (
     'alpha-black-0': #00000053,
     'alpha-black-1': #0000002d,
     'alpha-black-2':#00000016,
-
+    // Dark theme
     'dt.background': #111d28,
+    'dt.transparent-menu': #1f5489f4,
     'dt.primary-text': #f8f9fa,
     'dt.primary-blue': #1f5489,
     'dt.primary-blue-hover': #163c62,
@@ -107,4 +110,13 @@ $main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
 @mixin compressible($min-scale: .93) {
     transition: background-color .2s ease, scale 150ms ease;
     &:active { scale: $min-scale }
+}
+
+@mixin minmax-width($width) {
+    min-width: $width;
+    max-width: $width;
+}
+
+@mixin breakpoint($max-width) {
+    @media (max-width: $max-width) { @content }
 }

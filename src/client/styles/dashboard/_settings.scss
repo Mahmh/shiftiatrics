@@ -1,5 +1,6 @@
 #settings-content {
     @include vertical-flex;
+    @include themed-bgcolor('background');
     padding: 25px;
     gap: 35px;
 
@@ -67,6 +68,7 @@
         }
 
         .switch-div {
+            @include breakpoint(725px) { flex-direction: column }
             display: flex;
             justify-content: space-between;
             &, label { cursor: pointer }
@@ -106,6 +108,7 @@
 
 
 .dropdown-container {
+    @include breakpoint(725px) { flex-direction: column }
     display: flex;
     justify-content: space-between;
     position: relative;

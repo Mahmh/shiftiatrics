@@ -1,11 +1,13 @@
 #sidebar {
     @include vertical-flex;
     @include themed-bgcolor('primary-blue');
+    @include breakpoint(950px) { @include themed-bgcolor('transparent-menu'); display: none }
     position: fixed;
     top: 0;
     left: 0;
     width: 240px;
     height: 100vh;
+    z-index: 10;
     justify-content: space-between;
 
     #sidebar-upper, #sidebar-lower { @include vertical-flex }
@@ -26,13 +28,3 @@
         img { margin-right: 7px }
     }
 }
-
-
-// #sidebar.dark-theme {
-//     background-color: get-color('primary-blue', true);
-
-//     button {
-//         &:hover { background-color: get-color('primary-blue-hover', true) }
-//         &.active-content-btn { background-color: get-color('alpha-white') }
-//     }
-// }

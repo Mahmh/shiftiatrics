@@ -2,6 +2,7 @@ import { useContext, useState } from 'react'
 import { DashboardContext } from '@context'
 import { Employee } from '@types'
 import { Icon, Request, Choice, MAX_WORK_HOURS } from '@utils'
+import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -143,7 +144,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
         }
 
         setModalContent(<>
-            <h2>Remove Employee &quot{name}&quot?</h2>
+            <h2>Remove Employee {'"' + name + '"'}?</h2>
             <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
         openModal()
@@ -283,6 +284,7 @@ export default function Employees() {
     }
 
     return <>
+        <Sidebar/>
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>

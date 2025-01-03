@@ -34,6 +34,10 @@ export const DashboardContext = createContext<ContextProps>({
     setSettings: () => {},
     darkThemeClassName: '',
 
+    screenWidth: 0,
+    isMenuShown: false,
+    setIsMenuShown: () => {},
+
     isModalOpen: false,
     setIsModalOpen: () => {},
     modalContent: null,
@@ -52,8 +56,9 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
     const [settings, setSettings] = useState(nullSettings)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalContent, setModalContent] = useState<ReactNode>(null)
+    const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0)
+    const [isMenuShown, setIsMenuShown] = useState(screenWidth > 950)
     const darkThemeClassName = useMemo(() => settings.darkThemeEnabled ? 'dark-theme' : '', [settings.darkThemeEnabled])
-
     const openModal = useCallback(() => setIsModalOpen(true), [])
     const closeModal = useCallback(() => setIsModalOpen(false), [])
 
@@ -121,7 +126,6 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         }).get()
     }, [account.id])
 
-
     const loadSchedules = useCallback(async (employees: Employee[]) => {
         type Response = { account_id: Account['id'], schedule_id: Schedule['id'], month: number, year: number, schedule: ScheduleOfIDs }[];
         await new Request(`accounts/${account.id}/schedules`, (data: Response) => {
@@ -159,7 +163,6 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         }).get();
     }, [account.id, schedulesValidity, validateEmployeeById, setScheduleValidity])
 
-
     const loadSettings = useCallback(async () => {
         type Response = { detail: null } | {
             dark_theme_enabled: boolean,
@@ -196,7 +199,6 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [account])
 
-
     useEffect(() => {
         const regenerateSchedules = async () => {
             if (isLoggedIn(account) && employees.length > 0) await loadSchedules(employees)
@@ -205,13 +207,21 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [employees, shifts, account])
 
-
     useEffect(() => {
-        if (darkThemeClassName) {
-            document.body.classList.add('dark-theme');
-            return () => { document.body.classList.remove('dark-theme') };
+        if (!darkThemeClassName) return
+        document.documentElement.classList.add('dark-theme')
+        return () => { document.documentElement.classList.remove('dark-theme') }
+    }, [darkThemeClassName])
+    
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        const handleResize = () => {
+            setScreenWidth(window.innerWidth)
+            setIsMenuShown(window.innerWidth > 950)
         }
-      }, [darkThemeClassName])
+        window.addEventListener('resize', handleResize)
+        return () => { window.removeEventListener('resize', handleResize) }
+    }, [])
 
     return (
         <DashboardContext.Provider value={{
@@ -223,7 +233,8 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
             modalContent, setModalContent,
             openModal, closeModal,
             schedules, setSchedules, loadSchedules, setScheduleValidity, getScheduleValidity,
-            settings, setSettings, darkThemeClassName
+            settings, setSettings, darkThemeClassName,
+            screenWidth, isMenuShown, setIsMenuShown
         }}>{children}</DashboardContext.Provider>
     )
 }

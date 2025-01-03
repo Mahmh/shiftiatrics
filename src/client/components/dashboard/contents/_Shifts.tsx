@@ -2,6 +2,7 @@ import { useContext, useState } from 'react'
 import { DashboardContext } from '@context'
 import { Shift } from '@types'
 import { Icon, Request, Choice, formatTimeToAMPM } from '@utils'
+import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -190,6 +191,7 @@ export default function Shifts() {
     }
 
     return <>
+        <Sidebar/>
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>

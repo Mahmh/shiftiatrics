@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { DashboardContext } from '@context'
 import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, MIN_YEAR, MAX_YEAR } from '@utils'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
+import Sidebar from '../_Sidebar'
 import closeIcon from '@icons/close.png'
 import prevIcon from '@icons/prev.png'
 import nextIcon from '@icons/next.png'
@@ -312,6 +313,7 @@ export default function Schedules() {
     }, [selectedMonth, selectedYear])
 
     return <>
+        <Sidebar/>
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>

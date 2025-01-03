@@ -39,6 +39,10 @@ export interface ContextProps {
     setSettings: SetState<Settings>
     darkThemeClassName: string
 
+    screenWidth: number
+    isMenuShown: boolean
+    setIsMenuShown: SetState<boolean>
+
     isModalOpen: boolean
     setIsModalOpen: SetState<boolean>
     modalContent: ReactNode
