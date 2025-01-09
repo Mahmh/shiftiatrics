@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from src.server.main import app
 # Init
 client = TestClient(app)
-CRED = {'username': 'testuser', 'password': 'testpass'}
+CRED = {'username': 'testuser2', 'password': 'testpass'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
 delete_account = lambda cred: client.request('DELETE', '/accounts', json=cred)
 
@@ -11,7 +11,7 @@ SCHEDULE_DATA = {'schedule': [[[1, 2], [3, 4]]], 'month': 11, 'year': 2024}
 create_schedule = lambda account_id, schedule_data: client.post(f'/accounts/{account_id}/schedules', json=schedule_data)
 delete_schedule = lambda schedule_id: client.request('DELETE', f'/schedules/{schedule_id}')
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
     # Setup: Create the account & schedule
     account_id = create_account(CRED).json()['account_id']

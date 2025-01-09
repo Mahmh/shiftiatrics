@@ -1,12 +1,11 @@
-from sqlalchemy import text
 import pytest
-from src.server.lib.db import Session, create_account, log_in_account, delete_account, update_account, get_all_accounts
+from src.server.lib.db import reset_serial_sequence, create_account, log_in_account, delete_account, update_account, get_all_accounts
 from src.server.lib.models import Credentials
 from src.server.lib.exceptions import UsernameTaken, InvalidCredentials, NonExistent
 
 CRED = Credentials(username='testuser', password='testpass')
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
     # Setup: Create the account
     try: create_account(CRED)
@@ -15,9 +14,7 @@ def setup_and_teardown():
     # Teardown: Delete the account & reset the account_id serial sequence
     try: delete_account(CRED)
     except NonExistent: pass
-    with Session() as session:
-        session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
-        session.commit()
+    reset_serial_sequence()
 
 
 # Tests

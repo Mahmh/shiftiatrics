@@ -49,7 +49,7 @@ def setup_and_teardown():
 def test_generate_schedule(setup_and_teardown):
     account_id = setup_and_teardown
     num_days = 10
-    response = client.get(f'/engine/generate_schedule?account_id={account_id}&num_days={num_days}')
+    response = client.get(f'/engine/generate_schedule?account_id={account_id}&num_days={num_days}&year={SCHEDULE_DATA["year"]}&month={SCHEDULE_DATA["month"]+1}')
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 

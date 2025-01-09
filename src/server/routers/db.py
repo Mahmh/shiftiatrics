@@ -1,16 +1,17 @@
 from typing import Literal
 from functools import wraps
 from fastapi import APIRouter
-from src.server.lib.models import Credentials, EmployeeInfo, ShiftInfo, ScheduleInfo
+from src.server.lib.models import Credentials, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
 from src.server.lib.utils import todict, todicts
 from src.server.lib.db import (
-    Account, Employee, Shift, Schedule, Settings,
+    Account, Employee, Shift, Schedule, Holiday, Settings,
     get_all_accounts, log_in_account, create_account, update_account, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours,
-    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days
+    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days,
+    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday
 )
 
 # Init
@@ -18,6 +19,7 @@ account_router = APIRouter()
 employee_router = APIRouter()
 shift_router = APIRouter()
 schedule_router = APIRouter()
+holiday_router = APIRouter()
 settings_router = APIRouter()
 
 def endpoint(func):
@@ -25,7 +27,7 @@ def endpoint(func):
     def wrapper(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
-            if type(result) in (Account, Employee, Shift, Schedule, Settings):
+            if type(result) in (Account, Employee, Shift, Schedule, Holiday, Settings):
                 return todict(result)
             elif type(result) is list:
                 try: return todicts(result)
@@ -147,7 +149,33 @@ def delete_existing_schedule(schedule_id: int) -> dict:
     return {'detail': 'Schedule deleted successfully'}
 
 
-## Setting
+## Holiday
+@holiday_router.get('/accounts/{account_id}/holidays')
+@endpoint
+def read_holidays(account_id: int) -> list[dict] | dict:
+    return get_all_holidays_of_account(account_id=account_id)
+
+
+@holiday_router.post('/accounts/{account_id}/holidays')
+@endpoint
+def create_new_holiday(account_id: int, info: HolidayInfo) -> dict:
+    return create_holiday(account_id=account_id, holiday_name=info.holiday_name, assigned_to=info.assigned_to, start_date=info.start_date, end_date=info.end_date)
+
+
+@holiday_router.patch('/holidays/{holiday_id}')
+@endpoint
+def update_existing_holiday(holiday_id: int, updates: dict) -> dict:
+    return update_holiday(holiday_id=holiday_id, updates=updates)
+
+
+@holiday_router.delete('/holidays/{holiday_id}')
+@endpoint
+def delete_existing_holiday(holiday_id: int) -> dict:
+    delete_holiday(holiday_id=holiday_id)
+    return {'detail': 'Holiday deleted successfully'}
+
+
+## Settings
 @settings_router.get('/accounts/{account_id}/settings')
 @endpoint
 def read_settings(account_id: int) -> dict:

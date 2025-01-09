@@ -12,7 +12,7 @@ SHIFT = {'shift_name': 'Morning Shift', 'start_time': '08:00', 'end_time': '16:0
 create_shift = lambda account_id, shift: client.post(f'/accounts/{account_id}/shifts', json=shift)
 delete_shift = lambda shift_id: client.request('DELETE', f'/shifts/{shift_id}')
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
     # Setup: Create the account & shift
     account_id = create_account(CRED).json()['account_id']

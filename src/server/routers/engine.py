@@ -1,10 +1,16 @@
 from functools import wraps
 from fastapi import APIRouter
 from jpype import java, JArray, JInt, JString
-from src.server.lib.db import get_all_employees_of_account, get_all_shifts_of_account, get_settings_of_account, get_all_schedules_of_account
+from src.server.engine import Engine
 from src.server.lib.utils import err_log, log
 from src.server.lib.models import ScheduleType
-from src.server.engine import Engine
+from src.server.lib.db import (
+    get_all_employees_of_account,
+    get_all_shifts_of_account,
+    get_settings_of_account,
+    get_all_schedules_of_account,
+    get_all_holidays_of_account
+)
 
 # Init
 engine_router = APIRouter()
@@ -23,12 +29,15 @@ def endpoint(func):
 # Endpoints
 @engine_router.get('/engine/generate_schedule')
 @endpoint
-def generate_schedule(account_id: int, num_days: int) -> ScheduleType | dict[str, str]:
+def generate_schedule(account_id: int, num_days: int, year: int, month: int) -> ScheduleType | dict[str, str]:
+    # month is in range [0, 11]
     employees = get_all_employees_of_account(account_id)
     shifts = get_all_shifts_of_account(account_id)
-    settings = get_settings_of_account(account_id)
-    if not employees or not shifts: raise ValueError("No employees or shifts found for the account.")
+    holidays = get_all_holidays_of_account(account_id)
+    if not employees: raise ValueError('No employees registered by the account.')
+    if not shifts: raise ValueError('No shifts registered by the account.')
 
+    settings = get_settings_of_account(account_id)
     if settings is None:
         min_max_work_hours_enabled = False
         multi_emps_in_shift_enabled = False
@@ -40,37 +49,47 @@ def generate_schedule(account_id: int, num_days: int) -> ScheduleType | dict[str
 
     engine = Engine()
 
-    # Create a list of Employee objects
+    # Create a list of Employee objects & convert it to Java ArrayList
     employee_list = [
         engine.Employee(e.employee_id, JString(e.employee_name), e.min_work_hours, e.max_work_hours)
         if e.min_work_hours and e.max_work_hours
         else engine.Employee(e.employee_id, JString(e.employee_name))
         for e in employees
     ]
-
-    # Convert Python list to Java ArrayList
     java_employee_list = java.util.ArrayList()
-    for employee in employee_list:
-        java_employee_list.add(employee)
+    for employee in employee_list: java_employee_list.add(employee)
 
-    # Create a list of Shift objects, converting time to string format
+
+    # Create a list of Shift objects, converting time to string format & convert it to Java ArrayList
     shift_list = [
         engine.Shift(shift.start_time.strftime("%H:%M"), shift.end_time.strftime("%H:%M"))
         for shift in shifts
     ]
-
-    # Convert Python list to Java ArrayList
     java_shift_list = java.util.ArrayList()
-    for shift in shift_list:
-        java_shift_list.add(shift)
+    for shift in shift_list: java_shift_list.add(shift)
 
-    # Generate the schedule using the Java Engine
+
+    # Same for Holidays
+    holiday_list = [
+        engine.Holiday(
+            JString(holiday.holiday_name),
+            java.util.ArrayList([JInt(emp_id) for emp_id in holiday.assigned_to]),
+            JString(holiday.start_date.strftime("%Y-%m-%d")),
+            JString(holiday.end_date.strftime("%Y-%m-%d"))
+        )
+        for holiday in holidays
+    ]
+    java_holiday_list = java.util.ArrayList()
+    for holiday in holiday_list: java_holiday_list.add(holiday)
+
+
+    # Generate the schedule using the Java Engine & convert the Java 3D array into a Python-native structure
     raw_schedule = engine.ShiftScheduler.generateSchedule(
-        java_employee_list, java_shift_list, num_days,
+        java_employee_list, java_shift_list, java_holiday_list,
+        num_days, year, month,
         min_max_work_hours_enabled, multi_emps_in_shift_enabled, multi_shifts_one_emp_enabled
     )
 
-    # Convert the Java 3D array into a Python-native structure
     schedule = []
     for day_schedule in raw_schedule:
         daily_shifts = []
@@ -127,16 +146,18 @@ def get_work_hours_of_employees(account_id: int, year: int, month: int) -> dict[
     shifts_java = java.util.ArrayList()
     for shift in shifts: shifts_java.add(shift)
     log(f"shifts_java: {list(shifts_java)}", 'engine', 'DEBUG')
+
     # Convert schedule_data to a Java-compatible int[][][] array
     num_days = len(schedule)
-
     schedule_java = JArray(JArray(JArray(JInt)))(
         [[[JInt(emp_id) for emp_id in shift] for shift in day] for day in schedule]
     )
     log(f"schedule_java: {list(schedule_java)}", 'engine', 'DEBUG')
+
     # Calculate work hours using the Java method
     work_hours_java = engine.ShiftScheduler.getWorkHoursOfEmployees(schedule_java, shifts_java, num_days)
     log(f"work_hours_java: {work_hours_java}", 'engine', 'DEBUG')
+
     # Convert the resulting Java HashMap to a Python dictionary
     work_hours = {int(entry.getKey()): int(entry.getValue()) for entry in work_hours_java.entrySet()}
     log(f"work_hours: {work_hours}", 'engine', 'DEBUG')

@@ -1,14 +1,14 @@
 import Sidebar, { MenuButton } from './_Sidebar'
 import Content from './_Content'
 import Modal from './_Modal'
+import LoadingScreen from '../_LoadingScreen'
 
 export default function Dashboard() {
-    return (
-        <>
-            <Sidebar/>
-            <Content/>
-            <Modal/>
-            <MenuButton/>
-        </>
-    )
+    return <>
+        <LoadingScreen/>
+        <Sidebar/>
+        <Content/>
+        <Modal/>
+        <MenuButton/>
+    </>
 }

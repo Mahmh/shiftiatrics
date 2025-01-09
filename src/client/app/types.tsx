@@ -5,7 +5,7 @@ type SetState<T> = Dispatch<SetStateAction<T>>
 export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December'
 export type WeekendDays =  'Saturday & Sunday' | 'Friday & Saturday' | 'Sunday & Monday'
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
-export type ContentName = 'schedules' | 'employees' | 'shifts' | 'settings' | 'support'
+export type ContentName = 'schedules' | 'employees' | 'shifts' | 'holidays' | 'settings' | 'support'
 export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][][]
 export type YearToSchedules = Map<number, Schedule[]>
@@ -31,9 +31,12 @@ export interface ContextProps {
 
     schedules: YearToSchedules,
     setSchedules: SetState<YearToSchedules>
-    loadSchedules: (employees: Employee[]) => Promise<void>
     setScheduleValidity: (validity: boolean, year: number, month: number) => void
     getScheduleValidity: (year: number, month: number) => boolean | undefined
+
+    holidays: Holiday[]
+    setHolidays: SetState<Holiday[]>
+    loadHolidays: () => void
 
     settings: Settings
     setSettings: SetState<Settings>
@@ -76,6 +79,14 @@ export interface Shift {
 export interface Schedule {
     id: number
     schedule: Employee[][][]
+}
+
+export interface Holiday {
+    id: number
+    name: string
+    assignedTo: number[]
+    startDate: string
+    endDate: string
 }
 
 export interface Settings {

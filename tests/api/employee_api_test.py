@@ -9,10 +9,10 @@ create_account = lambda cred: client.post('/accounts/signup', json=cred)
 delete_account = lambda cred: client.request('DELETE', '/accounts', json=cred)
 
 EMPLOYEE = {'employee_name': 'John Doe'}
-create_employee = lambda account_id, employee: client.post(f'/accounts/{account_id}/employees', json=(employee))
+create_employee = lambda account_id, employee: client.post(f'/accounts/{account_id}/employees', json=employee)
 delete_employee = lambda employee_id: client.request('DELETE', f'/employees/{employee_id}')
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
     # Setup: Create the account & employee
     account_id = create_account(CRED).json()['account_id']

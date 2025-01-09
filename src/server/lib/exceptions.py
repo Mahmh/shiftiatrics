@@ -15,7 +15,7 @@ class InvalidCredentials(Exception):
 
 class NonExistent(Exception):
     """Exception for non-existent entities."""
-    def __init__(self, entity: Literal['account', 'employee', 'shift', 'schedule', 'setting'], identifier: str|int):
+    def __init__(self, entity: Literal['account', 'employee', 'shift', 'schedule', 'holiday', 'setting'], identifier: str|int):
         self.entity = entity
         msg = ''
         if type(identifier) is int: msg = f'{entity.title()} with ID "{identifier}" does not exist.'

@@ -1,10 +1,12 @@
 @import './modules';
 @import './globals';
 @import './dashboard/employees';
+@import './dashboard/shifts';
+@import './dashboard/holidays';
 @import './dashboard/support';
 @import './dashboard/schedules';
 @import './dashboard/settings';
-@import './dashboard/shifts';
 @import './dashboard/sidebar';
 @import './dashboard/modal';
 @import './landing_page/header';
+@import './landing_page/banner';

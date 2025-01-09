@@ -1,6 +1,5 @@
-from sqlalchemy import text
 import pytest
-from src.server.lib.db import Session, create_account, delete_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
+from src.server.lib.db import reset_serial_sequence, create_account, delete_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
 from src.server.lib.models import Credentials
 from src.server.lib.exceptions import UsernameTaken, NonExistent
 from src.server.lib.utils import parse_time
@@ -10,7 +9,7 @@ SHIFT_ID = 1
 CRED = Credentials(username='testuser', password='testpass')
 SHIFT_DETAILS = {'shift_name': 'Morning Shift', 'start_time': '08:00', 'end_time': '16:00'}
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
     # Setup: Create a shift
     try:
@@ -23,10 +22,7 @@ def setup_and_teardown():
         delete_account(CRED)
         delete_shift(SHIFT_ID)
     except NonExistent: pass
-    with Session() as session:
-        session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
-        session.execute(text('ALTER SEQUENCE shifts_shift_id_seq RESTART WITH 1;'))
-        session.commit()
+    reset_serial_sequence()
 
 
 # Tests

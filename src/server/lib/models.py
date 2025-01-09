@@ -21,3 +21,9 @@ class ScheduleInfo(BaseModel):
     schedule: ScheduleType
     month: int
     year: int
+
+class HolidayInfo(BaseModel):
+    holiday_name: str
+    assigned_to: list[int]
+    start_date: str
+    end_date: str

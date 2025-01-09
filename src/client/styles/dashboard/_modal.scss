@@ -1,13 +1,13 @@
 .backdrop {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, .6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
     z-index: 100;
     opacity: 0;
     pointer-events: none;
@@ -79,7 +79,20 @@
 
         .modal-input-sec {
             margin-bottom: 20px;
+
+            
         }
+
+        .checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px;
+            input[type='checkbox'] { scale: 1.4; margin: 0 7px }
+        }
+
+        
 
         button {
             @include themed-bgcolor('primary-blue', 'secondary-blue-hover');

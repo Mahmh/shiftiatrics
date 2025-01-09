@@ -1,0 +1,14 @@
+#lp-header {
+    position: absolute;
+    width: 100%;
+    background-color: transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+
+    h1, button {
+        background-color: transparent;
+        color: get-color('background');
+    }
+}

@@ -1,11 +1,11 @@
 from typing import Any, Optional
-from datetime import time
+from datetime import date, time
 from functools import wraps
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Time, Boolean
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import create_engine, text, Column, Integer, String, Boolean, ForeignKey, Date, Time
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY, array
 from sqlalchemy.orm import sessionmaker, declarative_base, Session as SessionType
 from src.server.lib.constants import ENGINE_URL, LIST_OF_WEEKEND_DAYS
-from src.server.lib.utils import log, err_log, parse_time
+from src.server.lib.utils import log, err_log, parse_date, parse_time
 from src.server.lib.models import Credentials, ScheduleType
 from src.server.lib.exceptions import UsernameTaken, NonExistent, InvalidCredentials
 
@@ -70,6 +70,16 @@ class Schedule(Base):
     year = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
 
+class Holiday(Base):
+    __tablename__ = 'holidays'
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
+    holiday_id = Column(Integer, primary_key=True, autoincrement=True)
+    holiday_name = Column(String(100), nullable=False)
+    assigned_to = Column(ARRAY(Integer, dimensions=1), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    __repr__ = lambda self: f'Holiday({self.holiday_id})'
+
 class Settings(Base):
     __tablename__ = 'settings'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False, primary_key=True)
@@ -113,7 +123,7 @@ def _check_employee(employee_id: int, *, session: SessionType) -> Employee:
 def _check_work_hours(min_work_hours: Optional[int] = None, max_work_hours: Optional[int] = None) -> tuple[Optional[int], Optional[int]]:
     """Checks & returns valid work hours."""
     if (not (min_work_hours and max_work_hours)) or (min_work_hours <= 0) or (max_work_hours <= 0): return None, None
-    assert (min_work_hours > 0) and (max_work_hours > 0)
+    assert (min_work_hours > 0) and (max_work_hours > 0), 'Invalid min & max work hours'
     return min_work_hours, max_work_hours
 
 
@@ -131,25 +141,46 @@ def _check_schedule(schedule_id: int, *, session: SessionType) -> Schedule:
     return schedule
 
 
+def _check_holiday(holiday_id: int, *, session: SessionType) -> Schedule:
+    """Returns an schedule if it exists using its ID."""
+    holiday = session.query(Holiday).filter_by(holiday_id=holiday_id).first()
+    if not holiday: raise NonExistent('holiday', holiday_id)
+    assert holiday.start_date <= holiday.end_date, 'Invalid start & end dates'
+    for emp_id in holiday.assigned_to: _check_employee(emp_id, session=session)
+    return holiday
+
+
 def _check_month_and_year(month: int, year: int) -> None:
     """Checks if a given month & year are valid."""
     assert 0 <= month <= 11, 'Invalid month'
     assert 1970 <= year <= 9999, 'Invalid year'
 
 
-def _get_default_settings_kwargs(account_id: int, enabled_setting: str, value: bool|str = True) -> dict:
+def _get_default_settings_kwargs(account_id: int, toggled_setting: str, value: bool|str = True) -> dict:
     """Returns initial settings."""
-    assert type(enabled_setting) is str, 'Invalid setting'
+    assert type(toggled_setting) is str, 'Invalid setting'
     kwargs = dict(
         account_id=account_id,
         dark_theme_enabled=False,
-        min_max_work_hours_enabled=False,
+        min_max_work_hours_enabled=True,
         multi_emps_in_shift_enabled=False,
         multi_shifts_one_emp_enabled=False,
         weekend_days=LIST_OF_WEEKEND_DAYS[0]
     )
-    kwargs[enabled_setting] = value
+    kwargs[toggled_setting] = value
     return kwargs
+
+
+# Other DB utils
+def reset_serial_sequence():
+    """Resets the DB auto-increment sequence of SERIAL columns"""
+    with Session() as session:
+        session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
+        session.execute(text('ALTER SEQUENCE employees_employee_id_seq RESTART WITH 1;'))
+        session.execute(text('ALTER SEQUENCE shifts_shift_id_seq RESTART WITH 1;'))
+        session.execute(text('ALTER SEQUENCE holidays_holiday_id_seq RESTART WITH 1;'))
+        session.execute(text('ALTER SEQUENCE schedules_schedule_id_seq RESTART WITH 1;'))
+        session.commit()
 
 
 # Functional
@@ -245,8 +276,12 @@ def update_employee(employee_id: int, updates: dict, *, session: SessionType) ->
 
 @dbsession(commit=True)
 def delete_employee(employee_id: int, *, session: SessionType) -> None:
-    """Deletes an employee by their ID."""
+    """Deletes an employee by their ID. It also removes their ID from any holiday assigned to them, and removes holidays that only contain that ID."""
     employee = _check_employee(employee_id, session=session)
+    holidays = session.query(Holiday).filter(Holiday.assigned_to.any(employee_id)).all()
+    for holiday in holidays:
+        holiday.assigned_to = array([id for id in holiday.assigned_to if id != employee_id])
+        if len(holiday.assigned_to) == 0: session.delete(holiday)
     session.delete(employee)
     log(f'Deleted employee: {employee}', 'db', 'INFO')
 
@@ -294,7 +329,6 @@ def delete_shift(shift_id: int, *, session: SessionType) -> None:
     log(f'Deleted shift: {shift}', 'db', 'INFO')
 
 
-
 ## Schedule
 @dbsession()
 def get_all_schedules_of_account(account_id: int, *, session: SessionType, **filter_kwargs) -> list[Schedule]:
@@ -336,6 +370,48 @@ def delete_schedule(schedule_id: int, *, session: SessionType) -> None:
     log(f'Deleted schedule: {schedule}', 'db', 'INFO')
 
 
+## Holiday
+@dbsession()
+def get_all_holidays_of_account(account_id: int, *, session: SessionType) -> list[Holiday]:
+    """Returns all holidays associated with the given account ID."""
+    _check_account(account_id, session=session)
+    return session.query(Holiday).filter_by(account_id=account_id).all()
+
+
+@dbsession(commit=True)
+def create_holiday(account_id: int, holiday_name: str, assigned_to: list[int], start_date: str|date, end_date: str|date, *, session: SessionType) -> Holiday:
+    """Creates a holiday for the given account ID."""
+    _check_account(account_id, session=session)
+    if type(start_date) is str: start_date = parse_date(start_date)
+    if type(end_date) is str: end_date = parse_date(end_date)
+    holiday = Holiday(account_id=account_id, holiday_name=holiday_name, assigned_to=assigned_to, start_date=start_date, end_date=end_date)
+    session.add(holiday)
+    log(f'Created holiday: {holiday}', 'db', 'INFO')
+    return holiday
+
+
+@dbsession(commit=True)
+def update_holiday(holiday_id: int, updates: dict[str, Any], *, session: SessionType) -> Holiday:
+    """Updates a holiday's attributes based on the given holiday ID and updates."""
+    holiday = _check_holiday(holiday_id, session=session)
+
+    ALLOWED_FIELDS = {'holiday_name', 'assigned_to', 'start_date', 'end_date'}
+    for key, value in updates.items():
+        if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        setattr(holiday, key, value)
+
+    log(f'Updated holiday: {holiday}, updates: {updates}', 'db', 'INFO')
+    return holiday
+
+
+@dbsession(commit=True)
+def delete_holiday(holiday_id: int, *, session: SessionType) -> None:
+    """Deletes a holiday by its ID."""
+    holiday = _check_holiday(holiday_id, session=session)
+    session.delete(holiday)
+    log(f'Deleted holiday: {holiday}', 'db', 'INFO')
+
+
 ## Settings
 @dbsession()
 def get_settings_of_account(account_id: int, *, session: SessionType) -> Settings | None:
@@ -362,7 +438,7 @@ def toggle_min_max_work_hours(account_id: int, *, session: SessionType) -> bool:
     _check_account(account_id, session=session)
     settings = session.query(Settings).filter_by(account_id=account_id).first()
     if settings is None:
-        settings = Settings(**_get_default_settings_kwargs(account_id, 'min_max_work_hours_enabled'))
+        settings = Settings(**_get_default_settings_kwargs(account_id, 'min_max_work_hours_enabled', False))
         session.add(settings)
     else:
         settings.min_max_work_hours_enabled = not settings.min_max_work_hours_enabled

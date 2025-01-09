@@ -7,7 +7,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
-    const { settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
+    const { settings, setModalContent, openModal, closeModal, loadEmployees, loadHolidays } = useContext(DashboardContext)
 
     /** Displays a modal for editing employee details */
     const openEditModal = () => {
@@ -139,12 +139,13 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
     /** Displays a modal for confirmation of employee deletion  */
     const openDeleteModal = () => {
         const confirmDelete = async () => {
-            await new Request(`employees/${id}`, () => loadEmployees()).delete()
+            await new Request(`employees/${id}`, () => { loadEmployees(); loadHolidays() }).delete()
             closeModal()
         }
 
         setModalContent(<>
-            <h2>Remove Employee {'"' + name + '"'}?</h2>
+            <h1>Remove Pediatrician &quot;{name}&quot;?</h1>
+            <p>This will remove the pediatrician and their name from any assigned holidays. Holidays that only include this pediatrician will also be deleted.</p>
             <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
         openModal()
@@ -233,12 +234,12 @@ export default function Employees() {
     
             return (
                 <>
-                    <h1>Add New Employee</h1>
+                    <h1>Add New Pediatrician</h1>
                     <section className='modal-input-sec'>
                         <label style={{ marginRight: 10 }}>Name: </label>
                         <input
                             type='text'
-                            placeholder='Employee name'
+                            placeholder='Pediatrician name'
                             value={tempName}
                             onChange={handleNameChange}
                             maxLength={40}
@@ -273,7 +274,7 @@ export default function Employees() {
                         disabled={isConfirmDisabled}
                         id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
                     >
-                        Add Employee
+                        Add Pediatrician
                     </button>
                 </>
             )
@@ -288,10 +289,10 @@ export default function Employees() {
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>
-                    <button onClick={openAddModal}>Add New Employee</button>
+                    <button onClick={openAddModal}>Add New Pediatrician</button>
                 </section>
             </section>
-            {employees.length === 0 && <p className='header-msg'>No employees registered.</p>}
+            {employees.length === 0 && <p className='header-msg'>No pediatrician registered.</p>}
         </header>
         {
             employees.length > 0 && 

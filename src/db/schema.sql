@@ -30,6 +30,15 @@ CREATE TABLE schedules (
     year INT NOT NULL
 );
 
+CREATE TABLE holidays (
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    holiday_id SERIAL PRIMARY KEY,
+    holiday_name VARCHAR(100) NOT NULL,
+    assigned_to INT[] NOT NULL,  -- Array of employee IDs
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL
+);
+
 CREATE TABLE settings (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     dark_theme_enabled BOOLEAN NOT NULL,

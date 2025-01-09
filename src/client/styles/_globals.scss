@@ -122,3 +122,44 @@ input {
     padding: 10px 20px;
     box-shadow: $main-box-shadow;
 }
+
+.loading-screen {
+    background-color: get-color('primary-blue-hover');
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+
+    &.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    &.closed {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .dot {
+        @include circle(15px);
+        background-color: get-color('background');
+        margin: 0 5px;
+        animation: dot-blink 1.4s infinite both;
+        &:nth-child(1) { animation-delay: 0s }
+        &:nth-child(2) { animation-delay: .2s }
+        &:nth-child(3) { animation-delay: .4s }
+
+        @keyframes dot-blink {
+            0%, 80%, 100% { opacity: 0 }
+            40% { opacity: 1 }
+        }
+    }
+}

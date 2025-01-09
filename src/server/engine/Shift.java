@@ -1,8 +1,11 @@
 package server.engine;
 
-/** Class for calculating length of shifts given 24-hour time */
+/** Class for employee shifts */
 public class Shift {
     private final int length;
+
+    /** @return The length of the shift in minutes. */
+    public final int getLength() { return length; }
 
     /**
      * Constructor to calculate the length of the shift in minutes.
@@ -38,7 +41,4 @@ public class Shift {
         int minutes = Integer.parseInt(parts[1]);
         return hours * 60 + minutes;
     }
-
-    /** @return The length of the shift in minutes. */
-    public final int getLength() { return length; }
 }

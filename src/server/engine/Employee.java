@@ -8,6 +8,13 @@ public class Employee {
     private final int minWorkHours;
     private final int maxWorkHours;
 
+    // Getters
+    public final int getId() { return id; }
+    public final String getName() { return name; }
+    public final int getMinWorkHours() { return minWorkHours; }
+    public final int getMaxWorkHours() { return maxWorkHours; }
+
+    // Constructors
     public Employee(int id, String name, int minWorkHours, int maxWorkHours) {
         this.id = id;
         this.name = name;
@@ -21,12 +28,6 @@ public class Employee {
         this.minWorkHours = -1;
         this.maxWorkHours = -1;
     }
-
-    // Getters
-    public final int getId() { return id; }
-    public final String getName() { return name; }
-    public final int getMinWorkHours() { return minWorkHours; }
-    public final int getMaxWorkHours() { return maxWorkHours; }
 
     // Overrides
     @Override

@@ -1,8 +1,8 @@
-#shifts-content {
+#holidays-content {
     display: flex;
     flex-direction: column;
 
-    .shift-card {
+    .holiday-card {
         @include themed-bgcolor('pale-blue', 'secondary-blue');
         display: flex;
         justify-content: space-between;
@@ -11,7 +11,7 @@
         border-radius: 20px;
         box-shadow: $main-box-shadow;
 
-        .shift-details {
+        .holiday-details {
             @include vertical-flex;
             padding-bottom: 10px;
         }

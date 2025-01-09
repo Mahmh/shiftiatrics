@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import date, time
 import logging, os
 from src.server.lib.constants import ENABLE_LOGGING, locate
 
@@ -35,6 +35,15 @@ def err_log(func_name: str, e: Exception, filename: str) -> None:
     """Log an exception to the specified file."""
     err_name = str(type(e)).split("'")[1]
     log(f"[{func_name}] {err_name}: {e}", filename, 'ERROR')
+
+
+def parse_date(date_str: str):
+    """Turns a string date to a `datetime.date` object (e.g, "2024-03-29" -> `date(2024, 3, 29)`)."""
+    try:
+        year, month, day = map(int, date_str.split('-'))
+        return date(year, month, day)
+    except ValueError:
+        raise ValueError(f'Invalid date format: "{date_str}". Expected format is "YYYY-MM-DD".')
 
 
 def parse_time(time_str: str) -> time:

@@ -88,7 +88,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
         }
 
         setModalContent(<>
-            <h2>Remove Shift &quot;{name}&quot;?</h2>
+            <h1>Remove Shift &quot;{name}&quot;?</h1>
             <Choice onYes={confirmDelete} onNo={closeModal}/>
         </>)
         openModal()

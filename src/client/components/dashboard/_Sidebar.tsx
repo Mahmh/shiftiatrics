@@ -6,6 +6,7 @@ import { Icon } from '@utils'
 import scheduleIcon from '@icons/schedule.png'
 import employeeIcon from '@icons/employee.png'
 import shiftIcon from '@icons/shift.png'
+import holidayIcon from '@icons/holiday.png'
 import settingsIcon from '@icons/settings.png'
 import menuIcon from '@icons/menu.png'
 import closeIcon from '@icons/white_close.png'
@@ -38,8 +39,9 @@ export default function Sidebar() {
         <nav id='sidebar' className={darkThemeClassName}>
             <section id='sidebar-upper'>
                 <SidebarButton name='Schedules' src={scheduleIcon}/>
-                <SidebarButton name='Employees' src={employeeIcon}/>
+                <SidebarButton name='Pediatricians' contentName='Employees' src={employeeIcon}/>
                 <SidebarButton name='Shifts per Day' contentName='Shifts' src={shiftIcon}/>
+                <SidebarButton name='Holidays' src={holidayIcon}/>
             </section>
             <section id='sidebar-lower'>
                 <SidebarButton name='Settings' src={settingsIcon}/>

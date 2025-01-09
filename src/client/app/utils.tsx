@@ -7,7 +7,7 @@ import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, Su
 // Constants
 export const MIN_YEAR = 2023
 export const MAX_YEAR = 2025
-export const MAX_WORK_HOURS = 240 // hours per week
+export const MAX_WORK_HOURS = 210 // hours per week
 
 
 /** Component for icons */
@@ -185,7 +185,7 @@ export class Request {
     private readonly data: object
     private readonly callbackFunc: (x:any)=>any
 
-    constructor(endpoint: string, callbackFunc: (x:any)=>any = x=>x, data: object = {}) {
+    public constructor(endpoint: string, callbackFunc: (x:any)=>any = x=>x, data: object = {}) {
         this.url = `http://localhost:8000/${endpoint}`
         this.data = data
         this.callbackFunc = callbackFunc
@@ -265,8 +265,8 @@ export class ScheduleExporter {
     private readonly year: number
     private readonly month: number
     private readonly weekendDays: WeekendDays
-    
-    constructor(scheduleToExport: Schedule['schedule'], shifts: Shift[], year: number, month: number, weekendDays: WeekendDays) {
+
+    public constructor(scheduleToExport: Schedule['schedule'], shifts: Shift[], year: number, month: number, weekendDays: WeekendDays) {
         this.scheduleToExport = scheduleToExport
         this.shifts = shifts
         this.year = year
@@ -278,12 +278,8 @@ export class ScheduleExporter {
     public async exportExcel(): Promise<void> {
         const workbook = new ExcelJS.Workbook()
         const worksheet = workbook.addWorksheet(`Schedule`)
-
-        // Get the number of days in the month
-        const daysInMonth = new Date(this.year, this.month + 1, 0).getDate()
-
-        // Define unique shift names
-        const uniqueShifts = [...new Set(this.shifts.map(shift => shift.name))]
+        const daysInMonth = new Date(this.year, this.month + 1, 0).getDate() // Get the number of days in the month
+        const uniqueShifts = [...new Set(this.shifts.map(shift => shift.name))] // Define unique shift names
 
         // Add a title row spanning all columns
         const monthNameOfSchedule = getMonthName(this.month)
@@ -390,7 +386,7 @@ export class ScheduleExporter {
             shiftHeaderCell.value = shift
             shiftHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' }
             shiftHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }
-            shiftHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } } // Light blue background
+            shiftHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'BFE4EE' } } // Light blue background
             shiftHeaderCell.border = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
@@ -408,7 +404,7 @@ export class ScheduleExporter {
         totalHeaderCell.value = "(Total)"
         totalHeaderCell.alignment = { vertical: 'middle', horizontal: 'center' }
         totalHeaderCell.font = { bold: true, color: { argb: 'FF000000' }, name: 'Calibri', size: 12 }
-        totalHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF93CDDD' } } // Light blue background
+        totalHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'BFE4EE' } } // Light blue background
         totalHeaderCell.border = {
             top: { style: 'thin' },
             left: { style: 'thin' },
@@ -481,7 +477,7 @@ export class ScheduleExporter {
                 shiftCountCell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: 'FF93CDDD' }, // Light blue for shift count columns
+                    fgColor: { argb: 'BFE4EE' }, // Light blue for shift count columns
                 }
                 shiftCountCell.border = {
                     top: { style: 'thin' },
@@ -499,7 +495,7 @@ export class ScheduleExporter {
             totalCell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: 'FF93CDDD' }, // Light blue for total column
+                fgColor: { argb: 'BFE4EE' }, // Light blue for total column
             }
             totalCell.border = {
                 top: { style: 'thin' },
@@ -528,7 +524,7 @@ export class ScheduleExporter {
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
         const link = document.createElement('a')
         link.href = URL.createObjectURL(blob)
-        link.download = `${monthNameOfSchedule.slice(0, 3)}_${this.year}_schedule.xlsx`
+        link.download = `${monthNameOfSchedule.slice(0, 3)}-${this.year}-Schedule.xlsx`
         link.click()
     }
 

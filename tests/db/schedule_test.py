@@ -1,6 +1,6 @@
 from sqlalchemy import text
 import pytest
-from src.server.lib.db import Session, create_account, delete_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
+from src.server.lib.db import reset_serial_sequence, create_account, delete_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
 from src.server.lib.models import Credentials
 from src.server.lib.exceptions import UsernameTaken, NonExistent
 
@@ -22,11 +22,7 @@ def setup_and_teardown():
     try: delete_schedule(schedule_id)
     except NonExistent: pass
     except UnboundLocalError: delete_schedule(1)
-
-    with Session() as session:
-        session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
-        session.execute(text('ALTER SEQUENCE schedules_schedule_id_seq RESTART WITH 1;'))
-        session.commit()
+    reset_serial_sequence()
 
 
 # Tests

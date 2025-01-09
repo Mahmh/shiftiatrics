@@ -20,7 +20,7 @@ With all of that information, I can design an effective system for automating sc
 - `tests` (Automated tests for the whole app)
 
 ### Client-Server Connection
-<img src='img/client_and_server.png' width=700>
+<img src='blueprints/client_and_server.png' width=700>
 
 ### Tech Stack
 - Frontend:

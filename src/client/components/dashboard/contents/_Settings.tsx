@@ -19,7 +19,7 @@ const Account = () => {
     }, [schedules])
 
     // Memoized account stats
-    const employeeCountText = useMemo(() => `${employees.length} employee${employees.length === 1 ? '' : 's'} registered`, [employees.length])
+    const employeeCountText = useMemo(() => `${employees.length} pediatrician${employees.length === 1 ? '' : 's'} registered`, [employees.length])
     const shiftCountText = useMemo(() => `${shifts.length} shift${shifts.length === 1 ? '' : 's'} per day`,[shifts.length])
     const scheduleCountText = useMemo(
         () => {
@@ -251,9 +251,9 @@ const PreferencesAndFunctionality = () => {
             <h3 className='settings-title'>Preferences & Functionality</h3>
             <div className='card-content'>
                 <Switch label='Dark theme' handleClick={toggleDarkTheme} enabled={settings.darkThemeEnabled}/>
-                <Switch label='Use minimum & maximum work hours for employees' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
-                <Switch label='Allow multiple employees to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
-                <Switch label='Allow employees to take multiple shifts in a day' handleClick={toggleMultiShiftsOneEmpEnabled} enabled={settings.multiShiftsOneEmpEnabled}/>
+                <Switch label='Use minimum & maximum work hours for pediatricians' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
+                <Switch label='Allow multiple pediatricians to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
+                <Switch label='Allow pediatricians to take multiple shifts in a day' handleClick={toggleMultiShiftsOneEmpEnabled} enabled={settings.multiShiftsOneEmpEnabled}/>
                 <Dropdown
                     label='Weekend days'
                     options={['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']}

@@ -1,11 +1,11 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
-import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays } from '@types'
+import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays } from '@types'
 import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth } from '@utils'
 
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: false, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday' }
+const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: true, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday' }
 export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
 export const DashboardContext = createContext<ContextProps>({
@@ -26,9 +26,12 @@ export const DashboardContext = createContext<ContextProps>({
 
     schedules: new Map(),
     setSchedules: () => {},
-    loadSchedules: async () => {},
     setScheduleValidity: () => {},
     getScheduleValidity: () => undefined,
+
+    holidays: [],
+    setHolidays: () => {},
+    loadHolidays: () => {},
 
     settings: nullSettings,
     setSettings: () => {},
@@ -52,6 +55,7 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
+    const [holidays, setHolidays] = useState<Holiday[]>([])
     const [schedulesValidity, setSchedulesValidity] = useState<YearToSchedulesValidity>(new Map())
     const [settings, setSettings] = useState(nullSettings)
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -163,6 +167,25 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         }).get();
     }, [account.id, schedulesValidity, validateEmployeeById, setScheduleValidity])
 
+    const loadHolidays = useCallback(async () => {
+        type Response = {
+            holiday_id: Holiday['id'],
+            holiday_name: Holiday['name'],
+            assigned_to: Holiday['assignedTo'],
+            start_date: Holiday['startDate'],
+            end_date: Holiday['endDate']
+        }[];
+        await new Request(`accounts/${account.id}/holidays`, (data: Response) => {
+            setHolidays(data.map(h => ({
+                id: h.holiday_id,
+                name: h.holiday_name,
+                assignedTo: h.assigned_to,
+                startDate: h.start_date,
+                endDate: h.end_date
+            })))
+        }).get()
+    }, [account.id])
+
     const loadSettings = useCallback(async () => {
         type Response = { detail: null } | {
             dark_theme_enabled: boolean,
@@ -192,6 +215,7 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
                 const loadedEmployees = await loadEmployees()
                 await loadShifts()
                 await loadSchedules(loadedEmployees)
+                await loadHolidays()
                 await loadSettings()
             }
         }
@@ -205,7 +229,7 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
         }
         regenerateSchedules()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [employees, shifts, account])
+    }, [account, employees, shifts, holidays])
 
     useEffect(() => {
         if (!darkThemeClassName) return
@@ -229,11 +253,12 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
             content, setContent,
             employees, setEmployees, loadEmployees, validateEmployeeById,
             shifts, setShifts, loadShifts,
+            schedules, setSchedules, setScheduleValidity, getScheduleValidity,
+            holidays, setHolidays, loadHolidays,
+            settings, setSettings, darkThemeClassName,
             isModalOpen, setIsModalOpen,
             modalContent, setModalContent,
             openModal, closeModal,
-            schedules, setSchedules, loadSchedules, setScheduleValidity, getScheduleValidity,
-            settings, setSettings, darkThemeClassName,
             screenWidth, isMenuShown, setIsMenuShown
         }}>{children}</DashboardContext.Provider>
     )

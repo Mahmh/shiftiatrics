@@ -86,8 +86,8 @@ export default function Schedules() {
             employees.length <= 0 ?
             <>
                 <h1>Invalid Input</h1>
-                <label>Please register employees first in the &quot;Employees&quot; section.</label>
-                <button onClick={() => { setContent('employees'); closeModal() }}>Register Employees</button>
+                <label>Please register employees first in the &quot;Pediatricians&quot; section.</label>
+                <button onClick={() => { setContent('employees'); closeModal() }}>Register Pediatricians</button>
             </>
             : shifts.length <= 0 ?
             <>
@@ -182,14 +182,22 @@ export default function Schedules() {
 
             return scheduleAvailable
             ? <>
-                <h2>Total Shifts and Work Hours per Employee This Month</h2>
+                <h2>Total Shifts and Work Hours per Pediatrician This Month</h2>
                 <section id='modal-content'>
-                    {!isLoading ? Array.from(shiftCounts.entries()).map(([emp, numShifts], i) => (
-                        <li key={i}>
-                            <b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts 
-                            ({workHours.get(emp) || 0} hours)
-                        </li>
-                    )) : <p>Loading...</p>}
+                    {!isLoading 
+                        ? shiftCounts.size > 0 
+                            ? Array.from(shiftCounts.entries()).map(([emp, numShifts], i) => (
+                                <li key={i}>
+                                    <b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts 
+                                    ({workHours.get(emp) || 0} hours)
+                                </li>
+                            )) 
+                            : <p>
+                                No pediatrician was assigned a shift in this month.
+                                Please ensure you have entered correct information, and then regenerate the schedule.
+                            </p>
+                        : <p>Loading...</p>
+                    }
                 </section>
             </>
             : <>
@@ -258,7 +266,7 @@ export default function Schedules() {
     
         // Send a request to generate a schedule
         await new Request(
-            `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}`,
+            `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}&year=${selectedYear}&month=${selectedMonth+1}`,
             (data: Employee['id'][][][]) => { newSchedule = data }
         ).get()
     
@@ -287,7 +295,7 @@ export default function Schedules() {
     
         // Send a request to regenerate the schedule
         await new Request(
-            `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}`,
+            `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}&year=${selectedYear}&month=${selectedMonth+1}`,
             (data: Employee['id'][][][]) => { newSchedule = data }
         ).get()
 
@@ -343,7 +351,7 @@ export default function Schedules() {
                       </p>
                     : !scheduleAvailable &&
                         <p className='header-msg'>
-                            {isLoading ? 'Generating...' : 'No schedule generated yet for this month. Click "Generate Schedule" to create one.'}
+                            {isLoading ? 'Generating...' : 'No schedule generated yet for this month. Click "Generate Schedule" to automatically generate one.'}
                         </p>
             }
         </header>
@@ -355,7 +363,7 @@ export default function Schedules() {
                         <h3>Day {dayI+1} <span className='weekday-name'>| {getWeekdayName(selectedYear, selectedMonth, dayI+1).slice(0, 3)}</span></h3>
                         <table>
                             <thead>
-                                <tr><th>Shift</th><th>Employee</th></tr>
+                                <tr><th>Shift</th><th>Pediatrician</th></tr>
                             </thead>
                             <tbody>
                                 {day.map((shift, shiftI) => (

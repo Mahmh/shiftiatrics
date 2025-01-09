@@ -8,7 +8,7 @@ CRED = {'username': 'testuser', 'password': 'testpass'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
 delete_account = lambda cred: client.request('DELETE', '/accounts', json=cred)
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
     # Setup: Create the account
     create_account(CRED)
