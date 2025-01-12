@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react'
-import { DashboardContext } from '@context'
+import { dashboardContext } from '@context'
 import { Icon, Request, Choice, getMonthName } from '@utils'
 import type { Holiday } from '@types'
 import Sidebar from '../_Sidebar'
@@ -7,7 +7,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
-    const { employees, holidays, setModalContent, openModal, closeModal, loadHolidays } = useContext(DashboardContext)
+    const { employees, holidays, setModalContent, openModal, closeModal, loadHolidays } = useContext(dashboardContext)
 
     const convertToUserFriendlyDate = (date: string) => {
         const [year, month, day] = date.split('-').map(Number)
@@ -156,7 +156,7 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
 }
 
 export default function Holidays() {
-    const { account, employees, holidays, setModalContent, openModal, closeModal, setContent, loadHolidays } = useContext(DashboardContext)
+    const { account, employees, holidays, setModalContent, openModal, closeModal, setContent, loadHolidays } = useContext(dashboardContext)
 
     const openAddModal = () => {
         const AddModalContent = () => {

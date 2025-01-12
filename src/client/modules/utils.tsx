@@ -2,7 +2,9 @@ import ExcelJS from 'exceljs'
 import ReactDOM from 'react-dom'
 import { useState, useEffect, useRef } from 'react'
 import Image, { StaticImageData } from 'next/image'
-import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays } from '@types'
+import Link from 'next/link'
+import routeIcon from '@icons/route.png'
+import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse } from '@types'
 
 // Constants
 export const MIN_YEAR = 2023
@@ -98,6 +100,20 @@ export const Dropdown = ({ label, options, onSelect, selected }: { label?: strin
 }
 
 
+/** Component for selecting a route in the UI */
+export const RouteCard = ({ href, h, p }: { href: string, h: string, p: string }) => (
+    <Link href={href} className='route-card'>
+        <section className='rc-text-sec'>
+            <h1>{h}</h1>
+            <p>{p}</p>
+        </section>
+        <section className='rc-img-sec'>
+            <Icon src={routeIcon} alt='Go To' size={35}/>
+        </section>
+    </Link>
+)
+
+
 /**
  * Checks if a user is logged in
  * @param account Account set in the context of the app
@@ -170,6 +186,27 @@ export const hasScheduleForMonth = (schedules: YearToSchedules, year: number, mo
 )
 
 
+/** @returns Sanitizes input credentials */
+export const sanitizeInput = (input: string) => {
+    const sanitized = input.replace(/[^\w\s]/gi, '')
+    return sanitized.trim()
+}
+
+
+/** @returns Validates input credentials */
+export const validateInput = (username: string, password: string): string | null => {
+    if (username.length < 3) return 'Username must be at least 3 characters long.'
+    if (password.length < 6) return 'Password must be at least 6 characters long.'
+    return null
+}
+
+
+/** @returns Stores a given account to local storage */
+export const storeAccountLocally = (account: Account) => {
+    localStorage.setItem('account', JSON.stringify(account))
+}
+
+
 /**
  * Class for making a GET, POST, PATCH, or DELETE request to the API server
  * ### Constructor
@@ -181,71 +218,84 @@ export const hasScheduleForMonth = (schedules: YearToSchedules, year: number, mo
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export class Request {
     //// Properties ////
-    private readonly url: string
-    private readonly data: object
-    private readonly callbackFunc: (x:any)=>any
+    private readonly endpointUrl: string
+    private readonly requestData: object
+    private readonly responseCallback: (x:any)=>any
 
-    public constructor(endpoint: string, callbackFunc: (x:any)=>any = x=>x, data: object = {}) {
-        this.url = `http://localhost:8000/${endpoint}`
-        this.data = data
-        this.callbackFunc = callbackFunc
-    }
-    
-    /**
-     * Makes `this.data` able to be sent to the API server
-     * @param method REST API Method
-     * @returns The appropriate payload for the method
-     */
-    private getPayload(method: string): object {
-        return {
-            method: method,
-            body: JSON.stringify(this.data),
-            headers: { 'Content-Type': 'application/json' }
-        }
+    public constructor(endpoint: string, responseCallback: (x: any) => any = (x) => x, requestData: object = {}) {
+        this.endpointUrl = `http://localhost:8000/${endpoint}`
+        this.requestData = requestData
+        this.responseCallback = responseCallback
     }
 
     /**
      * Performs a GET request
      * @returns The output of the inputted callback function
      */
-    public async get(): Promise<any> {
-        const response = await fetch(this.url)
+    public async get(): EndpointResponse {
+        const response = await fetch(this.endpointUrl)
+        this.checkStatus(response)
         const data = await response.json()
         if ('error' in data) console.error(data.error)
-        return this.callbackFunc(data)
-    }
-
-    /**
-     * Performs a POST request
-     * @returns The output of the inputted callback function
-     */
-    public async post(): Promise<any> {
-        const response = await fetch(this.url, this.getPayload('POST'))
-        const data = await response.json()
-        if ('error' in data) console.error(data.error)
-        return this.callbackFunc(data)
+        return this.responseCallback(data)
     }
 
     /**
      * Performs a PATCH request
      * @returns The output of the inputted callback function
      */
-    public async patch(): Promise<any> {
-        const response = await fetch(this.url, this.getPayload('PATCH'))
+    public async patch(): EndpointResponse {
+        const response = await fetch(this.endpointUrl, this.getPayload('PATCH'))
+        this.checkStatus(response)
         const data = await response.json()
         if ('error' in data) console.error(data.error)
-        return this.callbackFunc(data)
+        return this.responseCallback(data)
+    }
+
+    /**
+     * Performs a POST request
+     * @returns The output of the inputted callback function
+     */
+    public async post(): EndpointResponse {
+        const response = await fetch(this.endpointUrl, this.getPayload('POST'))
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+        const data = await response.json()
+        if ('error' in data) console.error(data.error)
+        return this.responseCallback(data)
     }
 
     /**
      * Performs a DELETE request
      * @returns The output of the inputted callback function
      */
-    public async delete(): Promise<any> {
-        const response = await fetch(this.url, this.getPayload('DELETE'))
+    public async delete(): EndpointResponse {
+        const response = await fetch(this.endpointUrl, this.getPayload('DELETE'))
+        this.checkStatus(response)
         const data = await response.json()
         if ('error' in data) console.error(data.error)
-        return this.callbackFunc(data)
+        return this.responseCallback(data)
+    }
+
+    /**
+     * Makes `this.requestData` able to be sent to the API server
+     * @param method REST API Method
+     * @returns The appropriate payload for the method
+     */
+    private getPayload(method: string): Record<string, string|object> {
+        const payload: Record<string, string|object> = {
+            method: method,
+            headers: { 'Content-Type': 'application/json' }
+        }
+        if (method !== 'GET') payload.body = JSON.stringify(this.requestData)
+        return payload
+    }
+
+    /**
+     * Throws an error for non-200 status code of a response
+     * @param response The given response
+     */
+    private checkStatus(response: Response): void {
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
     }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

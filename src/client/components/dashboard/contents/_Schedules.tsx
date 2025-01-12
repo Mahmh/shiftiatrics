@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { DashboardContext } from '@context'
+import { dashboardContext } from '@context'
 import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, MIN_YEAR, MAX_YEAR } from '@utils'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
 import Sidebar from '../_Sidebar'
@@ -12,7 +12,7 @@ export default function Schedules() {
         account, employees, validateEmployeeById, shifts, 
         schedules, setSchedules, setScheduleValidity, getScheduleValidity,
         setModalContent, openModal, closeModal, setContent, settings
-    } = useContext(DashboardContext)
+    } = useContext(dashboardContext)
     const [isLoading, setIsLoading] = useState(false)
     const today = new Date()
     const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth())

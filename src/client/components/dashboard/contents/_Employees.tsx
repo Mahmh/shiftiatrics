@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react'
-import { DashboardContext } from '@context'
+import { dashboardContext } from '@context'
 import { Employee } from '@types'
 import { Icon, Request, Choice, MAX_WORK_HOURS } from '@utils'
 import Sidebar from '../_Sidebar'
@@ -7,7 +7,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
-    const { settings, setModalContent, openModal, closeModal, loadEmployees, loadHolidays } = useContext(DashboardContext)
+    const { settings, setModalContent, openModal, closeModal, loadEmployees, loadHolidays } = useContext(dashboardContext)
 
     /** Displays a modal for editing employee details */
     const openEditModal = () => {
@@ -164,7 +164,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
 
 
 export default function Employees() {
-    const { account, employees, settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(DashboardContext)
+    const { account, employees, settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(dashboardContext)
 
     /** Displays a modal for adding an employee */
     const openAddModal = () => {

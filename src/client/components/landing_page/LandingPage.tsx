@@ -1,11 +1,14 @@
-import Header from './_Header'
-import Banner from './_Banner'
 import LoadingScreen from '../_LoadingScreen'
+import Banner from './_Banner'
+import Content from './_Content'
+import RegularPage from '../RegularPage'
 
 export default function LandingPage() {
     return <>
         <LoadingScreen/>
-        <Header/>
-        <Banner/>
+        <RegularPage transparentHeader={true}>
+            <Banner/>
+            <Content/>
+        </RegularPage>
     </>
 }

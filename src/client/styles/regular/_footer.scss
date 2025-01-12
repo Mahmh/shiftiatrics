@@ -1,0 +1,26 @@
+.lp-footer {
+    display: flex;
+    justify-content: space-evenly;
+    background-color: get-color('banner-blue-1', $lp: true);
+    padding: 50px;
+    margin-top: 40px;
+
+    section {
+        h1 {
+            color: get-color('background');
+            font-size: 1.5rem;
+            margin-bottom: 0;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            line-height: 1.5;
+        }
+    }
+
+    label { 
+        color: get-color('background'); 
+        font-style: italic; 
+    }
+}

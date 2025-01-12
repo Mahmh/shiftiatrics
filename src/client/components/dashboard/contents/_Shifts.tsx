@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react'
-import { DashboardContext } from '@context'
+import { dashboardContext } from '@context'
 import { Shift } from '@types'
 import { Icon, Request, Choice, formatTimeToAMPM } from '@utils'
 import Sidebar from '../_Sidebar'
@@ -7,7 +7,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
-    const { setModalContent, openModal, closeModal, loadShifts } = useContext(DashboardContext)
+    const { setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
 
     const openEditModal = () => {
         const EditModalContent = () => {
@@ -114,7 +114,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
 }
 
 export default function Shifts() {
-    const { account, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(DashboardContext)
+    const { account, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
 
     const openAddModal = () => {
         const AddModalContent = () => {

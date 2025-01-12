@@ -21,10 +21,12 @@
     "paths": {
       "@/*": ["./*"],
       "@icons/*": ["./public/icons/*"],
-      "@utils": ["./app/utils.tsx"],
-      "@types": ["./app/types.tsx"],
-      "@context": ["./app/context.tsx"],
-      "@img/*": ["./public/img/*"]
+      "@img/*": ["./public/img/*"],
+      "@utils": ["./modules/utils.tsx"],
+      "@types": ["./modules/types.tsx"],
+      "@context": ["./modules/context.tsx"],
+      "@styles": ["./styles/main.css"],
+      "@regpage": ["./components/RegularPage.tsx"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

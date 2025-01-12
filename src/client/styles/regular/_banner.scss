@@ -4,8 +4,8 @@
     gap: 200px;
     background: linear-gradient(
         to bottom right,
-        get-color('banner-blue-0'),
-        get-color('banner-blue-1')
+        get-color('banner-blue-0', $lp: true),
+        get-color('banner-blue-1', $lp: true)
     );
     width: 100%;
     height: 100vh;
@@ -22,12 +22,16 @@
         h1, p { color: get-color('background') }
         h1 { font-size: 4rem; margin: 0 }
 
-        button {
+        a {
+            display: block;
+            text-align: center;
             background-color: get-color('primary-blue');
             color: get-color('background');
             padding: 15px 10px;
             border-radius: 10px;
             width: 100%;
+            text-decoration: none;
+            &:hover { background-color: get-color('primary-blue-hover', $lp: true) }
         }
     }
 

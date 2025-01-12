@@ -1,0 +1,45 @@
+#lp-header {
+    background-color: transparent;
+    position: fixed;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+
+    h1 a {
+        color: get-color('background');
+        font-weight: 900;
+        font-size: 1.5rem;
+        margin-left: 60px;
+        text-decoration: none;
+    }
+
+    #header-links {
+        display: flex;
+        gap: 30px;
+
+        .active-navlink {
+            color: get-color('primary-blue');
+            text-decoration: none;
+            cursor: default;
+        }
+    }
+
+    #signup-btn {
+        @include compressible(.96);
+        background-color: get-color('primary-blue');
+        color: get-color('background');
+        padding: 10px 25px;
+        margin-right: 60px;
+        border-radius: 10px;
+        text-decoration: none;
+        &:hover { background-color: get-color('primary-blue-hover', $lp: true) }
+    }
+
+    &.bg-visible {
+        background-color: get-color('header', $lp: true);
+    }
+}

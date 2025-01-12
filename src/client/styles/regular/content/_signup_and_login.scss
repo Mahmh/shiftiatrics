@@ -1,0 +1,57 @@
+#signup-page, #login-page {
+    @include vertical-flex;
+    align-items: center;
+    width: 40%;
+    max-width: 650px;
+    padding: 50px 30px;
+    margin: 0 auto;
+    top: 170px !important;
+    border-radius: 10px;
+    box-shadow: $main-box-shadow;
+
+    section {
+        @include vertical-flex;
+        margin-bottom: 15px;
+        width: 450px;
+        max-width: 450px;
+
+        label {
+            @include themed-color('primary-text');
+            margin-bottom: 5px;
+        }
+
+        input {
+            @include themed-bgcolor('background');
+            @include themed-color('primary-text');
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid get-color('light-gray');
+        }
+    }
+
+    .error {
+        @include themed-color('primary-red');
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    .cred-submit-btn {
+        @include compressible(.96);
+        @include themed-bgcolor('primary-blue');
+        @include themed-color('background');
+        padding: 10px 40px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        &:hover { @include themed-bgcolor('primary-blue-hover') }
+    }
+
+    p {
+        @include themed-color('primary-text');
+        margin-bottom: 0;
+        a {
+            @include themed-color('primary-blue');
+            &:hover { text-decoration: underline }
+        }
+    }
+}

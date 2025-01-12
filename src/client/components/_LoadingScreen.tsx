@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from 'react'
-import { DashboardContext } from '@context'
+import { dashboardContext } from '@context'
 
 export default function LoadingScreen() {
-    const { account, employees, shifts, schedules, settings } = useContext(DashboardContext)
+    const { account, employees, shifts, schedules, settings } = useContext(dashboardContext)
     const [isShown, setIsShown] = useState(true)
 
     useEffect(() => {

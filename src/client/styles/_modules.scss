@@ -17,22 +17,29 @@ $color-palette: (
     'alpha-black-0': #00000053,
     'alpha-black-1': #0000002d,
     'alpha-black-2':#00000016,
-    'banner-blue-0': #1169d2,
-    'banner-blue-1': #050f18,
     // Dark theme
-    'dt.background': #111d28,
-    'dt.transparent-menu': #1f5489f4,
-    'dt.primary-text': #f8f9fa,
-    'dt.primary-blue': #1f5489,
-    'dt.primary-blue-hover': #163c62,
-    'dt.primary-red': #9d3838,
-    'dt.primary-red-hover': #7a2626,
-    'dt.secondary-blue': #2c659f,
-    'dt.secondary-blue-hover': #3d77b2,
-    'dt.gray': #5a6676,
-    'dt.dark-gray': #3f3f3fd1,
-    'dt.light-gray': #78889c,
-    'dt.alpha-white': #ffffffa9
+    'dt': (
+        'background': #111d28,
+        'transparent-menu': #1f5489f4,
+        'primary-text': #f8f9fa,
+        'primary-blue': #1f5489,
+        'primary-blue-hover': #163c62,
+        'primary-red': #9d3838,
+        'primary-red-hover': #7a2626,
+        'secondary-blue': #2c659f,
+        'secondary-blue-hover': #3d77b2,
+        'gray': #5a6676,
+        'dark-gray': #3f3f3fd1,
+        'light-gray': #78889c,
+        'alpha-white': #ffffffa9
+    ),
+    // Landing page & regular pages
+    'lp': (
+        'banner-blue-0': #1169d2,
+        'banner-blue-1': #050f18,
+        'primary-blue-hover': #3976bef5,
+        'header': #0a315cfa
+    )
 );
 $main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
 
@@ -59,11 +66,22 @@ $main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
     font-style: normal;
 }
 
+@font-face {
+    font-family: Lato;
+    src: url('../public/fonts/Lato-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+}
+
 
 // Functions & Mixins
-@function get-color($name, $dark-theme: false) {
-    @if $dark-theme {
-        @return map-get($color-palette, 'dt.#{$name}');
+@function get-color($name, $dt: false, $lp: false) {
+    @if $lp {
+        $lp-colors: map-get($color-palette, 'lp');
+        @return map-get($lp-colors, $name);
+    } @else if $dt {
+        $dt-colors: map-get($color-palette, 'dt');
+        @return map-get($dt-colors, $name);
     } @else {
         @return map-get($color-palette, $name);
     }

@@ -28,7 +28,13 @@ input {
     box-shadow: $main-box-shadow;
 }
 
-.content {
+a {
+    color: get-color('background');
+    text-decoration: none;
+    &:hover { text-decoration: underline }
+}
+
+.content { // Dashboard content
     margin-left: 240px;
     transition: background-color 250ms ease;
 

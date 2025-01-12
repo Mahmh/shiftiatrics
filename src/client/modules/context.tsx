@@ -1,14 +1,15 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
-import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays } from '@types'
-import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth } from '@utils'
+import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth, storeAccountLocally } from '@utils'
+import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren } from '@types'
 
+// Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
 const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: true, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday' }
 export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
-export const DashboardContext = createContext<ContextProps>({
+export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,
     setContent: () => {},
 
@@ -49,9 +50,13 @@ export const DashboardContext = createContext<ContextProps>({
     closeModal: () => {}
 })
 
-export function DashboardProvider({ children }: Readonly<{children: React.ReactNode}>) {
+export function DashboardProvider({ children }: ReadonlyChildren) {
     const [content, setContent] = useState<ContentName>(defaultContent)
-    const [account, setAccount] = useState<Account>(nullAccount)
+    const [account, setAccount] = useState<Account>(() => {
+        // Initialize account from localStorage, or use an empty object if not available
+        const storedAccount = localStorage.getItem('account')
+        return storedAccount ? JSON.parse(storedAccount) : {}
+    })
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
@@ -210,6 +215,7 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
     }, [account.id, setSettings])
 
     useEffect(() => {
+        storeAccountLocally(account)
         const fetchAllData = async () => {
             if (isLoggedIn(account)) {
                 const loadedEmployees = await loadEmployees()
@@ -248,7 +254,7 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
     }, [])
 
     return (
-        <DashboardContext.Provider value={{
+        <dashboardContext.Provider value={{
             account, setAccount,
             content, setContent,
             employees, setEmployees, loadEmployees, validateEmployeeById,
@@ -260,6 +266,6 @@ export function DashboardProvider({ children }: Readonly<{children: React.ReactN
             modalContent, setModalContent,
             openModal, closeModal,
             screenWidth, isMenuShown, setIsMenuShown
-        }}>{children}</DashboardContext.Provider>
+        }}>{children}</dashboardContext.Provider>
     )
 }

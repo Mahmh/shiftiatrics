@@ -1,5 +1,6 @@
 @import './modules';
 @import './globals';
+
 @import './dashboard/employees';
 @import './dashboard/shifts';
 @import './dashboard/holidays';
@@ -8,5 +9,10 @@
 @import './dashboard/settings';
 @import './dashboard/sidebar';
 @import './dashboard/modal';
-@import './landing_page/header';
-@import './landing_page/banner';
+
+@import './regular/header';
+@import './regular/banner';
+@import './regular/footer';
+@import './regular/content/lp_and_routes';
+@import './regular/content/signup_and_login';
+@import './regular/content/pricing';

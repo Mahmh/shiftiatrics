@@ -1,5 +1,5 @@
 import { ReactNode, useContext } from 'react'
-import { DashboardContext } from '@context'
+import { dashboardContext } from '@context'
 import { ContentName } from '@/app/types'
 import Employees from './contents/_Employees'
 import Shifts from './contents/_Shifts'
@@ -9,7 +9,7 @@ import Settings from './contents/_Settings'
 import Support from './contents/_Support'
 
 export default function Content() {
-    const { content, darkThemeClassName } = useContext(DashboardContext)
+    const { content, darkThemeClassName } = useContext(dashboardContext)
 
     const wrapContent = (name: ContentName, contentElement: ReactNode) => (
         <main id={`${name}-content`} className={`content ${darkThemeClassName}`}>{contentElement}</main>
