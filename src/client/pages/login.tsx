@@ -1,10 +1,10 @@
 import '@styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useContext, useState } from 'react'
-import { Request, sanitizeInput, storeAccountLocally } from '@utils'
-import RegularPage from '@regpage'
+import { useContext, useEffect, useState } from 'react'
+import { isLoggedIn, Request, sanitizeInput, storeAccountLocally } from '@utils'
 import { dashboardContext } from '@context'
+import RegularPage from '@regpage'
 
 export default function Login() {
     const router = useRouter()
@@ -38,6 +38,10 @@ export default function Login() {
         ).post()
     }
 
+    useEffect(() => {
+        if (isLoggedIn()) router.push('/')
+    }, [router])
+    
     return (
         <RegularPage id='login-page'>
             <section>

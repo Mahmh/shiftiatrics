@@ -1,0 +1,83 @@
+#pricing-page {
+    background: linear-gradient(
+        to bottom right,
+        get-color('banner-blue-0', $lp: true),
+        get-color('banner-blue-1', $lp: true)
+    );
+    width: 100%;
+    text-align: center;
+    padding: 5rem 0;
+    * { color: get-color('background') }
+
+    h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .pricing-cards {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        width: 70%;
+        margin: 0 auto;
+
+        .pricing-card {
+            @include vertical-flex;
+            justify-content: space-between;
+            background-color: get-color('secondary-blue', $lp: true);
+            border-radius: 8px;
+            width: 370px;
+            height: 700px;
+            margin: 1rem;
+            box-shadow: $main-box-shadow;
+
+            h2 {
+                background-color: get-color('primary-blue');
+                color: get-color('background');
+                padding: 10px;
+                font-size: 1.75rem;
+                margin-bottom: 1rem;
+            }
+
+            p {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                font-weight: bold;
+                span { color: get-color('alpha-white', $lp: true) }
+            }
+
+            ul {
+                @include vertical-flex;
+                width: 70%;
+                padding: 0;
+                margin: 0 auto;
+                margin-top: 30px;
+                list-style-type: none;
+                text-align: left;
+
+                li {
+                    display: flex;
+                    align-items: center;
+                    font-size: 1.1rem;
+                    margin: 0.5rem 0;
+                    img { margin-right: 10px }
+                }
+            }
+        }
+
+        button {
+            @include compressible(.97);
+            background-color: get-color('primary-blue');
+            color: get-color('background');
+            padding: 10px;
+            border-radius: 10px;
+            margin: 20px;
+            &:hover { background-color: get-color('primary-blue-hover') }
+        }
+    }
+}

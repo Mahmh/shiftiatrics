@@ -17,9 +17,9 @@ const Section = ({ title, links, label='' }: { title: string, links: { href: str
 }
 
 
-export default function Footer() {
+export default function Footer({ marginTop }: { marginTop?: boolean }) {
     return (
-        <footer className='lp-footer'>
+        <footer className='lp-footer' style={!marginTop ? { marginTop: 0 } : {}}>
             <Section 
                 title="About Us" 
                 links={[

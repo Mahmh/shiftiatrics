@@ -26,6 +26,7 @@ $color-palette: (
         'primary-blue-hover': #163c62,
         'primary-red': #9d3838,
         'primary-red-hover': #7a2626,
+        'primary-green': #24cc7d,
         'secondary-blue': #2c659f,
         'secondary-blue-hover': #3d77b2,
         'gray': #5a6676,
@@ -38,10 +39,12 @@ $color-palette: (
         'banner-blue-0': #1169d2,
         'banner-blue-1': #050f18,
         'primary-blue-hover': #3976bef5,
-        'header': #0a315cfa
+        'secondary-blue': #050f1bbf,
+        'header': #0a315cfa,
+        'alpha-white': #ffffff8f
     )
 );
-$main-box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .1);
+$main-box-shadow: 0 5px 15px 0 map-get($color-palette, 'alpha-black-1');
 
 
 // Fonts

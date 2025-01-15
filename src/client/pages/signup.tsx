@@ -1,17 +1,17 @@
 import '@styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useContext, useState } from 'react'
-import { Request, sanitizeInput, storeAccountLocally, validateInput } from '@utils'
-import RegularPage from '@regpage'
+import { useContext, useEffect, useState } from 'react'
+import { isLoggedIn, Request, sanitizeInput, storeAccountLocally, validateInput } from '@utils'
 import { dashboardContext } from '@context'
+import RegularPage from '@regpage'
 
 export default function Signup() {
     const router = useRouter()
     const { setAccount } = useContext(dashboardContext)
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
-    const [error, setError] = useState<string | 'X'>('X')
+    const [error, setError] = useState<string|'X'>('X')
     const [isLoading, setIsLoading] = useState(false)
 
     const handleSignup = async () => {
@@ -39,6 +39,10 @@ export default function Signup() {
             { username: sanitizedUsername, password: sanitizedPassword }
         ).post()
     }
+
+    useEffect(() => {
+        if (isLoggedIn()) router.push('/')
+    }, [router])
 
     return (
         <RegularPage id='signup-page'>

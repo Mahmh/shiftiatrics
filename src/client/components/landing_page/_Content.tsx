@@ -31,7 +31,7 @@ export default function Content() {
         <section className='lp-content'>
             <Section 
                 h='Effortless Shift Scheduling' 
-                p='Take the hassle out of managing pediatrician shifts. Our fast, intelligent scheduling system streamlines the process, saving time and reducing stress for everyone involved. Exporting to an Excel spreadsheet with automatic formating is included as well.' 
+                p='Take the hassle out of managing pediatrician shifts. Our fast, intelligent scheduling system streamlines the process, saving time and reducing stress for everyone involved.' 
             />
             <Section 
                 h='Optimize Your Workflow' 

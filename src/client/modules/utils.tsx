@@ -116,11 +116,13 @@ export const RouteCard = ({ href, h, p }: { href: string, h: string, p: string }
 
 /**
  * Checks if a user is logged in
- * @param account Account set in the context of the app
+ * @param account (optional) Account set in the context of the app. If not provided, local storage is used
  * @returns A boolean indicating if a user is logged in
  */
-export const isLoggedIn = (account: Account): boolean => {
-    return account.username?.length >= 3 && account.password?.length >= 3
+export const isLoggedIn = (account?: Account): boolean => {
+    if (account) return account.username?.length >= 3 && account.password?.length >= 3
+    const storedAccount = localStorage.getItem('account')
+    return storedAccount !== null && isLoggedIn(JSON.parse(storedAccount) as Account)
 }
 
 
