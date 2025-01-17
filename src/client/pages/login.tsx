@@ -2,7 +2,7 @@ import '@styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { isLoggedIn, Request, sanitizeInput, storeAccountLocally } from '@utils'
+import { isLoggedIn, Request, sanitizeInput, storeAccountLocally, validateInput } from '@utils'
 import { dashboardContext } from '@context'
 import RegularPage from '@regpage'
 
@@ -19,6 +19,12 @@ export default function Login() {
         setIsLoading(true)
         const sanitizedUsername = sanitizeInput(username)
         const sanitizedPassword = sanitizeInput(password)
+        const validationError = validateInput(sanitizedUsername, sanitizedPassword)
+        if (validationError) {
+            setError(validationError)
+            setIsLoading(false)
+            return
+        }
 
         type Response = { account_id: number, username: string, password: string } & { error?: string };
         await new Request(
@@ -43,20 +49,22 @@ export default function Login() {
     }, [router])
     
     return (
-        <RegularPage id='login-page'>
-            <section>
-                <label>Username</label>
-                <input type='text' value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading}/>
-            </section>
-            <section>
-                <label>Password</label>
-                <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
-            </section>
-            {error && <p className='error' style={error === 'X' ? { visibility: 'hidden' } : {}}>{error}</p>}
-            <button className='cred-submit-btn' onClick={handleLogin} disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Log In'}
-            </button>
-            <p>Don&apos;t have an account? <Link href='/signup'>Sign Up</Link></p>
+        <RegularPage id='login-page' transparentHeader={true} footerMarginTop={false}>
+            <div id='mid-container'>
+                <section>
+                    <label>Username</label>
+                    <input type='text' value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading}/>
+                </section>
+                <section>
+                    <label>Password</label>
+                    <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
+                </section>
+                {error && <p className='error' style={error === 'X' ? { visibility: 'hidden' } : {}}>{error}</p>}
+                <button className='cred-submit-btn' onClick={handleLogin} disabled={isLoading}>
+                    {isLoading ? 'Logging in...' : 'Log In'}
+                </button>
+                <p>Don&apos;t have an account? <Link href='/signup'>Sign Up</Link></p>
+            </div>
         </RegularPage>
     )
 }

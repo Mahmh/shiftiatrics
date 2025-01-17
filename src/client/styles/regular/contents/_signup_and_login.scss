@@ -1,62 +1,76 @@
 #signup-page, #login-page {
-    @include vertical-flex;
-    @include breakpoint(1330px) { box-shadow: none }
-    align-items: center;
-    width: 40%;
-    max-width: 650px;
-    padding: 50px 30px;
-    margin: 0 auto;
-    top: 170px !important;
-    border-radius: 10px;
-    box-shadow: $main-box-shadow;
+    background: linear-gradient(
+        to bottom right,
+        get-color('banner-blue-0', $lp: true),
+        get-color('banner-blue-1', $lp: true)
+    );
+    padding: 20px;
 
-    section {
+    #mid-container {
         @include vertical-flex;
-        @include breakpoint(600px) { max-width: 170% }
-        margin-bottom: 15px;
-        width: 450px;
-        max-width: 450px;
-
-        label {
-            @include themed-color('primary-text');
-            margin-bottom: 5px;
+        @include breakpoint(855px) {
+            background-color: transparent;
+            width: 40%;
+            box-shadow: none;
         }
-
-        input {
-            @include themed-bgcolor('background');
-            @include themed-color('primary-text');
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid get-color('light-gray');
-        }
-    }
-
-    .error {
-        @include themed-color('primary-red');
-        margin-top: 5px;
-        margin-bottom: 15px;
-    }
-
-    .cred-submit-btn {
-        @include compressible(.96);
-        @include themed-bgcolor('primary-blue');
-        @include themed-color('background');
-        padding: 10px 40px;
+        background-color: get-color('secondary-blue', $lp: true);
+        align-items: center;
+        width: 100%;
+        max-width: 650px;
+        padding: 50px 30px;
+        margin: 150px auto;
         border-radius: 10px;
-        margin-bottom: 15px;
-        &:hover { @include themed-bgcolor('primary-blue-hover') }
-    }
+        box-shadow: $main-box-shadow;
+        transition: none;
 
-    p {
-        @include themed-color('primary-text');
-        @include breakpoint(600px) { width: 170%; }
-        text-align: center;
-        margin-bottom: 0;
-
-        a {
-            @include themed-color('primary-blue');
-            &:hover { text-decoration: underline }
+        section {
+            @include vertical-flex;
+            @include breakpoint(600px) { max-width: 170% }
+            margin-bottom: 15px;
+            width: 450px;
+            max-width: 450px;
+    
+            label {
+                color: get-color('background');
+                margin-bottom: 5px;
+            }
+    
+            input {
+                @include themed-bgcolor('background');
+                width: 100%;
+                padding: 10px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px get-color('alpha-white');
+            }
+        }
+    
+        .error {
+            @include themed-color('primary-red');
+            @include breakpoint(855px) { width: 170% }
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+    
+        .cred-submit-btn {
+            @include compressible(.96);
+            @include themed-bgcolor('primary-blue');
+            @include themed-color('background');
+            padding: 10px 40px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            &:hover { @include themed-bgcolor('primary-blue-hover') }
+        }
+    
+        p {
+            @include breakpoint(600px) { width: 170% }
+            color: get-color('background');
+            text-align: center;
+            margin-bottom: 0;
+    
+            a {
+                @include themed-color('primary-blue');
+                &:hover { text-decoration: underline }
+            }
         }
     }
 }

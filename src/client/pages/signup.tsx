@@ -20,7 +20,11 @@ export default function Signup() {
         const sanitizedUsername = sanitizeInput(username)
         const sanitizedPassword = sanitizeInput(password)
         const validationError = validateInput(sanitizedUsername, sanitizedPassword)
-        if (validationError) { setError(validationError); setIsLoading(false); return }
+        if (validationError) {
+            setError(validationError)
+            setIsLoading(false)
+            return
+        }
 
         type Response = { account_id: number, username: string, password: string } & { error?: string };
         await new Request(
@@ -45,20 +49,22 @@ export default function Signup() {
     }, [router])
 
     return (
-        <RegularPage id='signup-page'>
-            <section>
-                <label>Username</label>
-                <input type='text' value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading}/>
-            </section>
-            <section>
-                <label>Password</label>
-                <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
-            </section>
-            {error && <p className='error' style={error === 'X' ? { visibility: 'hidden' } : {}}>{error}</p>}
-            <button className='cred-submit-btn' onClick={handleSignup} disabled={isLoading}>
-                {isLoading ? 'Signing up...' : 'Sign Up'}
-            </button>
-            <p>Already have an account? <Link href='/login'>Log In</Link></p>
+        <RegularPage id='signup-page' transparentHeader={true} footerMarginTop={false}>
+            <div id='mid-container'>
+                <section>
+                    <label>Username</label>
+                    <input type='text' value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading}/>
+                </section>
+                <section>
+                    <label>Password</label>
+                    <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
+                </section>
+                {error && <p className='error' style={error === 'X' ? { visibility: 'hidden' } : {}}>{error}</p>}
+                <button className='cred-submit-btn' onClick={handleSignup} disabled={isLoading}>
+                    {isLoading ? 'Signing up...' : 'Sign Up'}
+                </button>
+                <p>Already have an account? <Link href='/login'>Log In</Link></p>
+            </div>
         </RegularPage>
     )
 }

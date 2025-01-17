@@ -61,7 +61,7 @@
         width: 100vw;
         height: 40%;
         margin: 0;
-        padding-top: 20px;
+        padding: 20px 0;
         box-shadow: 0 0 15px get-color('banner-blue-1', $lp: true);
         transition: top 250ms ease;
 
@@ -74,7 +74,7 @@
             text-decoration: none;
             text-align: center;
 
-            &#header-btn {
+            &.active-navlink {
                 background-color: get-color('primary-blue');
             }
         }

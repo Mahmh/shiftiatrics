@@ -11,13 +11,26 @@
     gap: 200px;
     width: 100%;
     height: 100vh;
-    display: flex;
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(80%);
+        }
+        to { 
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
     #lp-banner-text {
         @include breakpoint(1550px) { margin: 0 auto; max-width: 65vw }
         margin: 0 1rem;
         margin-bottom: 100px;
         max-width: 35vw;
+        opacity: 0;
+        transform: translateY(80%);
+        animation: fadeIn .9s ease forwards .1s;
 
         h1, p { color: get-color('background') }
 
@@ -56,5 +69,8 @@
         border-radius: 10px;
         width: 859px;
         height: 500px;
+        opacity: 0;
+        transform: translateY(80%);
+        animation: fadeIn 1s ease forwards .2s;
     }
 }

@@ -4,9 +4,18 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Icon, isLoggedIn } from '@utils'
 import menuIcon from '@icons/menu.png'
 
-const HeaderBtn = ({ headerBtn }: { headerBtn: string }) => (
-    <Link href={headerBtn === 'Sign Up' ? '/signup' : '/'} id='header-btn'>{headerBtn}</Link>
-)
+const HeaderBtn = ({ headerBtn }: { headerBtn: string }) => {
+    const pathname = usePathname()
+    return (
+        <Link
+            href={headerBtn === 'Sign Up' ? '/signup' : '/'}
+            id='header-btn'
+            className={pathname?.includes('signup') || pathname?.includes('login') ? 'active-navlink' : ''}
+        >
+            {headerBtn}
+        </Link>
+    )
+}
 
 const NavLink = ({ href, children }: { href: string, children: ReactNode }) => {
     const pathname = usePathname()
