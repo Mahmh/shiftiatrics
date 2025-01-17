@@ -1,5 +1,6 @@
 #signup-page, #login-page {
     @include vertical-flex;
+    @include breakpoint(1330px) { box-shadow: none }
     align-items: center;
     width: 40%;
     max-width: 650px;
@@ -11,6 +12,7 @@
 
     section {
         @include vertical-flex;
+        @include breakpoint(600px) { max-width: 170% }
         margin-bottom: 15px;
         width: 450px;
         max-width: 450px;
@@ -48,7 +50,10 @@
 
     p {
         @include themed-color('primary-text');
+        @include breakpoint(600px) { width: 170%; }
+        text-align: center;
         margin-bottom: 0;
+
         a {
             @include themed-color('primary-blue');
             &:hover { text-decoration: underline }

@@ -1,123 +1,93 @@
-.backdrop {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, .6);
-    z-index: 100;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-
-    &.open {
-        opacity: 1;
-        pointer-events: auto;
-    }
-
-    &.closed {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    #modal {
-        @include themed-bgcolor('background', 'primary-blue');
-        @include breakpoint(815px) {
-            width: 100%;
-            margin: 0;
-            height: 70%;
-            position: relative;
-            top: 30%;
-            bottom: 0;
-
-            #close-modal-btn { display: none !important }
-
-            &.open {
-                transform: translateY(0) !important;
-                opacity: 1 !important;
-            }
-    
-            &.closed {
-                transform: translateY(30%) !important;
-                opacity: 0 !important;
-            }
-        }
-        border-radius: 16px;
-        padding: 20px 40px;
-        max-width: 700px;
-        width: 90%;
-        margin: 100px;
+.backdrop #modal {
+    @include themed-bgcolor('background', 'primary-blue');
+    @include breakpoint(815px) {
+        width: 100%;
+        margin: 0;
+        height: 70%;
         position: relative;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        text-align: center;
-        transform: translateY(-20px);
-        opacity: 0;
-        transition: transform 0.3s ease, opacity 0.3s ease;
+        top: 30%;
+        bottom: 0;
+
+        #close-modal-btn { display: none !important }
 
         &.open {
-            transform: translateY(0);
-            opacity: 1;
+            transform: translateY(0) !important;
+            opacity: 1 !important;
         }
 
         &.closed {
-            transform: translateY(-20px);
-            opacity: 0;
+            transform: translateY(30%) !important;
+            opacity: 0 !important;
+        }
+    }
+    border-radius: 16px;
+    padding: 20px 40px;
+    max-width: 700px;
+    width: 90%;
+    margin: 100px;
+    position: relative;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+
+    &.open {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    &.closed {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    #modal-content {
+        @include vertical-flex;
+        gap: 20px;
+        margin-bottom: 5px;
+    }
+
+    h1, h2, p, li, b, label {
+        @include themed-color('primary-text');
+    }
+
+    .modal-input-sec {
+        margin-bottom: 20px;
+    }
+
+    .checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        margin: 10px;
+        input[type='checkbox'] { scale: 1.4; margin: 0 7px }
+    }
+
+    button {
+        @include themed-bgcolor('primary-blue', 'secondary-blue-hover');
+        @include themed-color('background', 'primary-text');
+        padding: 10px 15px;
+        border-radius: 12px;
+        transition: background-color 250ms ease, color 250ms ease;
+        &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue') }
+
+        &#close-modal-btn {
+            @include circle(50px);
+            @include compressible;
+            @include themed-bgcolor('alpha-black-2', 'primary-text');
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 12px;
+            &:hover { @include themed-bgcolor('alpha-black-1', 'alpha-white') }
         }
 
-        #modal-content {
-            @include vertical-flex;
-            gap: 20px;
-            margin-bottom: 5px;
-        }
-
-        h1, h2, p, li, b, label {
-            @include themed-color('primary-text');
-        }
-
-        .modal-input-sec {
-            margin-bottom: 20px;
-
-            
-        }
-
-        .checkboxes {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            margin: 10px;
-            input[type='checkbox'] { scale: 1.4; margin: 0 7px }
-        }
-
-        
-
-        button {
-            @include themed-bgcolor('primary-blue', 'secondary-blue-hover');
-            @include themed-color('background', 'primary-text');
-            padding: 10px 15px;
-            border-radius: 12px;
-            transition: background-color 250ms ease, color 250ms ease;
-            &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue') }
-
-            &#close-modal-btn {
-                @include circle(50px);
-                @include compressible;
-                @include themed-bgcolor('alpha-black-2', 'primary-text');
-                position: absolute;
-                top: 15px;
-                right: 15px;
-                padding: 12px;
-                &:hover { @include themed-bgcolor('alpha-black-1', 'alpha-white') }
-            }
-
-            &#disabled-confirm-btn {
-                @include themed-bgcolor('light-gray', 'primary-blue-hover');
-                @include themed-color('alpha-black-1', 'secondary-blue');
-                cursor: default;
-            }
+        &#disabled-confirm-btn {
+            @include themed-bgcolor('light-gray', 'primary-blue-hover');
+            @include themed-color('alpha-black-1', 'secondary-blue');
+            cursor: default;
         }
     }
 }

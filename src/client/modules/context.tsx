@@ -52,11 +52,7 @@ export const dashboardContext = createContext<ContextProps>({
 
 export function DashboardProvider({ children }: ReadonlyChildren) {
     const [content, setContent] = useState<ContentName>(defaultContent)
-    const [account, setAccount] = useState<Account>(() => {
-        // Initialize account from localStorage, or use an empty object if not available
-        const storedAccount = localStorage.getItem('account')
-        return storedAccount ? JSON.parse(storedAccount) : {}
-    })
+    const [account, setAccount] = useState<Account>(nullAccount)
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
@@ -251,6 +247,11 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         }
         window.addEventListener('resize', handleResize)
         return () => { window.removeEventListener('resize', handleResize) }
+    }, [])
+
+    useEffect(() => {
+        const storedAccount = localStorage.getItem('account')
+        setAccount(storedAccount ? JSON.parse(storedAccount) : {})
     }, [])
 
     return (

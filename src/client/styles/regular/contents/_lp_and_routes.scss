@@ -1,5 +1,6 @@
 .lp-content {
     @include vertical-flex;
+    @include breakpoint(1550px) { width: 80% }
     padding: 50px;
     gap: 100px;
     width: 60%;
@@ -42,6 +43,7 @@
 
 .route-card-container {
     @include vertical-flex;
+    @include breakpoint(590px) { width: 90% }
     margin: 0 auto;
     width: 80%;
     margin-bottom: 20vh;
@@ -65,6 +67,7 @@
         }
 
         .rc-img-sec {
+            @include breakpoint(590px) { padding: 13px }
             display: flex;
             align-items: center;
             background-color: get-color('primary-blue');

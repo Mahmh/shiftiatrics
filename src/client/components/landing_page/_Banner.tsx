@@ -13,7 +13,7 @@ export default function Banner() {
                 </p>
                 <Link href='/signup'>Sign Up Now</Link>
             </section>
-            <Image src={dashboardPreview} height={500} width={859} alt='Dashboard Preview'/>
+            <Image src={dashboardPreview} alt='Dashboard Preview' priority={true}/>
         </section>
     )
 }

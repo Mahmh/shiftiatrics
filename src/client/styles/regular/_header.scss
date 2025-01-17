@@ -1,4 +1,5 @@
 #lp-header {
+    @include breakpoint(855px) { justify-content: space-around }
     background-color: transparent;
     position: fixed;
     top: 0;
@@ -8,8 +9,10 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
+    &.bg-visible { background-color: get-color('header', $lp: true) }
 
     h1 a {
+        @include breakpoint(855px) { margin-left: 0 }
         color: get-color('background');
         font-weight: 900;
         font-size: 1.5rem;
@@ -28,7 +31,7 @@
         }
     }
 
-    #signup-btn {
+    #header-btn {
         @include compressible(.96);
         background-color: get-color('primary-blue');
         color: get-color('background');
@@ -39,7 +42,44 @@
         &:hover { background-color: get-color('primary-blue-hover', $lp: true) }
     }
 
-    &.bg-visible {
-        background-color: get-color('header', $lp: true);
+    #header-menu-btn {
+        @include compressible(.96);
+        @include circle(50px);
+        background-color: get-color('secondary-blue', $lp: true);
+        padding: 10px;
     }
+}
+
+.backdrop {
+    #header-links {
+        @include vertical-flex;
+        border-radius: 10px;
+        background-color: get-color('banner-blue-1', $lp: true);
+        position: relative;
+        top: 100%;
+        bottom: 0;
+        width: 100vw;
+        height: 40%;
+        margin: 0;
+        padding-top: 20px;
+        box-shadow: 0 0 15px get-color('banner-blue-1', $lp: true);
+        transition: top 250ms ease;
+
+        a {
+            background-color: get-color('alpha-black', $lp: true);
+            font-size: 1.3rem;
+            margin: 6px 30px;
+            padding: 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            text-align: center;
+
+            &#header-btn {
+                background-color: get-color('primary-blue');
+            }
+        }
+    }
+
+    &.open   #header-links { top: 30% }
+    &.closed #header-links { top: 50% }
 }

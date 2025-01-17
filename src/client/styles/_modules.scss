@@ -41,7 +41,8 @@ $color-palette: (
         'primary-blue-hover': #3976bef5,
         'secondary-blue': #050f1bbf,
         'header': #0a315cfa,
-        'alpha-white': #ffffff8f
+        'alpha-white': #ffffff8f,
+        'alpha-black': #000000a4
     )
 );
 $main-box-shadow: 0 5px 15px 0 map-get($color-palette, 'alpha-black-1');
@@ -141,5 +142,10 @@ $main-box-shadow: 0 5px 15px 0 map-get($color-palette, 'alpha-black-1');
 }
 
 @mixin breakpoint($max-width) {
-    @media (max-width: $max-width) { @content }
+    @media (max-width: $max-width) { @content; }
+}
+
+@mixin scaled-resolution($prev-width, $prev-height, $new-height) {
+    width: calc($prev-width * $new-height / $prev-height);
+    height: $new-height;
 }

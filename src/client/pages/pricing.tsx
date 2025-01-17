@@ -52,7 +52,7 @@ export default function Pricing() {
             <PricingCard
                 title='Premium Plan'
                 price='$129.99'
-                titleBg='linear-gradient(45deg, #7c95ff, #3db4c7)'
+                titleBg='linear-gradient(45deg, #607eff, #47dbf3)'
                 features={[
                     'Unlimited pediatricians',
                     'Unlimited shifts per day',
@@ -65,7 +65,7 @@ export default function Pricing() {
             <PricingCard
                 title='Custom Plan'
                 price='Contact Sales'
-                titleBg='linear-gradient(45deg, #63aac7, #2262ad)'
+                titleBg='linear-gradient(45deg, #a463c7, #2241ad)'
                 features={[
                     'Tailored for your needs',
                     'Custom shifts',

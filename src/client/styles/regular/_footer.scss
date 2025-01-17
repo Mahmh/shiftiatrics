@@ -1,4 +1,5 @@
 .lp-footer {
+    @include breakpoint(810px) { flex-direction: column; text-align: center; }
     display: flex;
     justify-content: space-evenly;
     background-color: get-color('banner-blue-1', $lp: true);

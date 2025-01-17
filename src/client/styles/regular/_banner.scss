@@ -1,26 +1,36 @@
 #lp-banner {
-    display: flex;
-    justify-content: space-evenly;
-    gap: 200px;
+    @include breakpoint(1550px) { display: block; padding-top: 150px; }
     background: linear-gradient(
         to bottom right,
         get-color('banner-blue-0', $lp: true),
         get-color('banner-blue-1', $lp: true)
     );
-    width: 100%;
-    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 200px;
+    width: 100%;
+    height: 100vh;
+    display: flex;
 
     #lp-banner-text {
+        @include breakpoint(1550px) { margin: 0 auto; max-width: 65vw }
         margin: 0 1rem;
         margin-bottom: 100px;
         max-width: 35vw;
 
-        p { font-size: 1.3rem }
         h1, p { color: get-color('background') }
-        h1 { font-size: 4rem; margin: 0 }
+
+        h1 {
+            @include breakpoint(2000px) { font-size: 3rem; text-align: center }
+            font-size: 4rem;
+            margin: 0;
+        }
+
+        p {
+            @include breakpoint(2000px) { font-size: 1.2rem }
+            font-size: 1.3rem;
+        }
 
         a {
             display: block;
@@ -36,8 +46,15 @@
     }
 
     img {
+        @include breakpoint(2000px) { @include scaled-resolution(859px, 500px, 380px) }
+        @include breakpoint(1550px) { @include scaled-resolution(859px, 500px, 380px); margin: 0 auto; margin-top: 110px }
+        @include breakpoint(940px)  { @include scaled-resolution(859px, 500px, 300px) }
+        @include breakpoint(600px)  { @include scaled-resolution(859px, 500px, 200px) }
+        display: block;
         background-color: get-color('background');
-        border-radius: 10px;
         box-shadow: 0 5px 60px get-color('primary-blue');
+        border-radius: 10px;
+        width: 859px;
+        height: 500px;
     }
 }
