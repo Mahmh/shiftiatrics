@@ -6,7 +6,7 @@ import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Hol
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: true, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday' }
+const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: true, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday', maxEmpsInShift: 1 }
 export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
 
 export const dashboardContext = createContext<ContextProps>({
@@ -203,6 +203,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             multi_emps_in_shift_enabled: boolean
             multi_shifts_one_emp_enabled: boolean
             weekend_days: WeekendDays
+            max_emps_in_shift: number
         };
         await new Request(
             `accounts/${account.id}/settings`,
@@ -213,7 +214,8 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
                     minMaxWorkHoursEnabled: data.min_max_work_hours_enabled,
                     multiEmpsInShiftEnabled: data.multi_emps_in_shift_enabled,
                     multiShiftsOneEmpEnabled: data.multi_shifts_one_emp_enabled,
-                    weekendDays: data.weekend_days
+                    weekendDays: data.weekend_days,
+                    maxEmpsInShift: data.max_emps_in_shift
                 })
             }
         ).get()

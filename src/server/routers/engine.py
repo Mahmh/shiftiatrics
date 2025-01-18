@@ -42,10 +42,12 @@ def generate_schedule(account_id: int, num_days: int, year: int, month: int) -> 
         min_max_work_hours_enabled = False
         multi_emps_in_shift_enabled = False
         multi_shifts_one_emp_enabled = False
+        max_emps_in_shift = 1
     else:
         min_max_work_hours_enabled = settings.min_max_work_hours_enabled
         multi_emps_in_shift_enabled = settings.multi_emps_in_shift_enabled
         multi_shifts_one_emp_enabled = settings.multi_shifts_one_emp_enabled
+        max_emps_in_shift = settings.max_emps_in_shift if settings.multi_emps_in_shift_enabled else 1
 
     engine = Engine()
 
@@ -87,7 +89,8 @@ def generate_schedule(account_id: int, num_days: int, year: int, month: int) -> 
     raw_schedule = engine.ShiftScheduler.generateSchedule(
         java_employee_list, java_shift_list, java_holiday_list,
         num_days, year, month,
-        min_max_work_hours_enabled, multi_emps_in_shift_enabled, multi_shifts_one_emp_enabled
+        min_max_work_hours_enabled, multi_emps_in_shift_enabled, multi_shifts_one_emp_enabled,
+        max_emps_in_shift
     )
 
     schedule = []

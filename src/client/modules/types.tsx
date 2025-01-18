@@ -96,4 +96,5 @@ export interface Settings {
     multiEmpsInShiftEnabled: boolean
     multiShiftsOneEmpEnabled: boolean
     weekendDays: WeekendDays
+    maxEmpsInShift: number
 }

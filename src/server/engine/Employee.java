@@ -1,7 +1,7 @@
 package server.engine;
 import java.util.Objects;
 
-/** A struct to represent an employee with an ID, name, and work hours. */
+/** A struct to represent an employee with an ID, name, and *monthly* work hours. */
 public class Employee {
     private final int id;
     private final String name;
@@ -15,14 +15,15 @@ public class Employee {
     public final int getMaxWorkHours() { return maxWorkHours; }
 
     // Constructors
-    public Employee(int id, String name, int minWorkHours, int maxWorkHours) {
+    public Employee(int id, String name, int minWorkHours, int maxWorkHours) throws IllegalArgumentException {
+        if (minWorkHours > maxWorkHours) throw new IllegalArgumentException("minWorkHours is greater than maxWorkHours");
         this.id = id;
         this.name = name;
         this.minWorkHours = minWorkHours;
         this.maxWorkHours = maxWorkHours;
     }
 
-    public Employee(int id, String name) {
+    public Employee(int id, String name) throws IllegalArgumentException {
         this.id = id;
         this.name = name;
         this.minWorkHours = -1;

@@ -88,6 +88,7 @@ class Settings(Base):
     multi_emps_in_shift_enabled = Column(Boolean, nullable=False)
     multi_shifts_one_emp_enabled = Column(Boolean, nullable=False)
     weekend_days = Column(String(17), nullable=False)
+    max_emps_in_shift = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Settings({self.account_id})'
 
 
@@ -156,18 +157,19 @@ def _check_month_and_year(month: int, year: int) -> None:
     assert 1970 <= year <= 9999, 'Invalid year'
 
 
-def _get_default_settings_kwargs(account_id: int, toggled_setting: str, value: bool|str = True) -> dict:
+def _get_default_settings_kwargs(account_id: int, toggled_setting: str = '', value: bool|str = True) -> dict:
     """Returns initial settings."""
-    assert type(toggled_setting) is str, 'Invalid setting'
+    assert type(toggled_setting) is str and type(value) in [bool, str], 'Invalid setting'
     kwargs = dict(
         account_id=account_id,
         dark_theme_enabled=False,
         min_max_work_hours_enabled=True,
         multi_emps_in_shift_enabled=False,
         multi_shifts_one_emp_enabled=False,
-        weekend_days=LIST_OF_WEEKEND_DAYS[0]
+        weekend_days=LIST_OF_WEEKEND_DAYS[0],
+        max_emps_in_shift=1
     )
-    kwargs[toggled_setting] = value
+    if toggled_setting: kwargs[toggled_setting] = value
     return kwargs
 
 
@@ -483,3 +485,19 @@ def update_weekend_days(account_id: int, weekend_days: str, *, session: SessionT
         if weekend_days not in LIST_OF_WEEKEND_DAYS: raise ValueError(f'Invalid weekend days passed: "{weekend_days}"')
         settings.weekend_days = weekend_days
     return settings.weekend_days
+
+
+@dbsession(commit=True)
+def update_max_emps_in_shift(account_id: int, max_emps_in_shift: int, *, session: SessionType) -> int:
+    """Updates the maximum number of employees in a single shift for an account."""
+    _check_account(account_id, session=session)
+    settings = session.query(Settings).filter_by(account_id=account_id).first()
+    if settings is None:
+        settings = Settings(**_get_default_settings_kwargs(account_id))
+        session.add(settings)
+        raise ValueError('multi_emps_in_shift_enabled must be True first before updating max_emps_in_shift')
+    else:
+        if not settings.multi_emps_in_shift_enabled: raise ValueError('multi_emps_in_shift_enabled must be True first before updating max_emps_in_shift')
+        if not (1 <= max_emps_in_shift <= 10): raise ValueError('max_emps_in_shift must be in the range [1, 10]')
+        settings.max_emps_in_shift = max_emps_in_shift
+    return settings.max_emps_in_shift

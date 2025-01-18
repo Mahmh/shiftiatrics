@@ -188,8 +188,7 @@ export default function Schedules() {
                         ? shiftCounts.size > 0 
                             ? Array.from(shiftCounts.entries()).map(([emp, numShifts], i) => (
                                 <li key={i}>
-                                    <b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts 
-                                    ({workHours.get(emp) || 0} hours)
+                                    <b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts ({workHours.get(emp) || 0} hours)
                                 </li>
                             )) 
                             : <p>
@@ -257,7 +256,8 @@ export default function Schedules() {
     /** Sends an API request to the engine for schedule generation */
     const generateSchedule = useCallback(async () => {
         if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || isLoading) {
-            openGenerateScheduleModal(); return
+            openGenerateScheduleModal()
+            return
         }
 
         setIsLoading(true)
@@ -277,7 +277,8 @@ export default function Schedules() {
     /** Generates the schedule again then overwrites the old one in DB */
     const regenerateSchedule = useCallback(async () => {
         if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || isLoading) {
-            openGenerateScheduleModal(); return
+            openGenerateScheduleModal()
+            return
         }
 
         setScheduleValidity(true, selectedYear, selectedMonth)

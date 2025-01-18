@@ -21,6 +21,8 @@
     }
 
     .card-content {
+        @include vertical-flex;
+        gap: 6px;
         padding: 20px 30px;
         padding-bottom: 25px;
         transition: background-color 250ms ease;
@@ -37,6 +39,13 @@
             @include themed-color('primary-text');
             margin: 5px 0;
             transition: color 250ms ease;
+        }
+
+        div {
+            @include breakpoint(725px) { align-items: unset }
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         #account-actions-card {
@@ -101,6 +110,12 @@
                     .switch-circle { transform: translateX(26px) translateY(-50%) }
                 }
             }
+        }
+
+        .disabled-setting-input {
+            @include themed-bgcolor('light-gray');
+            @include themed-color('gray');
+            box-shadow: none;
         }
     }
 }

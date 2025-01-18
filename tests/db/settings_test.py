@@ -6,7 +6,7 @@ from src.server.lib.db import (
     reset_serial_sequence, Settings,
     create_account, delete_account,
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, 
-    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days
+    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift
 )
 
 CRED = Credentials(username='testuser', password='testpass')
@@ -39,7 +39,7 @@ def _assert_one_true(setting: str, settings: Settings):
 
     all_settings = {setting, 'dark_theme_enabled', 'min_max_work_hours_enabled', 'multi_emps_in_shift_enabled', 'multi_shifts_one_emp_enabled'}
     for s in all_settings:
-        assert getattr(settings, s) is (False if s not in {setting, 'min_max_work_hours_enabled'} else True)
+        assert getattr(settings, s) is (True if s in {setting, 'min_max_work_hours_enabled'} else False)
 
 
 # Tests
@@ -65,7 +65,6 @@ def test_enable_min_max_work_hours():
     toggle_min_max_work_hours(ACCOUNT_ID)
     settings = get_settings_of_account(ACCOUNT_ID)
     _assert_one_true('min_max_work_hours_enabled', settings)
-    
 
 
 def test_disable_min_max_work_hours():
@@ -105,3 +104,24 @@ def test_update_weekend_days():
     settings = get_settings_of_account(ACCOUNT_ID)
     _assert_all_default(settings)
     assert settings.weekend_days == LIST_OF_WEEKEND_DAYS[1]
+
+
+def test_update_max_emps_in_shift():
+    toggle_multi_emps_in_shift(ACCOUNT_ID)
+    update_max_emps_in_shift(ACCOUNT_ID, 5)
+    settings = get_settings_of_account(ACCOUNT_ID)
+    _assert_one_true('multi_emps_in_shift_enabled', settings)
+    assert settings.max_emps_in_shift == 5
+
+
+def test_update_max_emps_in_shift_without_enabling_multi_emps():
+    with pytest.raises(ValueError, match='multi_emps_in_shift_enabled must be True first before updating max_emps_in_shift'):
+        update_max_emps_in_shift(ACCOUNT_ID, 5)
+
+
+def test_update_max_emps_in_shift_invalid_value():
+    toggle_multi_emps_in_shift(ACCOUNT_ID)
+    with pytest.raises(ValueError, match='max_emps_in_shift must be in the range \[1, 10\]'):
+        update_max_emps_in_shift(ACCOUNT_ID, 0)
+    with pytest.raises(ValueError, match='max_emps_in_shift must be in the range \[1, 10\]'):
+        update_max_emps_in_shift(ACCOUNT_ID, 11)

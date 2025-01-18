@@ -91,3 +91,17 @@ def test_update_weekend_days(setup_and_teardown):
     response = client.patch(f'/accounts/{account_id}/settings/update_weekend_days', json={'weekend_days': LIST_OF_WEEKEND_DAYS[1]})
     assert response.status_code == 200
     assert response.json()['detail'] == LIST_OF_WEEKEND_DAYS[1]
+
+def test_update_max_emps_in_shift(setup_and_teardown):
+    account_id = setup_and_teardown
+    client.get(f'/accounts/{account_id}/settings/toggle_multi_emps_in_shift')
+    response = client.patch(f'/accounts/{account_id}/settings/max_emps_in_shift', json={'max_emps_in_shift': 5})
+    assert response.status_code == 200
+    assert response.json()['detail'] == 5
+
+
+def test_update_max_emps_in_shift_invalid_value(setup_and_teardown):
+    account_id = setup_and_teardown
+    client.get(f'/accounts/{account_id}/settings/toggle_multi_emps_in_shift')
+    response = client.patch(f'/accounts/{account_id}/settings/max_emps_in_shift', json={'max_emps_in_shift': -1})
+    assert 'must be in the range [1, 10]' in response.json()['error']

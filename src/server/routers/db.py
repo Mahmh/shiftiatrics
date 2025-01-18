@@ -10,8 +10,8 @@ from src.server.lib.db import (
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours,
-    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days,
-    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday
+    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
+    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift
 )
 
 # Init
@@ -211,3 +211,9 @@ def toggle_multi_shifts_one_emp_(account_id: int) -> dict:
 @endpoint
 def update_weekend_days_(account_id: int, info: dict[Literal['weekend_days'], str]) -> dict:
     return {'detail': update_weekend_days(account_id=account_id, weekend_days=info['weekend_days'])}
+
+
+@settings_router.patch('/accounts/{account_id}/settings/max_emps_in_shift')
+@endpoint
+def update_max_emps_in_shift_(account_id: int, info: dict[Literal['max_emps_in_shift'], int]) -> dict:
+    return {'detail': update_max_emps_in_shift(account_id=account_id, max_emps_in_shift=info['max_emps_in_shift'])}

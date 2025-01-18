@@ -17,7 +17,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             20, 2023, 10,
-            true, false, false
+            true, false, false,
+            1
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -40,7 +41,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays, 
             10, 2023, 10,
-            true, false, false
+            true, false, false,
+            1
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -62,7 +64,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             5, 2023, 10,
-            true, true, false
+            true, true, false,
+            employees.size()
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -81,7 +84,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             5, 2023, 10,
-            true, true, false
+            true, true, false,
+            employees.size()
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
         HashMap<Integer, Integer> shiftCounts = ShiftScheduler.getShiftCountsOfEmployees(idSchedule);
@@ -107,7 +111,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             numDays, year, month,
-            true, true, false
+            true, true, false,
+            employees.size()
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -137,7 +142,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             numDays, year, month,
-            true, true, false
+            true, true, false,
+            employees.size()
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
     
@@ -164,7 +170,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             numDays, 2023, 10,
-            true, true, false
+            true, true, false,
+            employees.size()
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -191,7 +198,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             numDays, 2023, 10,
-            true, true, true
+            true, true, true,
+            employees.size()
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -224,7 +232,8 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = ShiftScheduler.generateSchedule(
             employees, shifts, holidays,
             10, 2023, 10,
-            true, false, false
+            true, false, false,
+            1
         );
         int[][][] idSchedule = convertToIdSchedule(schedule);
 
@@ -232,6 +241,80 @@ public class ShiftSchedulerTest {
         int minShifts = Collections.min(shiftCounts.values());
         int maxShifts = Collections.max(shiftCounts.values());
         if (maxShifts-minShifts > 1) throw new AssertionError("Schedule is not balanced. Max shifts: " + maxShifts + ", Min shifts: " + minShifts);
+    }
+
+    /** Test that IllegalArgumentException is thrown when multiEmpOneShift is false and maxEmpsInShift > 1. */
+    public static void testIllegalArgumentExceptionForInvalidMaxEmpsInShift() {
+        TestSetup setup = new TestSetup();
+        List<Employee> employees = setup.initEmployees();
+        List<Shift> shifts = setup.initShifts();
+        List<Holiday> holidays = setup.initHolidays();
+        final int numDays = 10;
+
+        try {
+            ShiftScheduler.generateSchedule(
+                employees, shifts, holidays,
+                numDays, 2023, 10,
+                true, false, false,
+                2 // Invalid as multiEmpOneShift is false
+            );
+            throw new AssertionError("Expected IllegalArgumentException was not thrown.");
+        } catch (IllegalArgumentException e) {}
+    }
+
+    /** Test that no shift has more than one employee when maxEmpsInShift is 1. */
+    public static void testMaxEmpsInShiftConstraint() {
+        TestSetup setup = new TestSetup();
+        List<Employee> employees = setup.initEmployees();
+        List<Shift> shifts = setup.initShifts();
+        List<Holiday> holidays = setup.initHolidays();
+        final int numDays = 10;
+
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(
+            employees, shifts, holidays,
+            numDays, 2023, 10,
+            true, true, false,
+            1 // maxEmpsInShift is 1
+        );
+        int[][][] idSchedule = convertToIdSchedule(schedule);
+
+        for (int[][] day : idSchedule) {
+            for (int[] shift : day) {
+                if (shift.length > 1) {
+                    throw new AssertionError("Shift has more than one employee when maxEmpsInShift is 1.");
+                }
+            }
+        }
+    }
+
+    /** Test that at least one shift has more than one employee when maxEmpsInShift > 1 */
+    public static void testAtLeastOneShiftWithMultipleEmployees() {
+        TestSetup setup = new TestSetup();
+        List<Employee> employees = setup.initEmployees(true);
+        List<Shift> shifts = setup.initShifts(true);
+        List<Holiday> holidays = setup.initHolidays();
+        final int numDays = 10;
+
+        Employee[][][] schedule = ShiftScheduler.generateSchedule(
+            employees, shifts, holidays,
+            numDays, 2023, 10,
+            true, true, false,
+            2 // maxEmpsInShift is 2
+        );
+        int[][][] idSchedule = convertToIdSchedule(schedule);
+
+        boolean found = false;
+        for (int[][] day : idSchedule) {
+            for (int[] shift : day) {
+                if (shift.length > 1) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+
+        if (!found) throw new AssertionError("No shift has more than one employee when maxEmpsInShift is > 1.");
     }
 
     /** Utility method to convert Employee[][][] schedule to int[][][] schedule with Employee IDs. */
@@ -277,7 +360,10 @@ public class ShiftSchedulerTest {
             () -> runTest(ShiftSchedulerTest::testEmployeesNotAssignedOnHolidays, "testEmployeesNotAssignedOnHolidays", numPassed, numFailed),
             () -> runTest(ShiftSchedulerTest::testSingleShiftPerDayConstraint, "testSingleShiftPerDayConstraint", numPassed, numFailed),
             () -> runTest(ShiftSchedulerTest::testMultipleShiftsPerDayAllowed, "testMultipleShiftsPerDayAllowed", numPassed, numFailed),
-            () -> runTest(ShiftSchedulerTest::testBalancedScheduleWithoutMultiEmpOneShift, "testBalancedScheduleWithoutMultiEmpOneShift", numPassed, numFailed)
+            () -> runTest(ShiftSchedulerTest::testBalancedScheduleWithoutMultiEmpOneShift, "testBalancedScheduleWithoutMultiEmpOneShift", numPassed, numFailed),
+            () -> runTest(ShiftSchedulerTest::testIllegalArgumentExceptionForInvalidMaxEmpsInShift, "testIllegalArgumentExceptionForInvalidMaxEmpsInShift", numPassed, numFailed),
+            () -> runTest(ShiftSchedulerTest::testMaxEmpsInShiftConstraint, "testMaxEmpsInShiftConstraint", numPassed, numFailed),
+            () -> runTest(ShiftSchedulerTest::testAtLeastOneShiftWithMultipleEmployees, "testAtLeastOneShiftWithMultipleEmployees", numPassed, numFailed)
         ).parallel().forEach(Runnable::run);
 
         System.out.println(numPassed.get() + " passed, " + numFailed.get() + " failed");
@@ -286,7 +372,7 @@ public class ShiftSchedulerTest {
 
 
 /** Sets up tests for ShiftSchedulerTest */
-class TestSetup {
+final class TestSetup {
     private static final int MIN_WORK_HOURS = 100;
     private static final int MAX_WORK_HOURS = 173;
     private List<Employee> employees;

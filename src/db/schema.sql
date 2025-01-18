@@ -45,5 +45,6 @@ CREATE TABLE settings (
     min_max_work_hours_enabled BOOLEAN NOT NULL,
     multi_emps_in_shift_enabled BOOLEAN NOT NULL,
     multi_shifts_one_emp_enabled BOOLEAN NOT NULL,
-    weekend_days VARCHAR(17) NOT NULL
+    weekend_days VARCHAR(17) NOT NULL,
+    max_emps_in_shift INT NOT NULL
 );

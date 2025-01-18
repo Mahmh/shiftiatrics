@@ -59,9 +59,7 @@
             animation: fadeIn 600ms ease forwards;
 
             @for $i from 1 through 10 {
-                &:nth-child(#{$i}) {
-                    animation-delay: 70ms * $i;
-                }
+                &:nth-child(#{$i}) { animation-delay: calc($i * 70ms) }
             }
 
             h2 {
