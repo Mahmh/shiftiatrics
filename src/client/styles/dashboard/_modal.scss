@@ -90,4 +90,8 @@
             cursor: default;
         }
     }
+
+    .error {
+        color: get-color('primary-red') !important;
+    }
 }

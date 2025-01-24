@@ -20,7 +20,7 @@ const PricingCard = ({ title, titleBg, price, features }: { title: string, title
 }
 
 export default function Pricing() {
-    return <RegularPage id='pricing-page' transparentHeader={true} footerMarginTop={false}>
+    return <RegularPage name='Pricing' id='pricing-page' transparentHeader={true} footerMarginTop={false}>
         <h1>Pricing Plans</h1>
         <p>Choose the plan that fits your needs, and get started auto-scheduling right away!</p>
         <div className='pricing-cards'>
@@ -41,17 +41,17 @@ export default function Pricing() {
                 price='$69.99'
                 titleBg='linear-gradient(45deg, #217cff, #5ca7ff)'
                 features={[
-                    'Up to 15 pediatricians',
+                    'Up to 12 pediatricians',
                     '4 shifts per day',
                     'Priority support',
                     'E-mail & SMS notifications',
                     'Integration with other calendar platforms',
-                    'Export schedules to Microsoft Excel spreadsheets with advanced automatic formating'
+                    'Export schedules to Microsoft Excel spreadsheets with better automatic formating'
                 ]}
             />
             <PricingCard
                 title='Premium Plan'
-                price='$129.99'
+                price='$109.99'
                 titleBg='linear-gradient(45deg, #607eff, #47dbf3)'
                 features={[
                     'Unlimited pediatricians',

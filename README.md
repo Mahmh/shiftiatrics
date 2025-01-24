@@ -1,15 +1,15 @@
-# AutoShift: Automated Shift Scheduling for Businesses
-<u>Problem statement:</u> Businesses take a lot of time and energy in scheduling shifts & designing agreed-upon rosters every month.
+# Shiftiatrics: Automated Shift Scheduling for Businesses in the Pediatrics Industry
+<u>Problem statement:</u> Businesses spend a lot of time, energy, and money in scheduling shifts & designing agreed-upon rosters every month, especially in the healthcare industry. In addition, shift schedules for emergency doctors are more complicated than, for example, dentists. Hence, there is a higher demand for automating shift schedules for emergency doctors than dentists.
 
-<u>Solution:</u> I built an automated scheduling website for businesses to use for automating this tedious task.
+<u>Solution:</u> I have built an automated scheduling website for businesses that coordinate pediatricians to use for automating this tedious task.
 
 ## Problem Analysis
 Here are the challenges to keep track of:
 - Businesses differ in scheduling shifts; for example, some designate employees for day and evening shifts without night ones. Others, such as emergency doctors, have day, evening, and night shifts as well.
-- In addition, there is a variable number of employees to keep track of when designing the monthly schedule; that number may change per month.
-- Employees can swap with other ones, thus modifying the schedule.
+- In addition, there is a variable number of pediatricians to keep track of when designing the monthly schedule; that number may change per month.
+- Pediatricians can swap with other ones, thus modifying the schedule.
 
-With all of that information, I can design an effective system for automating schedules (auto-scheduling engine).
+With all of that information, I can design an effective system for automating schedules (auto-scheduling engine) for pediatricians.
 
 ## System Architecture & Plan
 ### File System

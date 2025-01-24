@@ -1,27 +1,23 @@
 import pytest
 from src.server.lib.constants import LIST_OF_WEEKEND_DAYS
 from src.server.lib.models import Credentials
-from src.server.lib.exceptions import UsernameTaken, NonExistent
 from src.server.lib.db import (
-    reset_serial_sequence, Settings,
-    create_account, delete_account,
+    reset_whole_db, Settings,
+    create_account,
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, 
     toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift
 )
 
+# Init
 CRED = Credentials(username='testuser', password='testpass')
 ACCOUNT_ID = 1
 
 @pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
-    # Setup: Create the account
-    try: create_account(CRED)
-    except UsernameTaken: pass
+    reset_whole_db()
+    create_account(CRED)
     yield
-    # Teardown: Delete the account & reset the account_id serial sequence
-    try: delete_account(CRED)
-    except NonExistent: pass
-    reset_serial_sequence()
+    reset_whole_db()
 
 
 def _assert_all_default(settings: Settings, all_false: bool = False):

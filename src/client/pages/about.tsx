@@ -2,7 +2,7 @@ import '@styles'
 import RegularPage from '@regpage'
 
 export default function About() {
-    return <RegularPage>
+    return <RegularPage name='About'>
         <></>
     </RegularPage>
 }

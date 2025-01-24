@@ -1,21 +1,17 @@
 import pytest
-from src.server.lib.db import reset_serial_sequence, create_account, delete_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
+from src.server.lib.db import reset_whole_db, create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
 from src.server.lib.models import Credentials
-from src.server.lib.exceptions import UsernameTaken, NonExistent
 
+# Init
 ACCOUNT_ID = 1
 CRED = Credentials(username='testuser', password='testpass')
 
 @pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
-    # Setup: Create the account
-    try: create_account(CRED)
-    except UsernameTaken: pass
-    yield  # Run the test
-    # Teardown: Delete the account & reset the ACCOUNT_ID serial sequence
-    try: delete_account(CRED)
-    except NonExistent: pass
-    reset_serial_sequence()
+    reset_whole_db()
+    create_account(CRED)
+    yield
+    reset_whole_db()
 
 
 # Tests

@@ -3,7 +3,7 @@ import RegularPage from '@/components/RegularPage'
 import { RouteCard } from '@utils'
 
 export default function Legal() {
-    return <RegularPage>
+    return <RegularPage name='Legal'>
         <section className='route-card-container'>
             <RouteCard 
                 href='/legal/terms' 

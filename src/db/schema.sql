@@ -1,9 +1,16 @@
-\c autoshift_db;
+\c shiftiatrics_db;
 
 CREATE TABLE accounts (
     account_id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL,
-    password VARCHAR(50) NOT NULL
+    username VARCHAR(50) UNIQUE NOT NULL,
+    hashed_password VARCHAR(128) NOT NULL
+);
+
+CREATE TABLE tokens (
+    account_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
+    token VARCHAR(256) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP
 );
 
 CREATE TABLE employees (

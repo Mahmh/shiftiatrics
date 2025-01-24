@@ -1,1 +1,1 @@
-from setuptools import setup, find_packages; setup(name='autoshift', packages=find_packages())
+from setuptools import setup, find_packages; setup(name='shiftiatrics', packages=find_packages())

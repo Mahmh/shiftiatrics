@@ -1,12 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
+from src.server.lib.db import reset_whole_db
 
 # Init
 client = TestClient(app)
 CRED = {'username': 'testuser', 'password': 'testpass'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
-delete_account = lambda cred: client.request('DELETE', '/accounts', json=cred)
 
 EMPLOYEE = {'employee_name': 'John Doe'}
 create_employee = lambda account_id, employee: client.post(f'/accounts/{account_id}/employees', json=employee)
@@ -14,13 +14,11 @@ delete_employee = lambda employee_id: client.request('DELETE', f'/employees/{emp
 
 @pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
-    # Setup: Create the account & employee
+    reset_whole_db()
     account_id = create_account(CRED).json()['account_id']
     employee_id = create_employee(account_id, EMPLOYEE).json()['employee_id']
     yield account_id, employee_id
-    # Teardown: Delete both
-    delete_employee(employee_id)
-    delete_account(CRED)
+    reset_whole_db()
 
 
 # Tests

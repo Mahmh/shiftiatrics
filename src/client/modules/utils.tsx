@@ -114,17 +114,20 @@ export const RouteCard = ({ href, h, p }: { href: string, h: string, p: string }
 )
 
 
-/**
- * Checks if a user is logged in
- * @param account (optional) Account set in the context of the app. If not provided, local storage is used
- * @returns A boolean indicating if a user is logged in
- */
-export const isLoggedIn = (account?: Account): boolean => {
-    if (account) return account.username?.length >= 3 && account.password?.length >= 3
-    const storedAccount = localStorage.getItem('account')
-    return storedAccount !== null && isLoggedIn(JSON.parse(storedAccount) as Account)
+/** Checks if a user is logged in */
+export const isLoggedIn = async (): Promise<false | Account> => {
+    type Response = { error: string } | { account_id: Account['id'], username: Account['username'] }
+    return await new Request(
+        'accounts/log_in_account_with_cookies',
+        (data: Response) => {
+            if ('error' in data) return false
+            if ('account_id' in data && 'username' in data) return { id: data.account_id, username: data.username }
+            return false
+        },
+        {},
+        true
+    ).get()
 }
-
 
 /**
  * Converts time from 24-hour format to AM/PM format
@@ -198,14 +201,8 @@ export const sanitizeInput = (input: string) => {
 /** @returns Validates input credentials */
 export const validateInput = (username: string, password: string): string | null => {
     if (username.length < 3) return 'Username must be at least 3 characters long.'
-    if (password.length < 6) return 'Password must be at least 6 characters long.'
+    if (password.length < 6) return 'Password must be at least 8 characters long.'
     return null
-}
-
-
-/** @returns Stores a given account to local storage */
-export const storeAccountLocally = (account: Account) => {
-    localStorage.setItem('account', JSON.stringify(account))
 }
 
 
@@ -221,24 +218,34 @@ export const storeAccountLocally = (account: Account) => {
 export class Request {
     //// Properties ////
     private readonly endpointUrl: string
+    private readonly responseCallback: (x:any) => EndpointResponse|void|any
     private readonly requestData: object
-    private readonly responseCallback: (x:any)=>any
+    private readonly includeCookies: boolean
+    private readonly logErrorsToConsole: boolean
 
-    public constructor(endpoint: string, responseCallback: (x: any) => any = (x) => x, requestData: object = {}) {
+    public constructor(
+        endpoint: string,
+        responseCallback: (x: any) => EndpointResponse|void|any = (x) => x,
+        requestData: object = {},
+        includeCookies: boolean = false,
+        logErrorsToConsole: boolean = true
+    ) {
         this.endpointUrl = `http://localhost:8000/${endpoint}`
         this.requestData = requestData
         this.responseCallback = responseCallback
+        this.includeCookies = includeCookies
+        this.logErrorsToConsole = logErrorsToConsole
     }
 
     /**
      * Performs a GET request
      * @returns The output of the inputted callback function
      */
-    public async get(): EndpointResponse {
-        const response = await fetch(this.endpointUrl)
+    public async get(): Promise<EndpointResponse|void|any> {
+        const response = await fetch(this.endpointUrl, this.getPayload('GET'))
         this.checkStatus(response)
         const data = await response.json()
-        if ('error' in data) console.error(data.error)
+        if ('error' in data && this.logErrorsToConsole && !this.endpointUrl.includes('log_in_account_with_cookies')) console.error(data.error)
         return this.responseCallback(data)
     }
 
@@ -246,11 +253,11 @@ export class Request {
      * Performs a PATCH request
      * @returns The output of the inputted callback function
      */
-    public async patch(): EndpointResponse {
+    public async patch(): Promise<EndpointResponse|void|any> {
         const response = await fetch(this.endpointUrl, this.getPayload('PATCH'))
         this.checkStatus(response)
         const data = await response.json()
-        if ('error' in data) console.error(data.error)
+        if ('error' in data && this.logErrorsToConsole) console.error(data.error)
         return this.responseCallback(data)
     }
 
@@ -258,11 +265,11 @@ export class Request {
      * Performs a POST request
      * @returns The output of the inputted callback function
      */
-    public async post(): EndpointResponse {
+    public async post(): Promise<EndpointResponse|void|any> {
         const response = await fetch(this.endpointUrl, this.getPayload('POST'))
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
         const data = await response.json()
-        if ('error' in data) console.error(data.error)
+        if ('error' in data && this.logErrorsToConsole && !data.error.includes('password=')) console.error(data.error)
         return this.responseCallback(data)
     }
 
@@ -270,11 +277,11 @@ export class Request {
      * Performs a DELETE request
      * @returns The output of the inputted callback function
      */
-    public async delete(): EndpointResponse {
+    public async delete(): Promise<EndpointResponse|void|any> {
         const response = await fetch(this.endpointUrl, this.getPayload('DELETE'))
         this.checkStatus(response)
         const data = await response.json()
-        if ('error' in data) console.error(data.error)
+        if ('error' in data && this.logErrorsToConsole) console.error(data.error)
         return this.responseCallback(data)
     }
 
@@ -283,10 +290,11 @@ export class Request {
      * @param method REST API Method
      * @returns The appropriate payload for the method
      */
-    private getPayload(method: string): Record<string, string|object> {
-        const payload: Record<string, string|object> = {
+    private getPayload(method: string): Record<string, string|object|undefined> {
+        const payload: Record<string, string|object|undefined> = {
             method: method,
-            headers: { 'Content-Type': 'application/json' }
+            headers: method !== 'GET' ? { 'Content-Type': 'application/json' } : undefined,
+            credentials: this.includeCookies ? 'include': undefined
         }
         if (method !== 'GET') payload.body = JSON.stringify(this.requestData)
         return payload
@@ -297,7 +305,7 @@ export class Request {
      * @param response The given response
      */
     private checkStatus(response: Response): void {
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
+        if (!response.ok && this.logErrorsToConsole) console.error(`${response.status} HTTP error`)
     }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

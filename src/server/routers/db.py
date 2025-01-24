@@ -1,11 +1,12 @@
 from typing import Literal
 from functools import wraps
-from fastapi import APIRouter
-from src.server.lib.models import Credentials, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
-from src.server.lib.utils import todict, todicts
+from fastapi import APIRouter, Request, Response
+from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
+from src.server.lib.utils import log, todict, todicts
+from src.server.lib.exceptions import CookiesUnavailable
 from src.server.lib.db import (
     Account, Employee, Shift, Schedule, Holiday, Settings,
-    get_all_accounts, log_in_account, create_account, update_account, delete_account,
+    get_all_accounts, log_in_account, log_in_account_with_cookies, create_account, update_account, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
@@ -32,10 +33,45 @@ def endpoint(func):
             elif type(result) is list:
                 try: return todicts(result)
                 except: return result
-            return result 
+            return result
         except Exception as e:
             return {'error': str(e)}
     return wrapper
+
+
+def _get_cookies(request: Request) -> Cookies:
+    """Returns the username & authentication token stored in the client's cookies."""
+    try:
+        return Cookies(account_id=int(request.cookies.get('account_id')), token=request.cookies.get('auth_token'))
+    except:
+        return Cookies(account_id=None, token=request.cookies.get('token'))
+
+
+def _set_cookie(key: str, value: str, response: Response) -> None:
+    """Stores a cookie with a given value."""
+    response.set_cookie(
+        key=key,
+        value=value,
+        httponly=True,
+        secure=False,
+        samesite='strict',
+        domain=None,
+        path='/'
+    )
+
+
+def _store_cookies(cookies: Cookies, response: Response) -> None:
+    """Stores the given username & authentication token as HttpOnly cookies in the client."""
+    if not cookies.available(): raise CookiesUnavailable(cookies)
+    log(f'Storing cookies: {cookies}', 'auth')
+    _set_cookie('account_id', cookies.account_id, response)
+    _set_cookie('auth_token', cookies.token, response)
+
+
+def _clear_cookies(response: Response) -> None:
+    """Sets the cookies to None, effectively clearing them."""
+    _set_cookie('account_id', None, response)
+    _set_cookie('auth_token', None, response)
 
 
 # Endpoints
@@ -46,28 +82,49 @@ def read_accounts() -> list[dict] | dict:
     return get_all_accounts()
 
 
+@account_router.get('/accounts/log_in_account_with_cookies')
+@endpoint
+def log_in_account_with_cookies_(request: Request) -> dict:
+    cookies = _get_cookies(request)
+    if cookies.account_id is None: return {'error': 'Account ID is either invalid or not found'}
+    elif cookies.token is None: return {'error': 'Token is either invalid or not found'}
+    else: return log_in_account_with_cookies(cookies)
+
+
 @account_router.post('/accounts/login')
 @endpoint
-def login_account(cred: Credentials) -> dict:
-    return log_in_account(cred)
+def login_account(cred: Credentials, response: Response) -> dict:
+    account, token = log_in_account(cred)
+    _store_cookies(Cookies(account_id=account.account_id, token=token), response)
+    return account
+
+
+@account_router.get('/accounts/logout')
+@endpoint
+def logout_account(response: Response) -> dict:
+    _clear_cookies(response)
+    return {'detail': 'Logged out successfully'}
 
 
 @account_router.post('/accounts/signup')
 @endpoint
-def create_new_account(cred: Credentials) -> dict:
-    return create_account(cred)
+def create_new_account(cred: Credentials, response: Response) -> dict:
+    account, token = create_account(cred)
+    _store_cookies(Cookies(account_id=account.account_id, token=token), response)
+    return account
 
 
 @account_router.patch('/accounts')
 @endpoint
-def update_existing_account(cred: Credentials, updates: dict) -> dict:
-    return update_account(cred, updates)
+def update_existing_account(updates: dict[Literal['username', 'new_password'], str], request: Request) -> dict:
+    return update_account(_get_cookies(request), updates)
 
 
 @account_router.delete('/accounts')
 @endpoint
-def delete_existing_account(cred: Credentials) -> dict:
-    delete_account(cred)
+def delete_existing_account(request: Request, response: Response) -> dict:
+    delete_account(_get_cookies(request))
+    _clear_cookies(response)
     return {'detail': 'Account deleted successfully'}
 
 

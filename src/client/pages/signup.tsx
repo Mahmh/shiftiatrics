@@ -2,7 +2,7 @@ import '@styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { isLoggedIn, Request, sanitizeInput, storeAccountLocally, validateInput } from '@utils'
+import { isLoggedIn, Request, sanitizeInput, validateInput } from '@utils'
 import { dashboardContext } from '@context'
 import RegularPage from '@regpage'
 
@@ -17,6 +17,7 @@ export default function Signup() {
     const handleSignup = async () => {
         setError('X')
         setIsLoading(true)
+
         const sanitizedUsername = sanitizeInput(username)
         const sanitizedPassword = sanitizeInput(password)
         const validationError = validateInput(sanitizedUsername, sanitizedPassword)
@@ -34,22 +35,24 @@ export default function Signup() {
                 if ('error' in data && data.error !== undefined) {
                     setError(data.error)
                 } else {
-                    const responseAccount = { id: data.account_id, username: data.username, password: data.password }
+                    const responseAccount = { id: data.account_id, username: data.username }
                     setAccount(responseAccount)
-                    storeAccountLocally(responseAccount)
                     router.push('/')
                 }
             },
-            { username: sanitizedUsername, password: sanitizedPassword }
+            { username: sanitizedUsername, password: sanitizedPassword },
+            true
         ).post()
     }
 
     useEffect(() => {
-        if (isLoggedIn()) router.push('/')
+        (async () => {
+            if (await isLoggedIn()) router.push('/')
+        })()
     }, [router])
 
     return (
-        <RegularPage id='signup-page' transparentHeader={true} footerMarginTop={false}>
+        <RegularPage name='Sign Up' id='signup-page' transparentHeader={true} footerMarginTop={false}>
             <div id='mid-container'>
                 <section>
                     <label>Username</label>

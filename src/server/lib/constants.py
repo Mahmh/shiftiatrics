@@ -12,6 +12,13 @@ PSQL_USER = os.getenv('POSTGRES_USER')
 PSQL_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 ENGINE_URL = f'postgresql+psycopg2://{PSQL_USER}:{PSQL_PASSWORD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
 
+# Security
+MIN_USERNAME_LEN = int(os.getenv('MIN_USERNAME_LEN'))
+MAX_USERNAME_LEN = int(os.getenv('MAX_USERNAME_LEN'))
+MIN_PASSWORD_LEN = int(os.getenv('MIN_PASSWORD_LEN'))
+MAX_PASSWORD_LEN = int(os.getenv('MAX_PASSWORD_LEN'))
+TOKEN_EXPIRY_SECONDS = int(os.getenv('TOKEN_EXPIRY_SECONDS'))
+
 # Misc
 LIST_OF_WEEKEND_DAYS = ['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']
 ENABLE_LOGGING = (os.getenv('ENABLE_LOGGING', 'true').lower() == 'true')

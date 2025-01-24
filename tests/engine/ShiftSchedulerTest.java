@@ -347,6 +347,7 @@ public class ShiftSchedulerTest {
 
 
     public static void main(String[] args) {
+        System.out.println("Engine tests:");
         AtomicInteger numPassed = new AtomicInteger(0);
         AtomicInteger numFailed = new AtomicInteger(0);
 

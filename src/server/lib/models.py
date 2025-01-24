@@ -7,6 +7,11 @@ class Credentials(BaseModel):
     username: str
     password: str
 
+class Cookies(BaseModel):
+    account_id: Optional[int] = None
+    token: Optional[str] = None
+    available = lambda self: (self.account_id is not None and self.token is not None) and self.account_id > 0 and len(self.token) > 0
+
 class EmployeeInfo(BaseModel):
     employee_name: str
     min_work_hours: Optional[int] = None

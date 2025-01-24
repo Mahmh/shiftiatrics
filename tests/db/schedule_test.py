@@ -1,28 +1,18 @@
-from sqlalchemy import text
 import pytest
-from src.server.lib.db import reset_serial_sequence, create_account, delete_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
+from src.server.lib.db import reset_whole_db, create_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
 from src.server.lib.models import Credentials
-from src.server.lib.exceptions import UsernameTaken, NonExistent
 
+# Init
 CRED = Credentials(username='testuser', password='testpass')
 SCHEDULE_DATA = {'schedule': [[1, 2], [3, 4]], 'month': 11, 'year': 2024}
 
 @pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
-    # Setup: Create a schedule
-    try:
-        account_id = create_account(CRED).account_id
-        schedule_id = create_schedule(account_id, **SCHEDULE_DATA).schedule_id
-        yield account_id, schedule_id
-    except UsernameTaken:
-        yield 1, 1
-        pass
-    # Teardown: Delete the schedule & reset the schedule_id serial sequence
-    delete_account(CRED)
-    try: delete_schedule(schedule_id)
-    except NonExistent: pass
-    except UnboundLocalError: delete_schedule(1)
-    reset_serial_sequence()
+    reset_whole_db()
+    account_id = create_account(CRED)[0].account_id
+    schedule_id = create_schedule(account_id, **SCHEDULE_DATA).schedule_id
+    yield account_id, schedule_id
+    reset_whole_db()
 
 
 # Tests

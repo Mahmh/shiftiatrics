@@ -3,7 +3,7 @@ import { DashboardProvider } from '@context'
 import '@/styles/main.css'
 
 export const metadata: Metadata = {
-    title: 'AutoShift',
+    title: 'Shiftiatrics',
     description: 'Auto-scheduling for your business'
 }
 

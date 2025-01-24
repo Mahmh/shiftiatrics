@@ -1,14 +1,14 @@
 import pytest
 from src.server.lib.db import (
-    reset_serial_sequence, 
-    create_account, delete_account,
+    reset_whole_db, 
+    create_account,
     create_employee, delete_employee,
     create_holiday, delete_holiday, get_all_holidays_of_account, update_holiday
 )
 from src.server.lib.models import Credentials
-from src.server.lib.exceptions import UsernameTaken, NonExistent
 from src.server.lib.utils import parse_date
 
+# Init
 ACCOUNT_ID = HOLIDAY_ID = 1
 CRED = Credentials(username='testuser', password='testpass')
 EMPLOYEE_DETAILS = {'employee_name': 'testemp'}
@@ -16,22 +16,13 @@ HOLIDAY_DETAILS = {'holiday_name': 'Holiday', 'assigned_to': [1, 2], 'start_date
 
 @pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
-    # Setup: Create a holiday
-    try:
-        create_account(CRED)
-        create_employee(1, 'testemp1')
-        create_employee(1, 'testemp2')
-        create_holiday(ACCOUNT_ID, **HOLIDAY_DETAILS)
-    except UsernameTaken: pass
-    yield  # Run the test
-    # Teardown: Delete the holiday & reset the holiday_id serial sequence
-    try:
-        delete_account(CRED)
-        delete_employee(1)
-        delete_employee(1, 'testemp2')
-        delete_holiday(HOLIDAY_ID)
-    except NonExistent: pass
-    reset_serial_sequence()
+    reset_whole_db()
+    create_account(CRED)
+    create_employee(1, 'testemp1')
+    create_employee(1, 'testemp2')
+    create_holiday(ACCOUNT_ID, **HOLIDAY_DETAILS)
+    yield
+    reset_whole_db()
 
 
 # Tests

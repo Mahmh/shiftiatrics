@@ -1,5 +1,5 @@
 .vscode/
-autoshift.egg-info/
+shiftiatrics.egg-info/
 **/__pycache__/
 **/*.ipynb
 .pytest_cache/

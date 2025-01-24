@@ -3,7 +3,7 @@ import RegularPage from '@/components/RegularPage'
 import { RouteCard } from '@utils'
 
 export default function Support() {
-    return <RegularPage>
+    return <RegularPage name='Support'>
         <section className='route-card-container'>
             <RouteCard
                 href='/support/contact'

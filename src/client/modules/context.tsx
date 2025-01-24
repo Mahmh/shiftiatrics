@@ -1,13 +1,13 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
-import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth, storeAccountLocally } from '@utils'
+import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth } from '@utils'
 import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren } from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
 const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: true, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday', maxEmpsInShift: 1 }
-export const nullAccount: Account = { id: -Infinity, username: '', password: '' }
+export const nullAccount: Account = { id: -Infinity, username: '' }
 
 export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,
@@ -53,15 +53,6 @@ export const dashboardContext = createContext<ContextProps>({
 export function DashboardProvider({ children }: ReadonlyChildren) {
     const [content, setContent] = useState<ContentName>(defaultContent)
     const [account, setAccount] = useState<Account>(nullAccount)
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const storedAccount = localStorage.getItem('account')
-            if (storedAccount) {
-                setAccount(JSON.parse(storedAccount))
-            }
-        }
-    }, [])
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
@@ -108,6 +99,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [setScheduleValidity])
 
     const loadEmployees = useCallback(async (): Promise<Employee[]> => {
+        if (account.id === -Infinity) return []
         return new Promise(async (resolve) => {
             type Response = {
                 employee_id: Employee['id'],
@@ -129,6 +121,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [account.id])
 
     const loadShifts = useCallback(async () => {
+        if (account.id === -Infinity) return []
         type Response = { shift_id: Shift['id'], shift_name: Shift['name'], start_time: Shift['startTime'], end_time: Shift['endTime'] }[];
         await new Request(`accounts/${account.id}/shifts`, (data: Response) => {
             setShifts(data.map(shift => ({
@@ -141,43 +134,45 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [account.id])
 
     const loadSchedules = useCallback(async (employees: Employee[]) => {
+        if (account.id === -Infinity) return []
         type Response = { account_id: Account['id'], schedule_id: Schedule['id'], month: number, year: number, schedule: ScheduleOfIDs }[];
         await new Request(`accounts/${account.id}/schedules`, (data: Response) => {
-            const parsedSchedules = new Map<number, Schedule[]>();
+            const parsedSchedules = new Map<number, Schedule[]>()
 
             data.forEach(scheduleData => {
-                const { schedule_id: scheduleId, month, year } = scheduleData;
+                const { schedule_id: scheduleId, month, year } = scheduleData
 
                 // Initialize validity for this schedule as true
-                setScheduleValidity(true, year, month);
+                setScheduleValidity(true, year, month)
 
                 // Transform schedule data to match Employee['id'][][][]
                 const parsedSchedule = scheduleData.schedule.map((day: number[][]) =>
                     day.map((shift: number[]) =>
                         shift.map(empId => validateEmployeeById(empId, employees, year, month))
                     )
-                );
+                )
 
                 // Ensure the year exists in the maps
-                if (!parsedSchedules.has(year)) parsedSchedules.set(year, []);
+                if (!parsedSchedules.has(year)) parsedSchedules.set(year, [])
                 if (!schedulesValidity.has(year)) {
-                    const map = new Map<number, boolean>();
-                    for (let i = 0; i < 12; i++) map.set(i, true);
-                    schedulesValidity.set(year, map);
+                    const map = new Map<number, boolean>()
+                    for (let i = 0; i < 12; i++) map.set(i, true)
+                    schedulesValidity.set(year, map)
                 }
 
-                const yearSchedules = parsedSchedules.get(year)!;
+                const yearSchedules = parsedSchedules.get(year)!
                 yearSchedules[month] = {
                     id: scheduleId,
                     schedule: parsedSchedule,
-                };
-            });
+                }
+            })
 
-            setSchedules(parsedSchedules);
-        }).get();
+            setSchedules(parsedSchedules)
+        }).get()
     }, [account.id, schedulesValidity, validateEmployeeById, setScheduleValidity])
 
     const loadHolidays = useCallback(async () => {
+        if (account.id === -Infinity) return []
         type Response = {
             holiday_id: Holiday['id'],
             holiday_name: Holiday['name'],
@@ -197,6 +192,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [account.id])
 
     const loadSettings = useCallback(async () => {
+        if (account.id === -Infinity) return []
         type Response = { detail: null } | {
             dark_theme_enabled: boolean,
             min_max_work_hours_enabled: boolean
@@ -221,10 +217,14 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         ).get()
     }, [account.id, setSettings])
 
+    const logInWithCookies = useCallback(async () => {
+        const response = await isLoggedIn()
+        if (response !== false) setAccount(response)
+    }, [setAccount])
+
     useEffect(() => {
-        storeAccountLocally(account)
         const fetchAllData = async () => {
-            if (isLoggedIn(account)) {
+            if (await isLoggedIn()) {
                 const loadedEmployees = await loadEmployees()
                 await loadShifts()
                 await loadSchedules(loadedEmployees)
@@ -238,7 +238,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
 
     useEffect(() => {
         const regenerateSchedules = async () => {
-            if (isLoggedIn(account) && employees.length > 0) await loadSchedules(employees)
+            if (await isLoggedIn() && employees.length > 0) await loadSchedules(employees)
         }
         regenerateSchedules()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -258,6 +258,10 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         }
         window.addEventListener('resize', handleResize)
         return () => { window.removeEventListener('resize', handleResize) }
+    }, [])
+
+    useEffect(() => {
+        logInWithCookies()
     }, [])
 
     return (

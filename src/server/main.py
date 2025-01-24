@@ -12,7 +12,7 @@ async def _lifespan(app: FastAPI):
     if not jpype.isJVMStarted():
         jpype.startJVM(classpath=locate('../engine/engine.jar'))
     try:
-        yield 
+        yield
     finally:
         if jpype.isJVMStarted():
             jpype.shutdownJVM()

@@ -11,7 +11,7 @@ export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][][]
 export type YearToSchedules = Map<number, Schedule[]>
 export type YearToSchedulesValidity = Map<number, Map<number, boolean>>
-export type EndpointResponse = Promise<any | any & { error: string }>
+export type EndpointResponse = any | any & { error: string }
 
 // Context
 export interface ContextProps {
@@ -60,7 +60,6 @@ export interface ContextProps {
 export interface Account {
     id: number
     username: string
-    password: string
 }
 
 export interface Employee {
