@@ -40,16 +40,13 @@ export default function Schedules() {
                     yearSchedules[data.month] = {
                         id: data.schedule_id,
                         schedule: data.schedule.map(day =>
-                            day.map(shift =>
-                                shift.map(id => validateEmployeeById(id, employees, data.month, data.year))
-                            )
+                            day.map(shift => shift.map(id => validateEmployeeById(id, employees, data.month, data.year)))
                         )
                     }
                     return updatedSchedules
                 })
             },
-            { year: selectedYear, month: selectedMonth, schedule }
-        ).post()
+        ).post({ year: selectedYear, month: selectedMonth, schedule })
     }, [account.id, employees, selectedMonth, selectedYear, setSchedules, validateEmployeeById])
 
     /** Overwrites the previously generated schedule in DB */
@@ -75,8 +72,7 @@ export default function Schedules() {
                     return updatedSchedules
                 })
             },
-            { schedule }
-        ).patch()
+        ).patch({ schedule })
     }, [employees, setSchedules, validateEmployeeById])
 
 
@@ -162,6 +158,7 @@ export default function Schedules() {
                 await new Request(
                     `engine/get_work_hours_of_employees?account_id=${account.id}&year=${selectedYear}&month=${selectedMonth}`,
                     (data: Record<number, number>) => {
+                        // data: Record<number, number>
                         const newWorkHours = new Map<Employee, number>()
                         for (const [employeeId, workHours] of Object.entries(data)) {
                             const employee = getEmployeeById(Number(employeeId), employees)!

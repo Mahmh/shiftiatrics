@@ -1,17 +1,21 @@
-import type { SetStateAction, Dispatch, ReactNode } from 'react'
+import type { SetStateAction, Dispatch, ReactNode, ChangeEvent } from 'react'
 
 // Types
 type SetState<T> = Dispatch<SetStateAction<T>>
 export type ReadonlyChildren = Readonly<{children: React.ReactNode}>
+export type EndpointResponse = object | { error: string }
+export type InputEvent = ChangeEvent<HTMLInputElement>
+
 export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December'
 export type WeekendDays =  'Saturday & Sunday' | 'Friday & Saturday' | 'Sunday & Monday'
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
 export type ContentName = 'schedules' | 'employees' | 'shifts' | 'holidays' | 'settings' | 'support'
+
 export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][][]
 export type YearToSchedules = Map<number, Schedule[]>
 export type YearToSchedulesValidity = Map<number, Map<number, boolean>>
-export type EndpointResponse = any | any & { error: string }
+
 
 // Context
 export interface ContextProps {

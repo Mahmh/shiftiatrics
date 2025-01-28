@@ -6,7 +6,7 @@ export default function LoadingScreen() {
     const [isShown, setIsShown] = useState(true)
 
     useEffect(() => {
-        setTimeout(() => setIsShown(!(account && employees && shifts && schedules && settings)), 0)
+        setIsShown(!(account && employees && shifts && schedules && settings))
     }, [account, employees, shifts, schedules, settings])
 
     return (

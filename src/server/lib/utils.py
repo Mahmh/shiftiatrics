@@ -31,7 +31,7 @@ def log(msg: str, filename: str, level: str = 'INFO') -> None:
     if logger: logger.log(logging._nameToLevel[level.upper()], msg)
 
 
-def err_log(func_name: str, e: Exception, filename: str) -> None:
+def errlog(func_name: str, e: Exception, filename: str) -> None:
     """Log an exception to the specified file."""
     err_name = str(type(e)).split("'")[1]
     log(f"[{func_name}] {err_name}: {e}", filename, 'ERROR')

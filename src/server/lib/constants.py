@@ -18,6 +18,7 @@ MAX_USERNAME_LEN = int(os.getenv('MAX_USERNAME_LEN'))
 MIN_PASSWORD_LEN = int(os.getenv('MIN_PASSWORD_LEN'))
 MAX_PASSWORD_LEN = int(os.getenv('MAX_PASSWORD_LEN'))
 TOKEN_EXPIRY_SECONDS = int(os.getenv('TOKEN_EXPIRY_SECONDS'))
+DEFAULT_RATE_LIMIT = os.getenv('DEFAULT_RATE_LIMIT')
 
 # Misc
 LIST_OF_WEEKEND_DAYS = ['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']

@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.db import reset_whole_db
 from src.server.lib.constants import LIST_OF_WEEKEND_DAYS
+from src.server.rate_limit import limiter
 
 # Init
 client = TestClient(app)
@@ -11,10 +12,12 @@ create_account = lambda cred: client.post('/accounts/signup', json=cred)
 
 @pytest.fixture(scope='function', autouse=True)
 def setup_and_teardown():
+    limiter.enabled = False
     reset_whole_db()
     account_id = create_account(CRED).json()['account_id']
     yield account_id
     reset_whole_db()
+    limiter.enabled = True
 
 
 # Tests
@@ -90,6 +93,7 @@ def test_update_weekend_days(setup_and_teardown):
     response = client.patch(f'/accounts/{account_id}/settings/update_weekend_days', json={'weekend_days': LIST_OF_WEEKEND_DAYS[1]})
     assert response.status_code == 200
     assert response.json()['detail'] == LIST_OF_WEEKEND_DAYS[1]
+
 
 def test_update_max_emps_in_shift(setup_and_teardown):
     account_id = setup_and_teardown

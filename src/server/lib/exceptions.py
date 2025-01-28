@@ -10,7 +10,7 @@ class UsernameTaken(Exception):
 class InvalidCredentials(Exception):
     """Exception for entering invalid credentials."""
     def __init__(self, cred: Credentials):
-        super().__init__(f'Invalid credentials: username={cred.username}, password={cred.password}')
+        super().__init__(f'Invalid credentials: username={cred.username}')
 
 
 class NonExistent(Exception):
@@ -33,3 +33,9 @@ class InvalidCookies(Exception):
     """Exception for invalid cookies."""
     def __init__(self, cookies: Cookies):
         super().__init__(f'Invalid cookies: {cookies}')
+
+
+class EndpointAuthError(Exception):
+    """Exception for unsuccessful authentication using a request to a back-end server's endpoint."""
+    def __init__(self):
+        super().__init__(f'Authentication required')

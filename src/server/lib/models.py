@@ -6,6 +6,7 @@ ScheduleType = list[list[list[int]]]
 class Credentials(BaseModel):
     username: str
     password: str
+    __repr__ = lambda self: f'Credentials(username={self.username})'
 
 class Cookies(BaseModel):
     account_id: Optional[int] = None

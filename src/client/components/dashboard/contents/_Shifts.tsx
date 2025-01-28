@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Shift } from '@types'
 import { Icon, Request, Choice, formatTimeToAMPM } from '@utils'
+import type { Shift, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
@@ -16,26 +16,26 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             const [tempEndTime, setEndTime] = useState(endTime)
             const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3)
 
-            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleNameChange = (e: InputEvent) => {
                 const newName = e.target.value
                 setTempName(newName)
                 setConfirmDisabled(newName.trim().length < 3 || !tempStartTime || !tempEndTime)
             }
 
-            const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleStartTimeChange = (e: InputEvent) => {
                 setStartTime(e.target.value)
             }
 
-            const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleEndTimeChange = (e: InputEvent) => {
                 setEndTime(e.target.value)
             }
 
             const confirmEdit = async () => {
-                await new Request(`shifts/${id}`, () => loadShifts(), {
+                await new Request(`shifts/${id}`, () => loadShifts()).patch({
                     shift_name: tempName,
                     start_time: tempStartTime,
                     end_time: tempEndTime,
-                }).patch()
+                })
                 closeModal()
             }
 
@@ -123,18 +123,18 @@ export default function Shifts() {
             const [tempEndTime, setEndTime] = useState('')
             const [isConfirmDisabled, setConfirmDisabled] = useState(true)
 
-            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleNameChange = (e: InputEvent) => {
                 const newName = e.target.value
                 setTempName(newName)
                 setConfirmDisabled(newName.trim().length === 0 || !tempStartTime || !tempEndTime)
             }
 
-            const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleStartTimeChange = (e: InputEvent) => {
                 setStartTime(e.target.value)
                 setConfirmDisabled(tempName.trim().length === 0 || !e.target.value || !tempEndTime)
             }
 
-            const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleEndTimeChange = (e: InputEvent) => {
                 setEndTime(e.target.value)
                 setConfirmDisabled(tempName.trim().length === 0 || !tempStartTime || !e.target.value)
             }
@@ -142,9 +142,8 @@ export default function Shifts() {
             const confirmAdd = async () => {
                 await new Request(
                     `accounts/${account.id}/shifts`,
-                    () => loadShifts(),
-                    { shift_name: tempName, start_time: tempStartTime, end_time: tempEndTime }
-                ).post()
+                    () => loadShifts()
+                ).post({ shift_name: tempName, start_time: tempStartTime, end_time: tempEndTime })
                 closeModal()
             }
 

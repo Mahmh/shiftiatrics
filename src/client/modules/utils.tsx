@@ -10,6 +10,7 @@ import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, Su
 export const MIN_YEAR = 2023
 export const MAX_YEAR = 2025
 export const MAX_WORK_HOURS = 210 // hours per week
+export const TOO_MANY_REQS_MSG = 'You have sent too many requests. Please try again later.'
 
 
 /** Component for icons */
@@ -114,18 +115,12 @@ export const RouteCard = ({ href, h, p }: { href: string, h: string, p: string }
 )
 
 
-/** Checks if a user is logged in */
-export const isLoggedIn = async (): Promise<false | Account> => {
-    type Response = { error: string } | { account_id: Account['id'], username: Account['username'] }
+/** Checks if a user is logged in. */
+export const isLoggedIn = async (): Promise<Account | false> => {
     return await new Request(
         'accounts/log_in_account_with_cookies',
-        (data: Response) => {
-            if ('error' in data) return false
-            if ('account_id' in data && 'username' in data) return { id: data.account_id, username: data.username }
-            return false
-        },
-        {},
-        true
+        (data) => 'account_id' in data && 'username' in data ? { id: data.account_id, username: data.username } : false,
+        () => false
     ).get()
 }
 
@@ -218,71 +213,64 @@ export const validateInput = (username: string, password: string): string | null
 export class Request {
     //// Properties ////
     private readonly endpointUrl: string
-    private readonly responseCallback: (x:any) => EndpointResponse|void|any
-    private readonly requestData: object
+    private readonly responseCallback: (data: any) => any
+    private readonly errorHandler: (error: string) => any
     private readonly includeCookies: boolean
-    private readonly logErrorsToConsole: boolean
 
     public constructor(
         endpoint: string,
-        responseCallback: (x: any) => EndpointResponse|void|any = (x) => x,
-        requestData: object = {},
-        includeCookies: boolean = false,
-        logErrorsToConsole: boolean = true
+        responseCallback: (data: any) => any = (x) => x,
+        errorHandler: (error: string) => void = (error) => console.error(error),
+        includeCookies: boolean = true
     ) {
         this.endpointUrl = `http://localhost:8000/${endpoint}`
-        this.requestData = requestData
         this.responseCallback = responseCallback
+        this.errorHandler = errorHandler
         this.includeCookies = includeCookies
-        this.logErrorsToConsole = logErrorsToConsole
     }
 
     /**
      * Performs a GET request
      * @returns The output of the inputted callback function
      */
-    public async get(): Promise<EndpointResponse|void|any> {
-        const response = await fetch(this.endpointUrl, this.getPayload('GET'))
-        this.checkStatus(response)
-        const data = await response.json()
-        if ('error' in data && this.logErrorsToConsole && !this.endpointUrl.includes('log_in_account_with_cookies')) console.error(data.error)
-        return this.responseCallback(data)
+    public async get(requestData: object = {}): Promise<any> {
+        const response = await fetch(this.endpointUrl, this.getPayload('GET', requestData))
+        if (!response.ok) return this.errorHandler(`${response.status} HTTP error`)
+        const data: EndpointResponse = await response.json()
+        return 'error' in data ? this.errorHandler(data.error) : this.responseCallback(data)
     }
 
     /**
      * Performs a PATCH request
      * @returns The output of the inputted callback function
      */
-    public async patch(): Promise<EndpointResponse|void|any> {
-        const response = await fetch(this.endpointUrl, this.getPayload('PATCH'))
-        this.checkStatus(response)
-        const data = await response.json()
-        if ('error' in data && this.logErrorsToConsole) console.error(data.error)
-        return this.responseCallback(data)
+    public async patch(requestData: object = {}): Promise<any> {
+        const response = await fetch(this.endpointUrl, this.getPayload('PATCH', requestData))
+        if (!response.ok) return this.errorHandler(`${response.status} HTTP error`)
+        const data: EndpointResponse = await response.json()
+        return 'error' in data ? this.errorHandler(data.error) : this.responseCallback(data)
     }
 
     /**
      * Performs a POST request
      * @returns The output of the inputted callback function
      */
-    public async post(): Promise<EndpointResponse|void|any> {
-        const response = await fetch(this.endpointUrl, this.getPayload('POST'))
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`)
-        const data = await response.json()
-        if ('error' in data && this.logErrorsToConsole && !data.error.includes('password=')) console.error(data.error)
-        return this.responseCallback(data)
+    public async post(requestData: object = {}): Promise<any> {
+        const response = await fetch(this.endpointUrl, this.getPayload('POST', requestData))
+        if (!response.ok) return this.errorHandler(`${response.status} HTTP error`)
+        const data: EndpointResponse = await response.json()
+        return 'error' in data ? this.errorHandler(data.error) : this.responseCallback(data)
     }
 
     /**
      * Performs a DELETE request
      * @returns The output of the inputted callback function
      */
-    public async delete(): Promise<EndpointResponse|void|any> {
-        const response = await fetch(this.endpointUrl, this.getPayload('DELETE'))
-        this.checkStatus(response)
-        const data = await response.json()
-        if ('error' in data && this.logErrorsToConsole) console.error(data.error)
-        return this.responseCallback(data)
+    public async delete(requestData: object = {}): Promise<any> {
+        const response = await fetch(this.endpointUrl, this.getPayload('DELETE', requestData))
+        if (!response.ok) return this.errorHandler(`${response.status} HTTP error`)
+        const data: EndpointResponse = await response.json()
+        return 'error' in data ? this.errorHandler(data.error) : this.responseCallback(data)
     }
 
     /**
@@ -290,22 +278,14 @@ export class Request {
      * @param method REST API Method
      * @returns The appropriate payload for the method
      */
-    private getPayload(method: string): Record<string, string|object|undefined> {
+    private getPayload(method: string, requestData: object): Record<string, string|object|undefined> {
         const payload: Record<string, string|object|undefined> = {
             method: method,
             headers: method !== 'GET' ? { 'Content-Type': 'application/json' } : undefined,
             credentials: this.includeCookies ? 'include': undefined
         }
-        if (method !== 'GET') payload.body = JSON.stringify(this.requestData)
+        if (method !== 'GET') payload.body = JSON.stringify(requestData)
         return payload
-    }
-
-    /**
-     * Throws an error for non-200 status code of a response
-     * @param response The given response
-     */
-    private checkStatus(response: Response): void {
-        if (!response.ok && this.logErrorsToConsole) console.error(`${response.status} HTTP error`)
     }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

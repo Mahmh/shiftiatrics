@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Employee } from '@types'
 import { Icon, Request, Choice, MAX_WORK_HOURS } from '@utils'
+import type { Employee, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
@@ -26,7 +26,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                 ))
             )
     
-            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleNameChange = (e: InputEvent) => {
                 const newName = e.target.value
                 setTempName(newName)
                 setConfirmDisabled(
@@ -41,7 +41,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                 )
             }
     
-            const handleMinWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleMinWorkHoursChange = (e: InputEvent) => {
                 const minHours = parseInt(e.target.value) || minWorkHours || 0
                 setTempMinWorkHours(minHours)
                 setConfirmDisabled(
@@ -56,7 +56,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                 )
             }
     
-            const handleMaxWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleMaxWorkHoursChange = (e: InputEvent) => {
                 const maxHours = parseInt(e.target.value) || maxWorkHours || 0
                 setTempMaxWorkHours(maxHours)
                 setConfirmDisabled(
@@ -72,15 +72,11 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
             }
     
             const confirmEdit = async () => {
-                await new Request(
-                    `employees/${id}`,
-                    () => loadEmployees(),
-                    {
-                        employee_name: tempName,
-                        min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
-                        max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
-                    }
-                ).patch()
+                await new Request(`employees/${id}`, () => loadEmployees()).patch({
+                    employee_name: tempName,
+                    min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
+                    max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
+                })
                 closeModal()
             }
     
@@ -174,7 +170,7 @@ export default function Employees() {
             const [tempMaxWorkHours, setTempMaxWorkHours] = useState<number>(0)
             const [isConfirmDisabled, setConfirmDisabled] = useState(true)
 
-            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleNameChange = (e: InputEvent) => {
                 const newName = e.target.value
                 setTempName(newName)
                 setConfirmDisabled(
@@ -189,7 +185,7 @@ export default function Employees() {
                 )
             }
     
-            const handleMinWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleMinWorkHoursChange = (e: InputEvent) => {
                 const minHours = parseInt(e.target.value) || 0
                 setTempMinWorkHours(minHours)
                 setConfirmDisabled(
@@ -204,7 +200,7 @@ export default function Employees() {
                 )
             }
     
-            const handleMaxWorkHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleMaxWorkHoursChange = (e: InputEvent) => {
                 const maxHours = parseInt(e.target.value) || 0
                 setTempMaxWorkHours(maxHours)
                 setConfirmDisabled(
@@ -220,15 +216,11 @@ export default function Employees() {
             }
     
             const confirmAdd = async () => {
-                await new Request(
-                    `accounts/${account.id}/employees`,
-                    () => loadEmployees(),
-                    {
-                        employee_name: tempName,
-                        min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
-                        max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
-                    }
-                ).post()
+                await new Request(`accounts/${account.id}/employees`, () => loadEmployees()).post({
+                    employee_name: tempName,
+                    min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
+                    max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
+                })
                 closeModal()
             }
     

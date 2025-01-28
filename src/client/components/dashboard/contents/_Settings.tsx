@@ -1,8 +1,8 @@
-import { useCallback, useContext, useState, useMemo, ChangeEvent } from 'react'
+import { useCallback, useContext, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { dashboardContext, nullAccount } from '@context'
-import { Choice, Switch, Dropdown, Request, MIN_YEAR, MAX_YEAR } from '@utils'
-import type { WeekendDays } from '@types'
+import { Choice, Switch, Dropdown, Request, MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@utils'
+import type { WeekendDays, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 
 const Account = () => {
@@ -31,18 +31,7 @@ const Account = () => {
 
     /** Logs out of the account */
     const logOut = useCallback(async () => {
-        type Response = { detail: string } | { error: string };
-        await new Request(
-            `accounts/logout`, 
-            (data: Response) => { 
-                if ('detail' in data) {
-                    setAccount(nullAccount)
-                    router.push('/')
-                }
-            }, 
-            {},
-            true
-        ).get()
+        await new Request(`accounts/logout`, () => { setAccount(nullAccount); router.push('/') }).get()
     }, [router, setAccount])
 
     /** Displays an account deletion modal. If confirmed, sends an API request to delete the account */
@@ -51,20 +40,17 @@ const Account = () => {
             const [error, setError] = useState('')
 
             const deleteAccount = useCallback(async () => {
-                type Response = { detail: string } | { error: string };
                 await new Request(
                     'accounts',
-                    async (data: Response) => {
-                        if ('error' in data) {
-                            setError(
-                                data.error.includes('Invalid cookies')
-                                ? 'Account session has expired. Please log out then log in again to delete your account.'
-                                : data.error
-                            )
-                        } else await logOut()
-                    },
-                    {},
-                    true
+                    async () => await logOut(),
+                    (error) => {
+                        if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
+                        setError(
+                            error.includes('Invalid cookies') ?
+                            'Account session has expired. Please log out then log in again to delete your account.'
+                            : error
+                        )
+                    }
                 ).delete()
             }, [])
 
@@ -94,31 +80,28 @@ const Account = () => {
             const [isConfirmDisabled, setConfirmDisabled] = useState(tempUsername.trim().length < 3 || account.username === tempUsername)
             const [error, setError] = useState('')
 
-            const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleUsernameChange = (e: InputEvent) => {
                 const newUsername = e.target.value
                 setTempUsername(newUsername)
                 setConfirmDisabled(newUsername.trim().length < 1 || account.username === newUsername)
             }
 
             const confirmEdit = async () => {
-                type Response = { error: string } | { account_id: number, username: string };
                 await new Request(
                     'accounts',
-                    (resAccount: Response) => {
-                        if ('error' in resAccount) {
-                            setError(
-                                resAccount.error.includes('Invalid cookies') 
-                                ? 'Account session has expired. Please log out then log in again to update your username.'
-                                : resAccount.error
-                            )
-                        } else {
-                            setAccount({ ...resAccount, id: resAccount.account_id })
-                            closeModal()
-                        }
+                    (resAccount: { account_id: number, username: string }) => {
+                        setAccount({ ...resAccount, id: resAccount.account_id })
+                        closeModal()
                     },
-                    { username: tempUsername },
-                    true
-                ).patch()
+                    (error) => {
+                        if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
+                        setError(
+                            error.includes('Invalid cookies') 
+                            ? 'Account session has expired. Please log out then log in again to update your username.'
+                            : error
+                        )
+                    }
+                ).patch({ username: tempUsername })
             }
 
             return <>
@@ -130,7 +113,7 @@ const Account = () => {
                         placeholder='New username'
                         value={tempUsername}
                         onChange={handleUsernameChange}
-                        maxLength={40}
+                        maxLength={32}
                     />
                 </section>
                 {error && <p className='error'>{error}</p>}
@@ -156,13 +139,13 @@ const Account = () => {
             const [isConfirmDisabled, setConfirmDisabled] = useState(tempNewPassword.trim().length < 3)
             const [error, setError] = useState('')
 
-            const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleNewPasswordChange = (e: InputEvent) => {
                 const newPassword = e.target.value
                 setNewPassword(newPassword)
                 setConfirmDisabled(newPassword.trim().length < 1)
             }
 
-            const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleConfirmPasswordChange = (e: InputEvent) => {
                 const confirmPassword = e.target.value
                 setConfirmPassword(confirmPassword)
                 setConfirmDisabled(tempNewPassword.trim().length < 1)
@@ -174,24 +157,21 @@ const Account = () => {
                     return
                 }
 
-                type Response = { error: string } | { account_id: number, username: string };
                 await new Request(
                     'accounts',
-                    (resAccount: Response) => {
-                        if ('error' in resAccount) {
-                            setError(
-                                resAccount.error.includes('Invalid cookies') 
-                                ? 'Session has expired. Please log out then log in again to update your password.'
-                                : resAccount.error
-                            )
-                        } else {
-                            setAccount({ ...resAccount, id: resAccount.account_id })
-                            closeModal()
-                        }
+                    (resAccount: { account_id: number, username: string }) => {
+                        setAccount({ ...resAccount, id: resAccount.account_id })
+                        closeModal()
                     },
-                    { new_password: tempNewPassword },
-                    true
-                ).patch()
+                    (error) => {
+                        if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
+                        setError(
+                            error.includes('Invalid cookies') 
+                            ? 'Session has expired. Please log out then log in again to update your password.'
+                            : error
+                        )
+                    }
+                ).patch({ new_password: tempNewPassword })
             }
 
             return <>
@@ -203,7 +183,7 @@ const Account = () => {
                         placeholder='New password'
                         value={tempNewPassword}
                         onChange={handleNewPasswordChange}
-                        maxLength={40}
+                        maxLength={32}
                     />
                 </section>
                 <section className='modal-input-sec'>
@@ -213,7 +193,7 @@ const Account = () => {
                         placeholder='Confirm password'
                         value={tempConfirmPassword}
                         onChange={handleConfirmPasswordChange}
-                        maxLength={40}
+                        maxLength={32}
                     />
                 </section>
                 {error && <p className='error'>{error}</p>}
@@ -297,22 +277,18 @@ const PreferencesAndFunctionality = () => {
         setSelectedWeekendDays(option as WeekendDays)
         await new Request(
             `accounts/${account.id}/settings/update_weekend_days`,
-            (data: { detail: WeekendDays }) => setSettings(prev => ({...prev, weekendDays: data.detail })),
-            { weekend_days: option }
-        ).patch()
+            (data: { detail: WeekendDays }) => setSettings(prev => ({...prev, weekendDays: data.detail }))
+        ).patch({ weekend_days: option })
     }
 
     /** Updates the maximum number of employees in a single shift */
-    const updateMaxEmpsInShift = async (e: ChangeEvent<HTMLInputElement>) => {
+    const updateMaxEmpsInShift = async (e: InputEvent) => {
         if (!settings.multiEmpsInShiftEnabled) return
         const newValue = parseInt(e.target.value, 10)
         await new Request(
             `accounts/${account.id}/settings/max_emps_in_shift`,
-            (data: { detail: number }) => {
-                if (typeof data.detail === 'number') setSettings(prev => ({...prev, maxEmpsInShift: data.detail }))
-            },
-            { max_emps_in_shift: newValue }
-        ).patch()
+            (data: { detail: number }) => setSettings(prev => ({...prev, maxEmpsInShift: data.detail }))   
+        ).patch({ max_emps_in_shift: newValue })
     }
 
     return (

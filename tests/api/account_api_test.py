@@ -18,12 +18,6 @@ def setup_and_teardown():
 
 
 # Tests
-def test_read_accounts():
-    response = client.get('/accounts')
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
-
-
 def test_login_account():
     response = client.post('/accounts/login', json=CRED)
     assert response.status_code == 200

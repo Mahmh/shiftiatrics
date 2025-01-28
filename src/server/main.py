@@ -1,14 +1,23 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 import jpype
+from src.server.rate_limit import limiter
 from src.server.lib.constants import WEB_SERVER_URL, locate
 from src.server.routers.db import account_router, employee_router, shift_router, schedule_router, holiday_router, settings_router
 from src.server.routers.engine import engine_router
 
+async def rate_limit_handler(request, exc):
+    """Handles rate limits from a specific client."""
+    return JSONResponse(status_code=429, content={'message': 'Too many requests. Please try again later.'})
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     """Defines the application lifespan to manage JVM startup and shutdown."""
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_handler) 
     if not jpype.isJVMStarted():
         jpype.startJVM(classpath=locate('../engine/engine.jar'))
     try:

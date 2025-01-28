@@ -2,7 +2,7 @@ import '@styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { isLoggedIn, Request, sanitizeInput, validateInput } from '@utils'
+import { isLoggedIn, Request, sanitizeInput, TOO_MANY_REQS_MSG, validateInput } from '@utils'
 import { dashboardContext } from '@context'
 import RegularPage from '@regpage'
 
@@ -27,22 +27,18 @@ export default function Signup() {
             return
         }
 
-        type Response = { account_id: number, username: string, password: string } & { error?: string };
         await new Request(
             'accounts/signup',
-            (data: Response) => {
+            (data: { account_id: number, username: string, password: string }) => {
                 setIsLoading(false)
-                if ('error' in data && data.error !== undefined) {
-                    setError(data.error)
-                } else {
-                    const responseAccount = { id: data.account_id, username: data.username }
-                    setAccount(responseAccount)
-                    router.push('/')
-                }
+                setAccount({ id: data.account_id, username: data.username })
+                router.push('/')
             },
-            { username: sanitizedUsername, password: sanitizedPassword },
-            true
-        ).post()
+            (error) => {
+                setIsLoading(false)
+                setError(error.includes('429') ? TOO_MANY_REQS_MSG : error)
+            }
+        ).post({ username: sanitizedUsername, password: sanitizedPassword })
     }
 
     useEffect(() => {
@@ -56,11 +52,11 @@ export default function Signup() {
             <div id='mid-container'>
                 <section>
                     <label>Username</label>
-                    <input type='text' value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading}/>
+                    <input type='text' value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading} maxLength={48}/>
                 </section>
                 <section>
                     <label>Password</label>
-                    <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
+                    <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} maxLength={32}/>
                 </section>
                 {error && <p className='error' style={error === 'X' ? { visibility: 'hidden' } : {}}>{error}</p>}
                 <button className='cred-submit-btn' onClick={handleSignup} disabled={isLoading}>

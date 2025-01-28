@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import JSONB, ARRAY, array
 from sqlalchemy.orm import sessionmaker, declarative_base, Session as _SessionType
 import unicodedata, re, bcrypt, uuid
 from src.server.lib.constants import ENGINE_URL, LIST_OF_WEEKEND_DAYS, MIN_USERNAME_LEN, MAX_USERNAME_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, TOKEN_EXPIRY_SECONDS
-from src.server.lib.utils import log, err_log, parse_date, parse_time
+from src.server.lib.utils import log, errlog, parse_date, parse_time
 from src.server.lib.models import Credentials, Cookies, ScheduleType
 from src.server.lib.exceptions import UsernameTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
 
@@ -15,7 +15,7 @@ engine = create_engine(ENGINE_URL)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
-def dbsession(*, commit=False):
+def dbsession(*, commit: bool = False):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -31,7 +31,7 @@ def dbsession(*, commit=False):
             except Exception as e:
                 session.rollback()
                 is_auth = (type(e) in (UsernameTaken, InvalidCredentials)) or (type(e) is NonExistent and e.entity == 'account')
-                err_log(func.__name__, e, 'auth' if is_auth else 'db')
+                errlog(func.__name__, e, 'auth' if is_auth else 'db')
                 raise e
             finally:
                 session.close()
@@ -195,8 +195,8 @@ def _sanitize_username(username: str) -> str:
         raise ValueError(f'Username must be between {MIN_USERNAME_LEN} and {MAX_USERNAME_LEN} characters long.')
 
     # Allow only alphanumeric characters and limited symbols for usernames
-    if not re.match(r'^[a-zA-Z0-9._-]+$', username):
-        raise ValueError(f'Username contains invalid characters.')
+    if not re.match(r'^[a-zA-Z0-9 ._-]+$', username):
+        raise ValueError('Username contains invalid characters.')
 
     return username
 
@@ -313,7 +313,6 @@ def _validate_cookies(cookies: Cookies, *, session: _SessionType) -> Account:
     token_obj = session.query(Token).filter_by(account_id=cookies.account_id, token=cookies.token).first()
 
     if token_obj is None:
-        # token_obj = _get_token_from_account(cookies.account_id, session=session)
         raise InvalidCookies(cookies)
     elif datetime.now() > token_obj.expires_at:
         raise InvalidCookies(cookies)
@@ -409,7 +408,13 @@ def update_account(cookies: Cookies, updates: dict, *, session: _SessionType) ->
             hashed_password = _hash_password(password)
             setattr(account, 'hashed_password', hashed_password)
 
-    log(f'Modified account: {account}, updates: {updates}', 'auth')
+    if 'username' in updates and 'new_password' in updates:
+        log(f'Modified account: {account}; username has changed to {updates["username"]}, and password has changed', 'auth')
+    elif 'new_password' in updates:
+        log(f'Modified account: {account}; only the password has changed', 'auth')
+    else:
+        log(f'Modified account: {account}; updates: {updates}', 'auth')
+
     return account
 
 

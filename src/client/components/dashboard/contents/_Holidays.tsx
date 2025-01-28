@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react'
 import { dashboardContext } from '@context'
 import { Icon, Request, Choice, getMonthName } from '@utils'
-import type { Holiday } from '@types'
+import type { Holiday, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
@@ -27,7 +27,7 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
                 tempName.trim().length === 0 || name.trim().length === 0 || assignedTo.length === 0 || !isValidDateRange(startDate, endDate)
             )
 
-            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleNameChange = (e: InputEvent) => {
                 setTempName(e.target.value)
                 setConfirmDisabled(
                     e.target.value.trim().length === 0 || name.trim().length === 0 || assignedTo.length === 0 || !isValidDateRange(startDate, endDate)
@@ -44,14 +44,14 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
                 })
             }
 
-            const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleStartDateChange = (e: InputEvent) => {
                 setStartDate(e.target.value)
                 setConfirmDisabled(
                     tempName.trim().length === 0 || name.trim().length === 0 || assignedTo.length === 0 || !isValidDateRange(e.target.value, endDate)
                 )
             }
 
-            const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleEndDateChange = (e: InputEvent) => {
                 setEndDate(e.target.value)
                 setConfirmDisabled(
                     tempName.trim().length === 0 || name.trim().length === 0 || assignedTo.length === 0 || !isValidDateRange(startDate, e.target.value)
@@ -59,12 +59,12 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
             }
 
             const confirmEdit = async () => {
-                await new Request(`holidays/${id}`, () => loadHolidays(), {
+                await new Request(`holidays/${id}`, () => loadHolidays()).patch({
                     holiday_name: tempName,
                     assigned_to: assignedTo,
                     start_date: startDate,
                     end_date: endDate,
-                }).patch()
+                })
                 closeModal()
             }
 
@@ -170,7 +170,7 @@ export default function Holidays() {
                 return new Date(start) <= new Date(end)
             }
 
-            const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleNameChange = (e: InputEvent) => {
                 setTempName(e.target.value)
                 setConfirmDisabled(
                     e.target.value.trim().length === 0 || assignedTo.length === 0 || !isValidDateRange(startDate, endDate)
@@ -187,14 +187,14 @@ export default function Holidays() {
                 })
             }
 
-            const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleStartDateChange = (e: InputEvent) => {
                 setStartDate(e.target.value)
                 setConfirmDisabled(
                     tempName.trim().length === 0 || assignedTo.length === 0 || !isValidDateRange(e.target.value, endDate)
                 )
             }
 
-            const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            const handleEndDateChange = (e: InputEvent) => {
                 setEndDate(e.target.value)
                 setConfirmDisabled(
                     tempName.trim().length === 0 || assignedTo.length === 0 || !isValidDateRange(startDate, e.target.value)
@@ -202,11 +202,12 @@ export default function Holidays() {
             }
 
             const confirmAdd = async () => {
-                await new Request(
-                    `accounts/${account.id}/holidays`,
-                    () => loadHolidays(),
-                    { holiday_name: tempName, assigned_to: assignedTo, start_date: startDate, end_date: endDate }
-                ).post()
+                await new Request(`accounts/${account.id}/holidays`, () => loadHolidays()).post({
+                    holiday_name: tempName,
+                    assigned_to: assignedTo,
+                    start_date: startDate,
+                    end_date: endDate
+                })
                 closeModal()
             }
 

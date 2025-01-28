@@ -2,7 +2,7 @@ import '@styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { isLoggedIn, Request, sanitizeInput, validateInput } from '@utils'
+import { isLoggedIn, Request, sanitizeInput, TOO_MANY_REQS_MSG, validateInput } from '@utils'
 import { dashboardContext } from '@context'
 import RegularPage from '@regpage'
 
@@ -27,22 +27,23 @@ export default function Login() {
             return
         }
 
-        type Response = { account_id: number, username: string, password: string } & { error?: string };
         await new Request(
             'accounts/login',
-            (data: Response) => {
+            (data: { account_id: number, username: string, password: string }) => {
                 setIsLoading(false)
-                if ('error' in data && data.error !== undefined) {
-                    setError(data.error.includes('Invalid credentials') ? 'Wrong credentials entered.' : data.error)
-                } else {
-                    const responseAccount = { id: data.account_id, username: data.username }
-                    setAccount(responseAccount)
-                    router.push('/')
-                }
+                setAccount({ id: data.account_id, username: data.username })
+                router.push('/')
             },
-            { username: sanitizedUsername, password: sanitizedPassword },
-            true
-        ).post()
+            (error) => {
+                setIsLoading(false)
+                if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
+                setError(
+                    error.includes('Invalid credentials') || error.includes('does not exist')
+                    ? 'You have entered invalid credentials.'
+                    : error
+                )
+            }
+        ).post({ username: sanitizedUsername, password: sanitizedPassword })
     }
 
     useEffect(() => {
