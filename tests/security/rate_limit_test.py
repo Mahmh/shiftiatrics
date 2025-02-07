@@ -1,30 +1,26 @@
 from typing import LiteralString, Optional
 from fastapi import Response
 from fastapi.testclient import TestClient
-import pytest, random, string
+import random, string
 from src.server.main import app
-from src.server.lib.db import reset_whole_db
-from src.server.rate_limit import limiter
+from tests.utils import ctxtest
 
 # Init
 client = TestClient(app)
-CRED = {'username': 'testuser', 'password': 'testpass'}
+CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
 create_account = lambda: client.post('/accounts/signup', json=CRED)
 login = lambda: client.post('/accounts/login', json=CRED)
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest(disable_rate_limiting=False)
 def setup_and_teardown():
-    limiter.reset()
-    reset_whole_db()
     create_account()
     yield
-    reset_whole_db()
 
 
 def _generate_random_credentials() -> dict[str, str]:
-    username = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    email = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-    return {'username': username, 'password': password}
+    return {'email': email, 'password': password}
 
 
 def _handle_client_cookies(cookies: dict) -> None:
@@ -33,11 +29,11 @@ def _handle_client_cookies(cookies: dict) -> None:
         client.cookies.set(key, value)
 
 
-def hit_endpoint(endpoint: str, method: LiteralString = 'get', json: Optional[dict] = None, cookies: Optional[dict] = None) -> Response:
+def hit_endpoint(endpoint: str, method: LiteralString = 'get', times=30, json: Optional[dict] = None, cookies: Optional[dict] = None) -> Response:
     """Helper function to spam requests to an endpoint."""
     if cookies: _handle_client_cookies(cookies)
 
-    for i in range(31):
+    for i in range(times+1):
         if endpoint == '/accounts/signup':
             json = _generate_random_credentials()
 
@@ -47,19 +43,19 @@ def hit_endpoint(endpoint: str, method: LiteralString = 'get', json: Optional[di
         elif method == 'delete': response = client.delete(endpoint)
 
         # 29 because create_account was already called beforehand
-        if (i < 30 and endpoint != '/accounts/signup') or (i < 29 and endpoint == '/accounts/signup'):
+        if (i < times and endpoint != '/accounts/signup') or (i < (times-1) and endpoint == '/accounts/signup'):
             assert response.status_code == 200
     return response
 
 
 # Tests
 def test_rate_limit_signup():
-    response = hit_endpoint('/accounts/signup', method='post', json=CRED)
+    response = hit_endpoint('/accounts/signup', method='post', times=10, json=CRED)
     assert response.status_code == 429
 
 
 def test_rate_limit_login():
-    response = hit_endpoint('/accounts/login', method='post', json=CRED)
+    response = hit_endpoint('/accounts/login', method='post', times=5, json=CRED)
     assert response.status_code == 429
 
 

@@ -15,7 +15,7 @@ export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][][]
 export type YearToSchedules = Map<number, Schedule[]>
 export type YearToSchedulesValidity = Map<number, Map<number, boolean>>
-
+ 
 
 // Context
 export interface ContextProps {
@@ -63,7 +63,7 @@ export interface ContextProps {
 // Entities
 export interface Account {
     id: number
-    username: string
+    email: string
 }
 
 export interface Employee {

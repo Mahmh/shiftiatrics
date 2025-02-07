@@ -9,7 +9,7 @@ import RegularPage from '@regpage'
 export default function Signup() {
     const router = useRouter()
     const { setAccount } = useContext(dashboardContext)
-    const [username, setUsername] = useState('')
+    const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string|'X'>('X')
     const [isLoading, setIsLoading] = useState(false)
@@ -18,9 +18,9 @@ export default function Signup() {
         setError('X')
         setIsLoading(true)
 
-        const sanitizedUsername = sanitizeInput(username)
+        const sanitizedEmail = sanitizeInput(email)
         const sanitizedPassword = sanitizeInput(password)
-        const validationError = validateInput(sanitizedUsername, sanitizedPassword)
+        const validationError = validateInput(sanitizedEmail, sanitizedPassword)
         if (validationError) {
             setError(validationError)
             setIsLoading(false)
@@ -29,16 +29,16 @@ export default function Signup() {
 
         await new Request(
             'accounts/signup',
-            (data: { account_id: number, username: string, password: string }) => {
+            (data: { account_id: number, email: string, password: string }) => {
                 setIsLoading(false)
-                setAccount({ id: data.account_id, username: data.username })
+                setAccount({ id: data.account_id, email: data.email })
                 router.push('/')
             },
             (error) => {
                 setIsLoading(false)
                 setError(error.includes('429') ? TOO_MANY_REQS_MSG : error)
             }
-        ).post({ username: sanitizedUsername, password: sanitizedPassword })
+        ).post({ email: sanitizedEmail, password: sanitizedPassword })
     }
 
     useEffect(() => {
@@ -51,8 +51,8 @@ export default function Signup() {
         <RegularPage name='Sign Up' id='signup-page' transparentHeader={true} footerMarginTop={false}>
             <div id='mid-container'>
                 <section>
-                    <label>Username</label>
-                    <input type='text' value={username} onChange={(e) => setUsername(e.target.value)} disabled={isLoading} maxLength={48}/>
+                    <label>Email</label>
+                    <input type='text' value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} maxLength={32}/>
                 </section>
                 <section>
                     <label>Password</label>

@@ -73,23 +73,23 @@ const Account = () => {
         openModal()
     }, [logOut, closeModal, openModal, setModalContent])
 
-    /** Displays a modal for editing the account's username */
-    const openEditUsernameModal = useCallback(() => {
-        const EditUsernameModalContent = () => {
-            const [tempUsername, setTempUsername] = useState(account.username)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempUsername.trim().length < 3 || account.username === tempUsername)
+    /** Displays a modal for editing the account's email */
+    const openEditEmailModal = useCallback(() => {
+        const EditEmailModalContent = () => {
+            const [tempEmail, setTempEmail] = useState(account.email)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempEmail.trim().length < 3 || account.email === tempEmail)
             const [error, setError] = useState('')
 
-            const handleUsernameChange = (e: InputEvent) => {
-                const newUsername = e.target.value
-                setTempUsername(newUsername)
-                setConfirmDisabled(newUsername.trim().length < 1 || account.username === newUsername)
+            const handleEmailChange = (e: InputEvent) => {
+                const newEmail = e.target.value
+                setTempEmail(newEmail)
+                setConfirmDisabled(newEmail.trim().length < 1 || account.email === newEmail)
             }
 
             const confirmEdit = async () => {
                 await new Request(
                     'accounts',
-                    (resAccount: { account_id: number, username: string }) => {
+                    (resAccount: { account_id: number, email: string }) => {
                         setAccount({ ...resAccount, id: resAccount.account_id })
                         closeModal()
                     },
@@ -97,22 +97,22 @@ const Account = () => {
                         if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
                         setError(
                             error.includes('Invalid cookies') 
-                            ? 'Account session has expired. Please log out then log in again to update your username.'
+                            ? 'Account session has expired. Please log out then log in again to update your email.'
                             : error
                         )
                     }
-                ).patch({ username: tempUsername })
+                ).patch({ email: tempEmail })
             }
 
             return <>
-                <h2>Edit Username</h2>
+                <h2>Edit Email</h2>
                 <section style={{ marginBottom: 20 }}>
-                    <label style={{ marginRight: 10 }}>Username: </label>
+                    <label style={{ marginRight: 10 }}>Email: </label>
                     <input
                         type='text'
-                        placeholder='New username'
-                        value={tempUsername}
-                        onChange={handleUsernameChange}
+                        placeholder='New email'
+                        value={tempEmail}
+                        onChange={handleEmailChange}
                         maxLength={32}
                     />
                 </section>
@@ -127,7 +127,7 @@ const Account = () => {
             </>
         }
 
-        setModalContent(<EditUsernameModalContent/>)
+        setModalContent(<EditEmailModalContent/>)
         openModal()
     }, [account, setAccount, openModal, closeModal, setModalContent])
 
@@ -159,7 +159,7 @@ const Account = () => {
 
                 await new Request(
                     'accounts',
-                    (resAccount: { account_id: number, username: string }) => {
+                    (resAccount: { account_id: number, email: string }) => {
                         setAccount({ ...resAccount, id: resAccount.account_id })
                         closeModal()
                     },
@@ -216,7 +216,7 @@ const Account = () => {
             <h3 className='settings-title'>Account</h3>
             <div className='card-content'>
                 <section>
-                    <h1>{account.username}</h1>
+                    <h1>{account.email}</h1>
                     <ul>
                         <li>{scheduleCountText}</li>
                         <li>{employeeCountText}</li>
@@ -225,7 +225,7 @@ const Account = () => {
                     </ul>
                 </section>
                 <section id='account-actions-card'>
-                    <button className='edit-account-btn' onClick={openEditUsernameModal}>Edit Username</button>
+                    <button className='edit-account-btn' onClick={openEditEmailModal}>Edit Email</button>
                     <button className='edit-account-btn' onClick={openChangePasswordModal}>Change Password</button>
                     <button id='log-out-btn' onClick={openLogOutModal}>Log Out</button>
                     <button id='delete-account-btn' onClick={openDeleteModal}>Delete Account</button>

@@ -34,7 +34,7 @@ With all of that information, I can design an effective system for automating sc
 
     | Table Name  | Fields                                                                                   |
     |-------------|------------------------------------------------------------------------------------------|
-    | Accounts    | Account ID, Username, Password                                                          |
+    | Accounts    | Account ID, Email, Password                                                          |
     | Employees   | Account ID, Employee ID, Employee Name, Min Work Hours, Max Work Hours                  |
     | Shifts      | Account ID, Shift ID, Shift Name, Start Time, End Time                                  |
     | Schedules   | Account ID, Schedule ID, Schedule (JSONB), Month, Year                                  |

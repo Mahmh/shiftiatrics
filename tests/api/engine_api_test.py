@@ -1,12 +1,12 @@
 import pytest, jpype
 from fastapi.testclient import TestClient
 from src.server.main import app
-from src.server.lib.db import reset_whole_db
-from src.server.lib.constants import locate
+from src.server.lib.constants import SCHEDULE_ENGINE_DIR
+from tests.utils import ctxtest
 
 # Init
 client = TestClient(app)
-CRED = {'username': 'testuser4', 'password': 'testpass2'}
+CRED = {'email': 'testuser@gmail.com', 'password': 'testpass2'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred).json()['account_id']
 
 EMPLOYEE = {'employee_name': 'John Doe'}
@@ -19,18 +19,16 @@ create_shift = lambda account_id, shift: client.post(f'/accounts/{account_id}/sh
 SCHEDULE_DATA = {'schedule': [[[3], [1]], [[2, 3], [1]], [[3, 1], [2]], [[2], [1, 3]]], 'month': 11, 'year': 2024}
 create_schedule = lambda account_id, schedule_data: client.post(f'/accounts/{account_id}/schedules', json=schedule_data)
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     if not jpype.isJVMStarted():
-        jpype.startJVM(classpath=locate('../engine/engine.jar'))
+        jpype.startJVM(classpath=SCHEDULE_ENGINE_DIR)
     account_id = create_account(CRED)
     create_employee(account_id, EMPLOYEE)
     create_shift(account_id, SHIFT1)
     create_shift(account_id, SHIFT2)
     create_schedule(account_id, SCHEDULE_DATA)
     yield account_id
-    reset_whole_db()
 
 
 # Tests

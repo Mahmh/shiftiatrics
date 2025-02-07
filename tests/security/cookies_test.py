@@ -1,22 +1,20 @@
 import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
-from src.server.lib.db import reset_whole_db
+from tests.utils import ctxtest
 
 # Init
 client = TestClient(app)
-CRED = {'username': 'testuser', 'password': 'testpass'}
-CRED2 = {'username': 'testuser2', 'password': 'testpass2'}
+CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
+CRED2 = {'email': 'testuser2@gmail.com', 'password': 'testpass2'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
 login = lambda: client.post('/accounts/login', json=CRED)
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     create_account(CRED2)
     create_account(CRED)
     yield
-    reset_whole_db()
 
 
 # Tests
@@ -44,8 +42,8 @@ def test_clear_cookies():
     client.cookies.set('auth_token', response.cookies.get('auth_token'))
     response = client.get('/accounts/logout')
     assert response.status_code == 200
-    assert response.cookies.get('account_id') == 'None'
-    assert response.cookies.get('auth_token') == 'None'
+    assert response.cookies.get('account_id') == None
+    assert response.cookies.get('auth_token') == None
 
 
 def test_invalid_cookies():

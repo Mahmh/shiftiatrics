@@ -2,7 +2,7 @@
 
 CREATE TABLE accounts (
     account_id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(256) UNIQUE NOT NULL,
     hashed_password VARCHAR(128) NOT NULL
 );
 
@@ -16,7 +16,7 @@ CREATE TABLE tokens (
 CREATE TABLE employees (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     employee_id SERIAL PRIMARY KEY,
-    employee_name VARCHAR(100) NOT NULL,
+    employee_name VARCHAR(40) NOT NULL,
     min_work_hours INT,
     max_work_hours INT
 );
@@ -24,7 +24,7 @@ CREATE TABLE employees (
 CREATE TABLE shifts (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     shift_id SERIAL PRIMARY KEY,
-    shift_name VARCHAR(100) NOT NULL,
+    shift_name VARCHAR(40) NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL
 );
@@ -40,7 +40,7 @@ CREATE TABLE schedules (
 CREATE TABLE holidays (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     holiday_id SERIAL PRIMARY KEY,
-    holiday_name VARCHAR(100) NOT NULL,
+    holiday_name VARCHAR(40) NOT NULL,
     assigned_to INT[] NOT NULL,  -- Array of employee IDs
     start_date DATE NOT NULL,
     end_date DATE NOT NULL

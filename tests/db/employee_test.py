@@ -1,17 +1,16 @@
 import pytest
-from src.server.lib.db import reset_whole_db, create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
+from src.server.lib.db import create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
 from src.server.lib.models import Credentials
+from tests.utils import ctxtest
 
 # Init
 ACCOUNT_ID = 1
-CRED = Credentials(username='testuser', password='testpass')
+CRED = Credentials(email='testuser@gmail.com', password='testpass')
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     create_account(CRED)
     yield
-    reset_whole_db()
 
 
 # Tests

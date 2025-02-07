@@ -9,7 +9,7 @@ export default function RegularPage(
 ) {
     return <>
         <Head>
-            <title>{name ? `${name} | ` : ''}Shiftiatrics</title>
+            <title>{name ? `${name} | Shiftiatrics` : 'Shiftiatrics'}</title>
         </Head>
         <Header transparentHeader={transparentHeader}/>
         <main id={id} style={transparentHeader ? {} : { position: 'relative', top: 120, marginBottom: '35vh' }}>

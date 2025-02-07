@@ -35,8 +35,8 @@ def _set_cookie(key: str, value: str, response: Response) -> None:
         key=key,
         value=value,
         httponly=True,
-        secure=False,
         samesite='strict',
+        secure=False,
         domain=None,
         path='/'
     )
@@ -46,10 +46,10 @@ def _set_cookie(key: str, value: str, response: Response) -> None:
 def endpoint(*, auth: bool = True):
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             try:
                 if auth: _authenticate(kwargs)
-                result = func(*args, **kwargs)
+                result = await func(*args, **kwargs)
                 return _handle_return_type(result)
             except Exception as e:
                 errlog(func.__name__, e, 'engine')
@@ -59,7 +59,7 @@ def endpoint(*, auth: bool = True):
 
 
 def get_cookies(request: Request) -> Cookies:
-    """Returns the username & authentication token stored in the client's cookies."""
+    """Returns the email & authentication token stored in the client's cookies."""
     try:
         return Cookies(account_id=int(request.cookies.get('account_id')), token=request.cookies.get('auth_token'))
     except (TypeError, ValueError):
@@ -67,7 +67,7 @@ def get_cookies(request: Request) -> Cookies:
 
 
 def store_cookies(cookies: Cookies, response: Response) -> None:
-    """Stores the given username & authentication token as HttpOnly cookies in the client."""
+    """Stores the given email & authentication token as HttpOnly cookies in the client."""
     if not cookies.available(): raise CookiesUnavailable(cookies)
     log(f'Storing cookies: {cookies}', 'auth')
     _set_cookie('account_id', cookies.account_id, response)
@@ -75,6 +75,6 @@ def store_cookies(cookies: Cookies, response: Response) -> None:
 
 
 def clear_cookies(response: Response) -> None:
-    """Sets the cookies to None, effectively clearing them."""
-    _set_cookie('account_id', None, response)
-    _set_cookie('auth_token', None, response)
+    """Deletes the auth cookies."""
+    response.delete_cookie('account_id')
+    response.delete_cookie('auth_token')

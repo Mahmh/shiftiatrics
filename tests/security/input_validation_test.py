@@ -1,22 +1,22 @@
 import pytest, bcrypt
 from src.server.lib.models import Credentials
-from src.server.lib.db import Session, Account, reset_whole_db, _sanitize_username, _sanitize_password, _sanitize_credentials, _hash_password, _authenticate_credentials
+from src.server.lib.db import Session, Account, _sanitize_email, _sanitize_password, _sanitize_credentials, _hash_password, _authenticate_credentials
 from src.server.lib.exceptions import NonExistent, InvalidCredentials
+from tests.utils import ctxtest
 
 # Init
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
+
 def setup_and_teardown():
-    reset_whole_db()
     yield
-    reset_whole_db()
 
 
 # Tests
-def test_sanitize_username():
-    assert _sanitize_username('  user  ') == 'user'
-    assert _sanitize_username('user.name') == 'user.name'
-    with pytest.raises(ValueError):
-        _sanitize_username('invalid username!')
+def test_sanitize_email():
+    assert _sanitize_email('  user@gmail.com  ') == 'user@gmail.com'
+    assert _sanitize_email('user.name@gmail.com') == 'user.name@gmail.com'
+    with pytest.raises(ValueError, match='Email format is invalid.'):
+        _sanitize_email('invalid email!')
 
 
 def test_sanitize_password():
@@ -26,9 +26,9 @@ def test_sanitize_password():
 
 
 def test_sanitize_credentials():
-    cred = Credentials(username='  user  ', password='  password  ')
+    cred = Credentials(email='  user@outlook.com  ', password='  password  ')
     sanitized_cred = _sanitize_credentials(cred)
-    assert sanitized_cred.username == 'user'
+    assert sanitized_cred.email == 'user@outlook.com'
     assert sanitized_cred.password == 'password'
 
 
@@ -40,20 +40,20 @@ def test_hash_password():
 
 
 def test_authenticate_credentials_valid():
-    cred = Credentials(username='validuser', password='validpassword')
+    cred = Credentials(email='validuser@hotmail.com', password='validpassword')
     hashed_password = _hash_password(cred.password)
-    account = Account(username=cred.username, hashed_password=hashed_password)
+    account = Account(email=cred.email, hashed_password=hashed_password)
     
     with Session() as session:
         session.add(account)
         session.commit()
     
     authenticated_account = _authenticate_credentials(cred, session=session)
-    assert authenticated_account.username == cred.username
+    assert authenticated_account.email == cred.email
 
 
-def test_authenticate_credentials_invalid_username():
-    cred = Credentials(username='invaliduser', password='validpassword')
+def test_authenticate_credentials_invalid_email():
+    cred = Credentials(email='invaliduser@gmail.com', password='validpassword')
     
     with pytest.raises(NonExistent):
         with Session() as session:
@@ -61,9 +61,9 @@ def test_authenticate_credentials_invalid_username():
 
 
 def test_authenticate_credentials_invalid_password():
-    cred = Credentials(username='validuser', password='invalidpassword')
+    cred = Credentials(email='validuser@gmail.com', password='invalidpassword')
     hashed_password = _hash_password('validpassword')
-    account = Account(username=cred.username, hashed_password=hashed_password)
+    account = Account(email=cred.email, hashed_password=hashed_password)
     
     with Session() as session:
         session.add(account)

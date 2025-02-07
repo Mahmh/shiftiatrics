@@ -1,11 +1,6 @@
 from datetime import date, time
 import logging, os
-from src.server.lib.constants import ENABLE_LOGGING, locate
-
-# Initialize log directory
-LOG_DIR = locate('../logs/')
-os.makedirs(LOG_DIR, exist_ok=True)
-
+from src.server.lib.constants import ENABLE_LOGGING, LOG_DIR
 
 def get_logger(name: str, filename: str, level: str = 'INFO') -> logging.Logger:
     """Get a logger with a specific name and file handler."""

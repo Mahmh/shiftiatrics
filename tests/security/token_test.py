@@ -2,18 +2,17 @@ from datetime import datetime, timedelta
 import pytest
 from src.server.lib.models import Credentials, Cookies
 from src.server.lib.exceptions import InvalidCookies, NonExistent
-from src.server.lib.db import Session, reset_whole_db, create_account, _renew_token, _generate_new_token, _get_token_from_account, _validate_cookies
+from src.server.lib.db import Session, create_account, _renew_token, _generate_new_token, _get_token_from_account, _validate_cookies
+from tests.utils import ctxtest
 
 # Init
-CRED = Credentials(username='testuser', password='testpass')
+CRED = Credentials(email='testuser@gmail.com', password='testpass')
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     out = create_account(CRED)
     account, token = out
     yield account.account_id, token
-    reset_whole_db()
 
 
 # Tests

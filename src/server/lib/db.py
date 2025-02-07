@@ -3,12 +3,13 @@ from datetime import date, time, datetime, timedelta
 from functools import wraps
 from sqlalchemy import create_engine, text, Column, Integer, String, Boolean, ForeignKey, Date, Time
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY, array
-from sqlalchemy.orm import sessionmaker, declarative_base, Session as _SessionType
+from sqlalchemy.orm import sessionmaker, Session as _SessionType
+from sqlalchemy.ext.declarative import declarative_base
 import unicodedata, re, bcrypt, uuid
-from src.server.lib.constants import ENGINE_URL, LIST_OF_WEEKEND_DAYS, MIN_USERNAME_LEN, MAX_USERNAME_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, TOKEN_EXPIRY_SECONDS
+from src.server.lib.constants import ENGINE_URL, LIST_OF_WEEKEND_DAYS, MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, TOKEN_EXPIRY_SECONDS
 from src.server.lib.utils import log, errlog, parse_date, parse_time
 from src.server.lib.models import Credentials, Cookies, ScheduleType
-from src.server.lib.exceptions import UsernameTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
+from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
 
 # Init
 engine = create_engine(ENGINE_URL)
@@ -30,7 +31,7 @@ def dbsession(*, commit: bool = False):
                 return result
             except Exception as e:
                 session.rollback()
-                is_auth = (type(e) in (UsernameTaken, InvalidCredentials)) or (type(e) is NonExistent and e.entity == 'account')
+                is_auth = (type(e) in (EmailTaken, InvalidCredentials)) or (type(e) is NonExistent and e.entity == 'account')
                 errlog(func.__name__, e, 'auth' if is_auth else 'db')
                 raise e
             finally:
@@ -43,9 +44,10 @@ def dbsession(*, commit: bool = False):
 class Account(Base):
     __tablename__ = 'accounts'
     account_id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(50), unique=True, nullable=False)
+    email = Column(String(256), unique=True, nullable=False)
     hashed_password = Column(String(128), nullable=False)
     __repr__ = lambda self: f'Account({self.account_id})'
+
 
 class Token(Base):
     __tablename__ = 'tokens'
@@ -54,6 +56,7 @@ class Token(Base):
     created_at = Column(Date, default=text('CURRENT_TIMESTAMP'))
     expires_at = Column(Date, nullable=True)
     __repr__ = lambda self: f'Token({self.account_id})'
+
 
 class Employee(Base):
     __tablename__ = 'employees'
@@ -64,6 +67,7 @@ class Employee(Base):
     max_work_hours = Column(Integer, nullable=True)
     __repr__ = lambda self: f'Employee({self.employee_id})'
 
+
 class Shift(Base):
     __tablename__ = 'shifts'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
@@ -72,6 +76,7 @@ class Shift(Base):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     __repr__ = lambda self: f'Employee({self.shift_id})'
+
 
 class Schedule(Base):
     __tablename__ = 'schedules'
@@ -82,6 +87,7 @@ class Schedule(Base):
     year = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
 
+
 class Holiday(Base):
     __tablename__ = 'holidays'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
@@ -91,6 +97,7 @@ class Holiday(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     __repr__ = lambda self: f'Holiday({self.holiday_id})'
+
 
 class Settings(Base):
     __tablename__ = 'settings'
@@ -105,10 +112,10 @@ class Settings(Base):
 
 
 # Utils not meant to be called directly
-def _check_username_is_not_registered(sanitized_username: str, *, session: _SessionType) -> None:
-    """Raises an exception if the provided username is already registered."""
-    if session.query(Account).filter_by(username=sanitized_username).first():
-        raise UsernameTaken(sanitized_username)
+def _check_email_is_not_registered(sanitized_email: str, *, session: _SessionType) -> None:
+    """Raises an exception if the provided email is already registered."""
+    if session.query(Account).filter_by(email=sanitized_email).first():
+        raise EmailTaken(sanitized_email)
 
 
 def _check_account(account_id: int, *, session: _SessionType) -> Account:
@@ -177,28 +184,29 @@ def _get_default_settings_kwargs(account_id: int, toggled_setting: str = '', val
     return kwargs
 
 
-def _sanitize_username(username: str) -> str:
+def _sanitize_email(email: str) -> str:
     """
-    Sanitizes the username by trimming whitespace, normalizing unicode, validating format,
+    Sanitizes the email by trimming whitespace, normalizing unicode, validating format,
     and removing potentially harmful characters.
-    Raises a `ValueError` if the username is invalid or fails sanitization checks.
+    Raises a `ValueError` if the email is invalid or fails sanitization checks.
     """
-    # Ensure username is a string
-    if not isinstance(username, str): raise ValueError("Username must be a string.")
+    # Ensure email is a string
+    if not isinstance(email, str): raise ValueError("Email must be a string.")
     # Normalize Unicode to prevent homograph attacks
-    username = unicodedata.normalize('NFKC', username)
+    email = unicodedata.normalize('NFKC', email)
     # Trim leading and trailing whitespace
-    username = username.strip()
+    email = email.strip()
 
-    # Enforce username constraints
-    if not (MIN_USERNAME_LEN <= len(username) <= MAX_USERNAME_LEN):
-        raise ValueError(f'Username must be between {MIN_USERNAME_LEN} and {MAX_USERNAME_LEN} characters long.')
+    # Enforce email constraints
+    if not (MIN_EMAIL_LEN <= len(email) <= MAX_EMAIL_LEN):
+        raise ValueError(f'Email must be between {MIN_EMAIL_LEN} and {MAX_EMAIL_LEN} characters long.')
 
-    # Allow only alphanumeric characters and limited symbols for usernames
-    if not re.match(r'^[a-zA-Z0-9 ._-]+$', username):
-        raise ValueError('Username contains invalid characters.')
+    # Validate email format using a regular expression
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, email):
+        raise ValueError('Email format is invalid.')
 
-    return username
+    return email
 
 
 def _sanitize_password(password: str) -> str:
@@ -234,7 +242,7 @@ def _sanitize_credentials(cred: Credentials) -> Credentials:
     and removing potentially harmful characters.
     Raises a `ValueError` if credentials are invalid or fail sanitization checks.
     """
-    cred.username = _sanitize_username(cred.username)
+    cred.email = _sanitize_email(cred.email)
     cred.password = _sanitize_password(cred.password)
     return cred
 
@@ -254,16 +262,16 @@ def _authenticate_credentials(cred: Credentials, *, session: _SessionType) -> Ac
     Returns:
         Account: The authenticated account object if authentication succeeds.
     Raises:
-        NonExistent: If the account with the given username does not exist.
+        NonExistent: If the account with the given email does not exist.
         InvalidCredentials: If the password does not match the stored hash.
     """
     # Sanitize the input credentials
     sanitized_cred = _sanitize_credentials(cred)
 
-    # Fetch the account from the database using the sanitized username
-    account = session.query(Account).filter_by(username=sanitized_cred.username).first()
+    # Fetch the account from the database using the sanitized email
+    account = session.query(Account).filter_by(email=sanitized_cred.email).first()
     if not account:
-        raise NonExistent('account', sanitized_cred.username)
+        raise NonExistent('account', sanitized_cred.email)
 
     # Verify the provided password against the stored hashed password
     if not bcrypt.checkpw(sanitized_cred.password.encode('utf-8'), account.hashed_password.encode('utf-8')):
@@ -322,32 +330,8 @@ def _validate_cookies(cookies: Cookies, *, session: _SessionType) -> Account:
     return account
 
 
-def reset_whole_db():
-    """Resets the DB auto-increment sequence of SERIAL columns, and deletes all rows from all tables."""
-    with Session() as session:
-        session.query(Token).delete()
-        session.query(Employee).delete()
-        session.query(Shift).delete()
-        session.query(Schedule).delete()
-        session.query(Holiday).delete()
-        session.query(Account).delete()
-        session.commit()
-        session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
-        session.execute(text('ALTER SEQUENCE employees_employee_id_seq RESTART WITH 1;'))
-        session.execute(text('ALTER SEQUENCE shifts_shift_id_seq RESTART WITH 1;'))
-        session.execute(text('ALTER SEQUENCE holidays_holiday_id_seq RESTART WITH 1;'))
-        session.execute(text('ALTER SEQUENCE schedules_schedule_id_seq RESTART WITH 1;'))
-        session.commit()
-
-
 # Functional
 ## Account
-@dbsession()
-def get_all_accounts(*, session: _SessionType) -> list[Account]:
-    """Returns all accounts in the DB."""
-    return session.query(Account).all()
-
-
 @dbsession()
 def log_in_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, str]:
     """
@@ -363,7 +347,7 @@ def log_in_account(cred: Credentials, *, session: _SessionType) -> tuple[Account
         token = _renew_token(account.account_id, session=session)
     else:
         token = retrieved_token_obj.token
-    log(f'Successful login for username: {cred.username}', 'auth')
+    log(f'Successful login for email: {cred.email}', 'auth')
     return account, token
 
 
@@ -372,20 +356,20 @@ def log_in_account_with_cookies(cookies: Cookies, *, session: _SessionType) -> A
     """Authenticate an account based on the given cookies."""
     if not cookies.available(): raise CookiesUnavailable(cookies)
     account = _validate_cookies(cookies, session=session)
-    log(f'Successful login with cookies for username: {account.username}', 'auth')
+    log(f'Successful login with cookies for email: {account.email}', 'auth')
     return account
 
 
 @dbsession(commit=True)
 def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, str]:
     """Creates an account with the provided credentials. Returns the account and a new or the given token."""
-    _check_username_is_not_registered(_sanitize_username(cred.username), session=session)
+    _check_email_is_not_registered(_sanitize_email(cred.email), session=session)
     cred = _sanitize_credentials(cred)
-    account = Account(username=cred.username, hashed_password=_hash_password(cred.password))
+    account = Account(email=cred.email, hashed_password=_hash_password(cred.password))
     session.add(account)
     session.commit()
     token = _create_new_token(account.account_id, session=session)
-    log(f'Successful account creating for username: {account.username}', 'auth')
+    log(f'Successful account creating for email: {account.email}', 'auth')
     return account, token
 
 
@@ -395,21 +379,21 @@ def update_account(cookies: Cookies, updates: dict, *, session: _SessionType) ->
     account = _validate_cookies(cookies, session=session)
 
     # Update the account attributes
-    ALLOWED_FIELDS = {'username', 'new_password'}
+    ALLOWED_FIELDS = {'email', 'new_password'}
     for key, value in updates.items():
         if key not in ALLOWED_FIELDS:
             raise ValueError(f'"{key}" is not a valid attribute to modify.')
-        if key == 'username':
-            username = _sanitize_username(value)
-            _check_username_is_not_registered(username, session=session)
-            setattr(account, key, username)
+        if key == 'email':
+            email = _sanitize_email(value)
+            _check_email_is_not_registered(email, session=session)
+            setattr(account, key, email)
         elif key == 'new_password':
             password = _sanitize_password(value)
             hashed_password = _hash_password(password)
             setattr(account, 'hashed_password', hashed_password)
 
-    if 'username' in updates and 'new_password' in updates:
-        log(f'Modified account: {account}; username has changed to {updates["username"]}, and password has changed', 'auth')
+    if 'email' in updates and 'new_password' in updates:
+        log(f'Modified account: {account}; email has changed to {updates["email"]}, and password has changed', 'auth')
     elif 'new_password' in updates:
         log(f'Modified account: {account}; only the password has changed', 'auth')
     else:

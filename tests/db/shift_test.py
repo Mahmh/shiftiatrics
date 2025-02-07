@@ -1,21 +1,20 @@
 import pytest
-from src.server.lib.db import reset_whole_db, create_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
+from src.server.lib.db import create_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
 from src.server.lib.models import Credentials
 from src.server.lib.utils import parse_time
+from tests.utils import ctxtest
 
 # Init
 ACCOUNT_ID = 1
 SHIFT_ID = 1
-CRED = Credentials(username='testuser', password='testpass')
+CRED = Credentials(email='testuser@gmail.com', password='testpass')
 SHIFT_DETAILS = {'shift_name': 'Morning Shift', 'start_time': '08:00', 'end_time': '16:00'}
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     create_account(CRED)
     create_shift(ACCOUNT_ID, **SHIFT_DETAILS)
     yield
-    reset_whole_db()
 
 
 # Tests

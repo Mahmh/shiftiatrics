@@ -21,7 +21,7 @@ engine_router = APIRouter()
 @engine_router.get('/engine/generate_schedule')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-def generate_schedule(account_id: int, num_days: int, year: int, month: int, request: Request) -> ScheduleType | dict[str, str]:
+async def generate_schedule(account_id: int, num_days: int, year: int, month: int, request: Request) -> ScheduleType | dict[str, str]:
     # month is in range [0, 11]
     employees = get_all_employees_of_account(account_id)
     shifts = get_all_shifts_of_account(account_id)
@@ -100,7 +100,7 @@ def generate_schedule(account_id: int, num_days: int, year: int, month: int, req
 @engine_router.get('/engine/get_shift_counts_of_employees')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-def get_shift_counts_of_employees(account_id: int, year: int, month: int, request: Request) -> dict[int, int] | dict[str, str]:
+async def get_shift_counts_of_employees(account_id: int, year: int, month: int, request: Request) -> dict[int, int] | dict[str, str]:
     # Fetch the schedule for the given account, year, and month
     schedule_data = get_all_schedules_of_account(account_id, year=year, month=month)
     if not schedule_data: raise ValueError("No schedule found for the given account, year, and month.")
@@ -128,7 +128,7 @@ def get_shift_counts_of_employees(account_id: int, year: int, month: int, reques
 @engine_router.get('/engine/get_work_hours_of_employees')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-def get_work_hours_of_employees(account_id: int, year: int, month: int, request: Request) -> dict[int, int] | dict[str, str]:
+async def get_work_hours_of_employees(account_id: int, year: int, month: int, request: Request) -> dict[int, int] | dict[str, str]:
     # Fetch the schedule and shifts for the given account, year, and month
     schedule: list[ScheduleType] = get_all_schedules_of_account(account_id, year=year, month=month)[0].schedule
     shifts = get_all_shifts_of_account(account_id)  # list of unique shifts per day

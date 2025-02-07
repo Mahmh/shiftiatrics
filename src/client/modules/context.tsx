@@ -7,7 +7,7 @@ import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Hol
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
 const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: true, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday', maxEmpsInShift: 1 }
-export const nullAccount: Account = { id: -Infinity, username: '' }
+export const nullAccount: Account = { id: -Infinity, email: '' }
 
 export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,

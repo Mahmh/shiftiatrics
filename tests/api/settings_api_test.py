@@ -1,23 +1,18 @@
 import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
-from src.server.lib.db import reset_whole_db
 from src.server.lib.constants import LIST_OF_WEEKEND_DAYS
-from src.server.rate_limit import limiter
+from tests.utils import ctxtest
 
 # Init
 client = TestClient(app)
-CRED = {'username': 'testuser', 'password': 'testpass'}
+CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    limiter.enabled = False
-    reset_whole_db()
     account_id = create_account(CRED).json()['account_id']
     yield account_id
-    reset_whole_db()
-    limiter.enabled = True
 
 
 # Tests

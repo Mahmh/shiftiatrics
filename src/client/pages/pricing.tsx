@@ -26,13 +26,12 @@ export default function Pricing() {
         <div className='pricing-cards'>
             <PricingCard
                 title='Basic Plan'
-                price='$29.99'
+                price='$19.99'
                 titleBg='linear-gradient(45deg, #72acfe, #3d7cc7)'
                 features={[
                     'Up to 5 pediatricians',
                     '3 shifts per day',
                     'Basic support',
-                    'E-mail notifications',
                     'Export schedules to Microsoft Excel spreadsheets with simple automatic formating'
                 ]}
             />
@@ -44,21 +43,21 @@ export default function Pricing() {
                     'Up to 12 pediatricians',
                     '4 shifts per day',
                     'Priority support',
-                    'E-mail & SMS notifications',
-                    'Integration with other calendar platforms',
+                    'E-mail notifications',
+                    'Integration with external platforms',
                     'Export schedules to Microsoft Excel spreadsheets with better automatic formating'
                 ]}
             />
             <PricingCard
                 title='Premium Plan'
-                price='$109.99'
+                price='$99.99'
                 titleBg='linear-gradient(45deg, #607eff, #47dbf3)'
                 features={[
                     'Unlimited pediatricians',
                     'Unlimited shifts per day',
-                    '24/7 support',
-                    'E-mail & SMS notifications',
-                    'Integration with other calendar platforms',
+                    'Priority support',
+                    'E-mail notifications',
+                    'Integration with external platforms',
                     'Export schedules to Microsoft Excel spreadsheets with advanced automatic formating'
                 ]}
             />
@@ -71,7 +70,7 @@ export default function Pricing() {
                     'Custom shifts',
                     'Dedicated support',
                     'Custom notifications',
-                    'Custom integration with other platforms',
+                    'Custom integration with external platforms',
                     'Export schedules to Microsoft Excel spreadsheets with custom automatic formating',
                     'Price evaluated based on your ROI'
                 ]}

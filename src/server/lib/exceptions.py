@@ -1,16 +1,16 @@
 from typing import Literal
 from src.server.lib.models import Credentials, Cookies
 
-class UsernameTaken(Exception):
-    """Exception for entering an existing username."""
-    def __init__(self, username: str):
-        super().__init__(f'Username "{username}" is already registered by another account. Please try a different one.')
+class EmailTaken(Exception):
+    """Exception for entering an existing email."""
+    def __init__(self, email: str):
+        super().__init__(f'Email "{email}" is already registered by another account. Please try a different one.')
 
 
 class InvalidCredentials(Exception):
     """Exception for entering invalid credentials."""
     def __init__(self, cred: Credentials):
-        super().__init__(f'Invalid credentials: username={cred.username}')
+        super().__init__(f'Invalid credentials: email={cred.email}')
 
 
 class NonExistent(Exception):

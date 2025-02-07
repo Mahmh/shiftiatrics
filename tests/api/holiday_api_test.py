@@ -1,11 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
-from src.server.lib.db import reset_whole_db
+from tests.utils import ctxtest
 
 # Init
 client = TestClient(app)
-CRED = {'username': 'testuser123', 'password': 'testpass'}
+CRED = {'email': 'testuser123@outlook.com', 'password': 'testpass'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
 
 create_employee = lambda account_id, employee: client.post(f'/accounts/{account_id}/employees', json=employee)
@@ -14,15 +14,13 @@ HOLIDAY = {'holiday_name': 'Christmas', 'assigned_to': [2, 1], 'start_date': '20
 create_holiday = lambda account_id, holiday: client.post(f'/accounts/{account_id}/holidays', json=holiday)
 delete_holiday = lambda holiday_id: client.request('DELETE', f'/holidays/{holiday_id}')
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     account_id = create_account(CRED).json()['account_id']
     create_employee(account_id, {'employee_name': 'testemp1'}).json()['employee_id']
     create_employee(account_id, {'employee_name': 'testemp2'}).json()['employee_id']
     holiday_id = create_holiday(account_id, HOLIDAY).json()['holiday_id']
     yield account_id, holiday_id
-    reset_whole_db()
 
 
 # Tests

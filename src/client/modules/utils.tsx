@@ -119,7 +119,7 @@ export const RouteCard = ({ href, h, p }: { href: string, h: string, p: string }
 export const isLoggedIn = async (): Promise<Account | false> => {
     return await new Request(
         'accounts/log_in_account_with_cookies',
-        (data) => 'account_id' in data && 'username' in data ? { id: data.account_id, username: data.username } : false,
+        (data) => 'account_id' in data && 'email' in data ? { id: data.account_id, email: data.email } : false,
         () => false
     ).get()
 }
@@ -186,17 +186,17 @@ export const hasScheduleForMonth = (schedules: YearToSchedules, year: number, mo
 )
 
 
-/** @returns Sanitizes input credentials */
-export const sanitizeInput = (input: string) => {
-    const sanitized = input.replace(/[^\w\s]/gi, '')
-    return sanitized.trim()
-}
+/** Sanitizes input credentials */
+export const sanitizeInput = (input: string): string => (
+    input.replace(/[^\w\s@.]/gi, '').trim()
+)
 
 
-/** @returns Validates input credentials */
-export const validateInput = (username: string, password: string): string | null => {
-    if (username.length < 3) return 'Username must be at least 3 characters long.'
-    if (password.length < 6) return 'Password must be at least 8 characters long.'
+/** Validates input credentials */
+export const validateInput = (email: string, password: string): string | null => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) return 'Invalid email format.'
+    if (password.length < 8) return 'Password must be at least 8 characters long.'
     return null
 }
 

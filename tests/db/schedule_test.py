@@ -1,18 +1,17 @@
 import pytest
-from src.server.lib.db import reset_whole_db, create_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
+from src.server.lib.db import create_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
 from src.server.lib.models import Credentials
+from tests.utils import ctxtest
 
 # Init
-CRED = Credentials(username='testuser', password='testpass')
+CRED = Credentials(email='testuser@gmail.com', password='testpass')
 SCHEDULE_DATA = {'schedule': [[1, 2], [3, 4]], 'month': 11, 'year': 2024}
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     account_id = create_account(CRED)[0].account_id
     schedule_id = create_schedule(account_id, **SCHEDULE_DATA).schedule_id
     yield account_id, schedule_id
-    reset_whole_db()
 
 
 # Tests

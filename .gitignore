@@ -4,7 +4,7 @@ shiftiatrics.egg-info/
 **/*.ipynb
 .pytest_cache/
 .env
-tasks.txt
+tasks.md
 
 htmlcov/
 .coverage

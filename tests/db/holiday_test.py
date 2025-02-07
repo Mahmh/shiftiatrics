@@ -1,28 +1,26 @@
 import pytest
 from src.server.lib.db import (
-    reset_whole_db, 
     create_account,
     create_employee, delete_employee,
     create_holiday, delete_holiday, get_all_holidays_of_account, update_holiday
 )
 from src.server.lib.models import Credentials
 from src.server.lib.utils import parse_date
+from tests.utils import ctxtest
 
 # Init
 ACCOUNT_ID = HOLIDAY_ID = 1
-CRED = Credentials(username='testuser', password='testpass')
+CRED = Credentials(email='testuser@gmail.com', password='testpass')
 EMPLOYEE_DETAILS = {'employee_name': 'testemp'}
 HOLIDAY_DETAILS = {'holiday_name': 'Holiday', 'assigned_to': [1, 2], 'start_date': '2023-12-25', 'end_date': '2023-12-26'}
 
-@pytest.fixture(scope='function', autouse=True)
+@ctxtest()
 def setup_and_teardown():
-    reset_whole_db()
     create_account(CRED)
     create_employee(1, 'testemp1')
     create_employee(1, 'testemp2')
     create_holiday(ACCOUNT_ID, **HOLIDAY_DETAILS)
     yield
-    reset_whole_db()
 
 
 # Tests
