@@ -1,6 +1,6 @@
 'use client'
 import { useContext, useEffect, useState } from 'react'
-import { isLoggedIn } from '@utils'
+import { isLoggedIn } from '@auth'
 import { dashboardContext } from '@context'
 import type { Account } from '@types'
 import LandingPage from '@/components/landing_page/LandingPage'

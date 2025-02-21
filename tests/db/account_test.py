@@ -1,5 +1,5 @@
 import pytest
-from src.server.lib.db import create_account, log_in_account, delete_account, update_account
+from src.server.db import create_account, log_in_account, delete_account, update_account
 from src.server.lib.models import Credentials, Cookies
 from src.server.lib.exceptions import EmailTaken, InvalidCredentials, NonExistent
 from tests.utils import ctxtest

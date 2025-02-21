@@ -1,4 +1,4 @@
-import pytest, jpype
+import jpype
 from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.constants import SCHEDULE_ENGINE_DIR

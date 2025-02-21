@@ -5,6 +5,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # path with respect to
 _locate = lambda x: os.path.join(CURRENT_DIR, x)
 
 # Net
+BACKEND_SERVER_URL = os.getenv('BACKEND_SERVER_URL', 'http://localhost:8000')
 WEB_SERVER_URL = os.getenv('WEB_SERVER_URL', 'http://localhost:3000')
 
 # DB
@@ -22,6 +23,7 @@ MIN_PASSWORD_LEN = int(os.getenv('MIN_PASSWORD_LEN'))
 MAX_PASSWORD_LEN = int(os.getenv('MAX_PASSWORD_LEN'))
 TOKEN_EXPIRY_SECONDS = int(os.getenv('TOKEN_EXPIRY_SECONDS'))
 DEFAULT_RATE_LIMIT = os.getenv('DEFAULT_RATE_LIMIT')
+COOKIE_DOMAIN = None
 
 # Email
 SMTP_HOST = os.getenv('SMTP_HOST')
@@ -31,8 +33,15 @@ SMTP_PASS = os.getenv('SMTP_PASS')
 MAIL_BROKER = os.getenv('MAIL_BROKER')
 MAIL_RESULT_BACKEND = os.getenv('MAIL_RESULT_BACKEND')
 
+# OAuth
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
+GOOGLE_REDIRECT_URI = f'{BACKEND_SERVER_URL}/auth/google/callback'
+GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
+GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+
 # Misc
-LIST_OF_WEEKEND_DAYS = ['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']
 ENABLE_LOGGING = os.getenv('ENABLE_LOGGING', 'false').lower() == 'true'
 LOG_DIR = _locate('../logs/')
 SCHEDULE_ENGINE_DIR = _locate('../engine/engine.jar')

@@ -4,14 +4,16 @@ from src.server.rate_limit import limiter
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
 from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies
-from src.server.lib.db import (
+from src.server.lib.types import WeekendDays, Interval
+from src.server.db import (
     log_in_account, log_in_account_with_cookies, create_account, update_account, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours,
     get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
-    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift
+    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift,
+    toggle_email_ntf, update_email_ntf_interval
 )
 
 # Init
@@ -77,6 +79,7 @@ async def delete_existing_account(request: Request, response: Response) -> dict:
     return {'detail': 'Account deleted successfully'}
 
 
+
 ## Employee
 @employee_router.get('/accounts/{account_id}/employees')
 @limiter.limit(DEFAULT_RATE_LIMIT)
@@ -105,6 +108,7 @@ async def update_existing_employee(employee_id: int, updates: dict, request: Req
 async def delete_existing_employee(employee_id: int, request: Request) -> dict:
     delete_employee(employee_id=employee_id)
     return {'detail': 'Employee deleted successfully'}
+
 
 
 ## Shift
@@ -137,6 +141,7 @@ async def delete_existing_shift(shift_id: int, request: Request) -> dict:
     return {'detail': 'Shift deleted successfully'}
 
 
+
 ## Schedule
 @schedule_router.get('/accounts/{account_id}/schedules')
 @limiter.limit(DEFAULT_RATE_LIMIT)
@@ -167,6 +172,7 @@ async def delete_existing_schedule(schedule_id: int, request: Request) -> dict:
     return {'detail': 'Schedule deleted successfully'}
 
 
+
 ## Holiday
 @holiday_router.get('/accounts/{account_id}/holidays')
 @limiter.limit(DEFAULT_RATE_LIMIT)
@@ -195,6 +201,7 @@ async def update_existing_holiday(holiday_id: int, updates: dict, request: Reque
 async def delete_existing_holiday(holiday_id: int, request: Request) -> dict:
     delete_holiday(holiday_id=holiday_id)
     return {'detail': 'Holiday deleted successfully'}
+
 
 
 ## Settings
@@ -237,7 +244,7 @@ async def toggle_multi_shifts_one_emp_(account_id: int, request: Request) -> dic
 @settings_router.patch('/accounts/{account_id}/settings/update_weekend_days')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-async def update_weekend_days_(account_id: int, info: dict[Literal['weekend_days'], str], request: Request) -> dict:
+async def update_weekend_days_(account_id: int, info: dict[Literal['weekend_days'], WeekendDays], request: Request) -> dict:
     return {'detail': update_weekend_days(account_id=account_id, weekend_days=info['weekend_days'])}
 
 
@@ -246,3 +253,17 @@ async def update_weekend_days_(account_id: int, info: dict[Literal['weekend_days
 @endpoint()
 async def update_max_emps_in_shift_(account_id: int, info: dict[Literal['max_emps_in_shift'], int], request: Request) -> dict:
     return {'detail': update_max_emps_in_shift(account_id=account_id, max_emps_in_shift=info['max_emps_in_shift'])}
+
+
+@settings_router.get('/accounts/{account_id}/settings/toggle_email_ntf')
+@limiter.limit(DEFAULT_RATE_LIMIT)
+@endpoint()
+async def toggle_email_ntf_(account_id: int, request: Request) -> dict:
+    return {'detail': toggle_email_ntf(account_id=account_id)}
+
+
+@settings_router.patch('/accounts/{account_id}/settings/update_email_ntf_interval')
+@limiter.limit(DEFAULT_RATE_LIMIT)
+@endpoint()
+async def update_email_ntf_interval_(account_id: int, info: dict[Literal['email_ntf_interval'], Interval], request: Request) -> dict:
+    return {'detail': update_email_ntf_interval(account_id=account_id, interval=info['email_ntf_interval'])}

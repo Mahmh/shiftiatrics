@@ -8,6 +8,7 @@ export type InputEvent = ChangeEvent<HTMLInputElement>
 
 export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December'
 export type WeekendDays =  'Saturday & Sunday' | 'Friday & Saturday' | 'Sunday & Monday'
+export type Interval =  'Daily' | 'Weekly' | 'Monthly'
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
 export type ContentName = 'schedules' | 'employees' | 'shifts' | 'holidays' | 'settings' | 'support'
 
@@ -15,7 +16,7 @@ export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][][]
 export type YearToSchedules = Map<number, Schedule[]>
 export type YearToSchedulesValidity = Map<number, Map<number, boolean>>
- 
+
 
 // Context
 export interface ContextProps {
@@ -66,6 +67,7 @@ export interface Account {
     email: string
 }
 
+
 export interface Employee {
     id: number
     name: string
@@ -100,4 +102,6 @@ export interface Settings {
     multiShiftsOneEmpEnabled: boolean
     weekendDays: WeekendDays
     maxEmpsInShift: number
+    emailNtfEnabled: boolean
+    emailNtfInterval: Interval
 }

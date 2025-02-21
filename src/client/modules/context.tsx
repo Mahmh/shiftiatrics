@@ -1,12 +1,22 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
-import { isLoggedIn, Request, getEmployeeById, hasScheduleForMonth } from '@utils'
-import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren } from '@types'
+import { Request, getEmployeeById, hasScheduleForMonth } from '@utils'
+import { isLoggedIn } from '@auth'
+import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval } from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-const nullSettings: Settings = { darkThemeEnabled: false, minMaxWorkHoursEnabled: true, multiEmpsInShiftEnabled: false, multiShiftsOneEmpEnabled: false, weekendDays: 'Friday & Saturday', maxEmpsInShift: 1 }
+const nullSettings: Settings = {
+    darkThemeEnabled: false,
+    minMaxWorkHoursEnabled: true,
+    multiEmpsInShiftEnabled: false,
+    multiShiftsOneEmpEnabled: false,
+    weekendDays: 'Friday & Saturday',
+    maxEmpsInShift: 1,
+    emailNtfEnabled: false,
+    emailNtfInterval: 'Monthly'
+}
 export const nullAccount: Account = { id: -Infinity, email: '' }
 
 export const dashboardContext = createContext<ContextProps>({
@@ -200,6 +210,8 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             multi_shifts_one_emp_enabled: boolean
             weekend_days: WeekendDays
             max_emps_in_shift: number
+            email_ntf_enabled: boolean
+            email_ntf_interval: Interval
         };
         await new Request(
             `accounts/${account.id}/settings`,
@@ -211,7 +223,9 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
                     multiEmpsInShiftEnabled: data.multi_emps_in_shift_enabled,
                     multiShiftsOneEmpEnabled: data.multi_shifts_one_emp_enabled,
                     weekendDays: data.weekend_days,
-                    maxEmpsInShift: data.max_emps_in_shift
+                    maxEmpsInShift: data.max_emps_in_shift,
+                    emailNtfEnabled: data.email_ntf_enabled,
+                    emailNtfInterval: data.email_ntf_interval
                 })
             }
         ).get()
@@ -230,6 +244,9 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
                 await loadSchedules(loadedEmployees)
                 await loadHolidays()
                 await loadSettings()
+                document.body.classList.add('logged-in')
+            } else {
+                document.body.classList.remove('logged-in')
             }
         }
         fetchAllData()

@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 import jpype
 from src.server.rate_limit import limiter, rate_limit_handler
-from src.server.lib.constants import WEB_SERVER_URL, SCHEDULE_ENGINE_DIR
+from src.server.lib.constants import BACKEND_SERVER_URL, WEB_SERVER_URL, SCHEDULE_ENGINE_DIR
+from src.server.routers.auth import auth_router
 from src.server.routers.db import account_router, employee_router, shift_router, schedule_router, holiday_router, settings_router
 from src.server.routers.engine import engine_router
 
@@ -25,12 +26,20 @@ async def _lifespan(app: FastAPI):
 app = FastAPI(lifespan=_lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[WEB_SERVER_URL],
-    allow_credentials=True,
+    allow_origins=[BACKEND_SERVER_URL, WEB_SERVER_URL],
     allow_methods=['GET', 'POST', 'PATCH', 'DELETE'],
     allow_headers=['*'],
+    allow_credentials=True
 )
 
 
-for r in (account_router, employee_router, shift_router, schedule_router, settings_router, holiday_router, engine_router):
-    app.include_router(r)
+for r in (
+    auth_router,
+    account_router,
+    employee_router,
+    shift_router,
+    schedule_router,
+    settings_router,
+    holiday_router,
+    engine_router
+): app.include_router(r)

@@ -2,6 +2,7 @@ import { useCallback, useContext, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { dashboardContext, nullAccount } from '@context'
 import { Choice, Switch, Dropdown, Request, MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@utils'
+// import type { WeekendDays, InputEvent, Interval } from '@types'
 import type { WeekendDays, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 
@@ -74,8 +75,8 @@ const Account = () => {
     }, [logOut, closeModal, openModal, setModalContent])
 
     /** Displays a modal for editing the account's email */
-    const openEditEmailModal = useCallback(() => {
-        const EditEmailModalContent = () => {
+    const openChangeEmailModal = useCallback(() => {
+        const ChangeEmailModalContent = () => {
             const [tempEmail, setTempEmail] = useState(account.email)
             const [isConfirmDisabled, setConfirmDisabled] = useState(tempEmail.trim().length < 3 || account.email === tempEmail)
             const [error, setError] = useState('')
@@ -105,7 +106,7 @@ const Account = () => {
             }
 
             return <>
-                <h2>Edit Email</h2>
+                <h2>Change Email</h2>
                 <section style={{ marginBottom: 20 }}>
                     <label style={{ marginRight: 10 }}>Email: </label>
                     <input
@@ -127,7 +128,7 @@ const Account = () => {
             </>
         }
 
-        setModalContent(<EditEmailModalContent/>)
+        setModalContent(<ChangeEmailModalContent/>)
         openModal()
     }, [account, setAccount, openModal, closeModal, setModalContent])
 
@@ -225,7 +226,7 @@ const Account = () => {
                     </ul>
                 </section>
                 <section id='account-actions-card'>
-                    <button className='edit-account-btn' onClick={openEditEmailModal}>Edit Email</button>
+                    <button className='edit-account-btn' onClick={openChangeEmailModal}>Change Email</button>
                     <button className='edit-account-btn' onClick={openChangePasswordModal}>Change Password</button>
                     <button id='log-out-btn' onClick={openLogOutModal}>Log Out</button>
                     <button id='delete-account-btn' onClick={openDeleteModal}>Delete Account</button>
@@ -239,6 +240,7 @@ const Account = () => {
 const PreferencesAndFunctionality = () => {
     const { account, settings, setSettings } = useContext(dashboardContext)
     const [selectedWeekendDays, setSelectedWeekendDays] = useState<WeekendDays>(settings.weekendDays)
+    // const [selectedEmailNtfInterval, setSelectedEmailNtfInterval] = useState<Interval>(settings.emailNtfInterval)
 
     /** Switches between light & dark themes */
     const toggleDarkTheme = async () => {
@@ -291,20 +293,38 @@ const PreferencesAndFunctionality = () => {
         ).patch({ max_emps_in_shift: newValue })
     }
 
+    /** Switches between light & dark themes */
+    // const toggleEmailNtf = async () => {
+    //     await new Request(
+    //         `accounts/${account.id}/settings/toggle_email_ntf`,
+    //         (data: { detail: boolean }) => setSettings(prev => ({...prev, emailNtfEnabled: data.detail ? true : false }))
+    //     ).get()
+    // }
+
+    /** Changes the weekend days of the account */
+    // const changeEmailNtfInterval = async (option: string) => {
+    //     setSelectedEmailNtfInterval(option as Interval)
+    //     await new Request(
+    //         `accounts/${account.id}/settings/update_email_ntf_interval`,
+    //         (data: { detail: Interval }) => setSettings(prev => ({...prev, emailNtfInterval: data.detail }))
+    //     ).patch({ email_ntf_interval: option })
+    // }
+
     return (
         <section id='pref-card' className='settings-card'>
             <h3 className='settings-title'>Preferences & Functionality</h3>
             <div className='card-content'>
                 <Switch label='Dark theme' handleClick={toggleDarkTheme} enabled={settings.darkThemeEnabled}/>
-                <Switch label='Use minimum & maximum work hours for pediatricians' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
-                <Switch label='Allow multiple pediatricians to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
-                <Switch label='Allow pediatricians to take multiple shifts in a day' handleClick={toggleMultiShiftsOneEmpEnabled} enabled={settings.multiShiftsOneEmpEnabled}/>
                 <Dropdown
                     label='Weekend days'
                     options={['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']}
                     onSelect={changeWeekendDays}
                     selected={selectedWeekendDays}
                 />
+                <div className='horizontal-separator'></div>
+                <Switch label='Use minimum & maximum work hours for pediatricians' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
+                <Switch label='Allow pediatricians to take multiple shifts in a day' handleClick={toggleMultiShiftsOneEmpEnabled} enabled={settings.multiShiftsOneEmpEnabled}/>
+                <Switch label='Allow multiple pediatricians to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
                 <div>
                     <label>Maximum number of pediatricians in one shift</label>
                     <input
@@ -316,6 +336,14 @@ const PreferencesAndFunctionality = () => {
                         className={!settings.multiEmpsInShiftEnabled ? 'disabled-setting-input' : ''}
                     />
                 </div>
+                {/* <div className='horizontal-separator'></div>
+                <Switch label='Receive e-mail notifications' handleClick={toggleEmailNtf} enabled={settings.emailNtfEnabled}/>
+                <Dropdown
+                    label='When to send e-mail notifications'
+                    options={['Daily', 'Weekly', 'Monthly']}
+                    onSelect={changeEmailNtfInterval}
+                    selected={selectedEmailNtfInterval}
+                /> */}
             </div>
         </section>
     )
@@ -325,7 +353,9 @@ const PreferencesAndFunctionality = () => {
 export default function Settings() {
     return <>
         <Sidebar/>
-        <Account/>
-        <PreferencesAndFunctionality/>
+        <div className='settings-cards'>
+            <Account/>
+            <PreferencesAndFunctionality/>
+        </div>
     </>
 }

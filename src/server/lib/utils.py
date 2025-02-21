@@ -1,6 +1,6 @@
-from datetime import date, time
+from datetime import date, time, datetime, timezone, timedelta
 import logging, os
-from src.server.lib.constants import ENABLE_LOGGING, LOG_DIR
+from src.server.lib.constants import ENABLE_LOGGING, LOG_DIR, TOKEN_EXPIRY_SECONDS
 
 def get_logger(name: str, filename: str, level: str = 'INFO') -> logging.Logger:
     """Get a logger with a specific name and file handler."""
@@ -48,6 +48,16 @@ def parse_time(time_str: str) -> time:
         return time(hours, minutes)
     except ValueError:
         raise ValueError(f'Invalid time format: "{time_str}". Expected format is "HH:MM".')
+
+
+def utcnow() -> datetime:
+    """Returns UTC date & time of now."""
+    return datetime.now(timezone.utc)
+
+
+def get_token_expiry_datetime() -> datetime:
+    """Calculates and returns the expiry date of a newly-created session token."""
+    return utcnow() + timedelta(seconds=TOKEN_EXPIRY_SECONDS)
 
 
 def todict(obj: object):

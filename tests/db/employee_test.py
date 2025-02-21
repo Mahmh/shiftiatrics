@@ -1,5 +1,4 @@
-import pytest
-from src.server.lib.db import create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
+from src.server.db import create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
 from src.server.lib.models import Credentials
 from tests.utils import ctxtest
 

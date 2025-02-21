@@ -1,7 +1,7 @@
 from sqlalchemy import text
 from functools import wraps
 import pytest
-from src.server.lib.db import Session, Account, Token, Employee, Shift, Schedule, Holiday
+from src.server.db import Session, Account, Token, Employee, Shift, Schedule, Holiday
 from src.server.rate_limit import limiter
 
 def _reset_whole_db() -> None:

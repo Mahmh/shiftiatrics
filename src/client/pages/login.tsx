@@ -2,7 +2,8 @@ import '@styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { isLoggedIn, Request, sanitizeInput, TOO_MANY_REQS_MSG, validateInput } from '@utils'
+import { Request, sanitizeInput, TOO_MANY_REQS_MSG, validateInput } from '@utils'
+import { isLoggedIn, ContinueWithGoogle } from '@auth'
 import { dashboardContext } from '@context'
 import RegularPage from '@regpage'
 
@@ -68,6 +69,7 @@ export default function Login() {
                     {isLoading ? 'Logging in...' : 'Log In'}
                 </button>
                 <p>Don&apos;t have an account? <Link href='/signup'>Sign Up</Link></p>
+                <ContinueWithGoogle/>
             </div>
         </RegularPage>
     )

@@ -1,5 +1,5 @@
 import pytest
-from src.server.lib.db import create_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
+from src.server.db import create_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
 from src.server.lib.models import Credentials
 from src.server.lib.utils import parse_time
 from tests.utils import ctxtest

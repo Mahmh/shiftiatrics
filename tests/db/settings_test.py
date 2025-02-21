@@ -1,10 +1,11 @@
 import pytest
-from src.server.lib.constants import LIST_OF_WEEKEND_DAYS
 from src.server.lib.models import Credentials
-from src.server.lib.db import (
+from src.server.lib.types import WeekendDaysEnum, IntervalEnum
+from src.server.db import (
     Settings, create_account,
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours, 
-    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift
+    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift,
+    toggle_email_ntf, update_email_ntf_interval
 )
 from tests.utils import ctxtest
 
@@ -22,7 +23,7 @@ def _assert_all_default(settings: Settings, all_false: bool = False):
     assert isinstance(settings, Settings)
     assert settings.account_id == ACCOUNT_ID
     assert settings.dark_theme_enabled is False
-    assert settings.min_max_work_hours_enabled is (True if not all_false else False)
+    assert settings.min_max_work_hours_enabled is (False if all_false else True)
     assert settings.multi_emps_in_shift_enabled is False
     assert settings.multi_shifts_one_emp_enabled is False
 
@@ -94,10 +95,10 @@ def test_disable_multi_shifts_one_emp():
 
 
 def test_update_weekend_days():
-    update_weekend_days(ACCOUNT_ID, LIST_OF_WEEKEND_DAYS[1])
+    update_weekend_days(ACCOUNT_ID, WeekendDaysEnum.FRI_SAT.value)
     settings = get_settings_of_account(ACCOUNT_ID)
     _assert_all_default(settings)
-    assert settings.weekend_days == LIST_OF_WEEKEND_DAYS[1]
+    assert settings.weekend_days == WeekendDaysEnum.FRI_SAT
 
 
 def test_update_max_emps_in_shift():
@@ -119,3 +120,30 @@ def test_update_max_emps_in_shift_invalid_value():
         update_max_emps_in_shift(ACCOUNT_ID, 0)
     with pytest.raises(ValueError, match='max_emps_in_shift must be in the range \[1, 10\]'):
         update_max_emps_in_shift(ACCOUNT_ID, 11)
+
+
+def test_enable_email_ntf():
+    toggle_email_ntf(ACCOUNT_ID)
+    settings = get_settings_of_account(ACCOUNT_ID)
+    _assert_one_true('email_ntf_enabled', settings)
+
+
+def test_disable_email_ntf():
+    toggle_email_ntf(ACCOUNT_ID)
+    toggle_email_ntf(ACCOUNT_ID)
+    settings = get_settings_of_account(ACCOUNT_ID)
+    _assert_all_default(settings)
+
+
+def test_update_email_ntf_interval():
+    toggle_email_ntf(ACCOUNT_ID)
+
+    s1 = get_settings_of_account(ACCOUNT_ID)
+    _assert_all_default(s1)
+    assert s1.email_ntf_interval == IntervalEnum.MONTHLY
+
+    update_email_ntf_interval(ACCOUNT_ID, IntervalEnum.DAILY.value)
+
+    s2 = get_settings_of_account(ACCOUNT_ID)
+    assert s2.email_ntf_interval == IntervalEnum.DAILY
+    _assert_all_default(s2)

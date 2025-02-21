@@ -1,5 +1,5 @@
 import pytest
-from src.server.lib.db import create_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
+from src.server.db import create_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
 from src.server.lib.models import Credentials
 from tests.utils import ctxtest
 

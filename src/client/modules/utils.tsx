@@ -115,15 +115,6 @@ export const RouteCard = ({ href, h, p }: { href: string, h: string, p: string }
 )
 
 
-/** Checks if a user is logged in. */
-export const isLoggedIn = async (): Promise<Account | false> => {
-    return await new Request(
-        'accounts/log_in_account_with_cookies',
-        (data) => 'account_id' in data && 'email' in data ? { id: data.account_id, email: data.email } : false,
-        () => false
-    ).get()
-}
-
 /**
  * Converts time from 24-hour format to AM/PM format
  * @param time Time in 24-hour format
@@ -186,10 +177,11 @@ export const hasScheduleForMonth = (schedules: YearToSchedules, year: number, mo
 )
 
 
-/** Sanitizes input credentials */
-export const sanitizeInput = (input: string): string => (
-    input.replace(/[^\w\s@.]/gi, '').trim()
-)
+/** Sanitizes input credentials to prevent XSS and SQL injection */
+export const sanitizeInput = (input: string): string => {
+    const sanitized = input.replace(/[^\w\s@.-]/gi, '').trim(); // Allow only alphanumeric characters, spaces, @, ., and -
+    return sanitized.replace(/['"]/g, ''); // Remove single and double quotes
+}
 
 
 /** Validates input credentials */

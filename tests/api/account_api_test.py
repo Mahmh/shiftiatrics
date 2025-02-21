@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
 from tests.utils import ctxtest
@@ -7,7 +6,6 @@ from tests.utils import ctxtest
 client = TestClient(app)
 CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
-delete_account = lambda: client.request('DELETE', '/accounts')
 
 @ctxtest()
 def setup_and_teardown():
@@ -41,7 +39,7 @@ def test_update_existing_account():
 
 
 def test_delete_existing_account():
-    response = delete_account()
+    response = client.request('DELETE', '/accounts')
     assert response.status_code == 200
     assert response.cookies.get('account_id') == None
     assert response.cookies.get('auth_token') == None

@@ -1,7 +1,9 @@
 from typing import Any, Optional
 from functools import wraps
 from fastapi import Request, Response
-from src.server.lib.db import Account, Employee, Shift, Schedule, Holiday, Settings, log_in_account_with_cookies
+from fastapi.responses import RedirectResponse
+from src.server.db import Account, Employee, Shift, Schedule, Holiday, Settings, log_in_account_with_cookies
+from src.server.lib.constants import WEB_SERVER_URL, COOKIE_DOMAIN, TOKEN_EXPIRY_SECONDS
 from src.server.lib.models import Cookies
 from src.server.lib.utils import log, errlog, todict, todicts
 from src.server.lib.exceptions import CookiesUnavailable, InvalidCookies, EndpointAuthError
@@ -35,10 +37,10 @@ def _set_cookie(key: str, value: str, response: Response) -> None:
         key=key,
         value=value,
         httponly=True,
-        samesite='strict',
         secure=False,
-        domain=None,
-        path='/'
+        samesite='strict',
+        domain=COOKIE_DOMAIN,
+        max_age=TOKEN_EXPIRY_SECONDS
     )
 
 
@@ -66,6 +68,12 @@ def get_cookies(request: Request) -> Cookies:
         return Cookies(account_id=None, token=request.cookies.get('token'))
 
 
+def clear_cookies(response: Response) -> None:
+    """Deletes the auth cookies."""
+    response.delete_cookie('account_id', httponly=True)
+    response.delete_cookie('auth_token', httponly=True)
+
+
 def store_cookies(cookies: Cookies, response: Response) -> None:
     """Stores the given email & authentication token as HttpOnly cookies in the client."""
     if not cookies.available(): raise CookiesUnavailable(cookies)
@@ -74,7 +82,8 @@ def store_cookies(cookies: Cookies, response: Response) -> None:
     _set_cookie('auth_token', cookies.token, response)
 
 
-def clear_cookies(response: Response) -> None:
-    """Deletes the auth cookies."""
-    response.delete_cookie('account_id')
-    response.delete_cookie('auth_token')
+def store_cookies_then_redirect(cookies: Cookies) -> RedirectResponse:
+    """Stores the HttpOnly cookies in the client before redirecting, then redirects the client."""
+    response = RedirectResponse(WEB_SERVER_URL)
+    store_cookies(cookies, response)
+    return response

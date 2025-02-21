@@ -1,6 +1,6 @@
 import { ReactNode, useContext } from 'react'
 import { dashboardContext } from '@context'
-import { ContentName } from '@/app/types'
+import { ContentName } from '@types'
 import Employees from './contents/_Employees'
 import Shifts from './contents/_Shifts'
 import Schedules from './contents/_Schedules'

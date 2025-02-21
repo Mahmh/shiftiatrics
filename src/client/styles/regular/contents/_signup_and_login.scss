@@ -18,6 +18,7 @@
         width: 100%;
         max-width: 650px;
         padding: 50px 30px;
+        padding-bottom: 30px;
         margin: 150px auto;
         border-radius: 10px;
         box-shadow: $main-box-shadow;
@@ -72,5 +73,15 @@
                 &:hover { text-decoration: underline }
             }
         }
+    }
+
+    #google-auth-btn {
+        @include compressible(.97);
+        @include themed-bgcolor('secondary-blue');
+        color: white;
+        padding: 10px 30px;
+        margin-top: 30px;
+        border-radius: 300px;
+        &:hover { @include themed-bgcolor('secondary-blue-hover') }
     }
 }

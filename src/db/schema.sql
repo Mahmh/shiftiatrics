@@ -1,9 +1,17 @@
 \c shiftiatrics_db;
 
+-- Types
+CREATE TYPE weekend_days_enum AS ENUM ('Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday');
+CREATE TYPE interval_enum AS ENUM ('Daily', 'Weekly', 'Monthly');
+
+-- Tables
 CREATE TABLE accounts (
     account_id SERIAL PRIMARY KEY,
     email VARCHAR(256) UNIQUE NOT NULL,
-    hashed_password VARCHAR(128) NOT NULL
+    hashed_password VARCHAR(128), -- Null for OAuth users
+    oauth_provider VARCHAR(16),
+    oauth_token VARCHAR(2048),
+    oauth_id VARCHAR(64) UNIQUE
 );
 
 CREATE TABLE tokens (
@@ -48,10 +56,12 @@ CREATE TABLE holidays (
 
 CREATE TABLE settings (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
-    dark_theme_enabled BOOLEAN NOT NULL,
-    min_max_work_hours_enabled BOOLEAN NOT NULL,
-    multi_emps_in_shift_enabled BOOLEAN NOT NULL,
-    multi_shifts_one_emp_enabled BOOLEAN NOT NULL,
-    weekend_days VARCHAR(17) NOT NULL,
-    max_emps_in_shift INT NOT NULL
+    dark_theme_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    min_max_work_hours_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    multi_emps_in_shift_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    multi_shifts_one_emp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    weekend_days weekend_days_enum NOT NULL DEFAULT 'Saturday & Sunday',
+    max_emps_in_shift INT NOT NULL DEFAULT 1,
+    email_ntf_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    email_ntf_interval interval_enum NOT NULL DEFAULT 'Monthly'
 );

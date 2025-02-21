@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
 from tests.utils import ctxtest

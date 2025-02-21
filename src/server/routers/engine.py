@@ -6,7 +6,7 @@ from src.server.lib.constants import DEFAULT_RATE_LIMIT
 from src.server.lib.utils import log
 from src.server.lib.models import ScheduleType
 from src.server.lib.api import endpoint
-from src.server.lib.db import (
+from src.server.db import (
     get_all_employees_of_account,
     get_all_shifts_of_account,
     get_settings_of_account,

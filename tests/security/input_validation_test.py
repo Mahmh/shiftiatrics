@@ -1,12 +1,11 @@
 import pytest, bcrypt
 from src.server.lib.models import Credentials
-from src.server.lib.db import Session, Account, _sanitize_email, _sanitize_password, _sanitize_credentials, _hash_password, _authenticate_credentials
+from src.server.db import Session, Account, _sanitize_email, _sanitize_password, _sanitize_credentials, _hash_password, _authenticate_credentials
 from src.server.lib.exceptions import NonExistent, InvalidCredentials
 from tests.utils import ctxtest
 
 # Init
 @ctxtest()
-
 def setup_and_teardown():
     yield
 
