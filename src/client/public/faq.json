@@ -1,0 +1,100 @@
+[
+    {
+        "category": "General Questions",
+        "questions": [
+            {
+                "question": "What does this scheduling app do?",
+                "answer": "Our platform automates shift scheduling for pediatricians, ensuring fair, optimized, and conflict-free work schedules."
+            },
+            {
+                "question": "Who can use this app?",
+                "answer": "Pediatricians, hospital administrators, HR teams, and clinic managers."
+            },
+            {
+                "question": "How does the app ensure fairness in scheduling?",
+                "answer": "The system considers workload balance, shift preferences, and legal work-hour limitations."
+            },
+            {
+                "question": "Does this work for private practices as well as hospitals?",
+                "answer": "Yes, the system is flexible and can handle both small clinics and large hospital departments."
+            }
+        ]
+    },
+    {
+        "category": "Account & Access",
+        "questions": [
+            {
+                "question": "How do I sign up?",
+                "answer": "On desktop computer, click the Sign Up button on the top right of your screen. On mobile, tap the menu button and press Sign Up."
+            },
+            {
+                "question": "Can multiple users from the same hospital access the same schedule?",
+                "answer": "Currently, only the account that generates a schedule can export and share it manually. We are considering adding collaborative access for multiple users in the future."
+            }
+        ]
+    },
+    {
+        "category": "Scheduling & Features",
+        "questions": [
+            {
+                "question": "How does the scheduling system work?",
+                "answer": "The system uses AI to analyze preferences, minimum and maximum work-hour constraints, and other settings to create optimal shift plans."
+            },
+            {
+                "question": "Can I set preferences for my shifts?",
+                "answer": "Yes, doctors can set preferences for night shifts, weekends, or specific availability. Holidays can be assigned to selected pediatricians, and the system will keep that in mind when generating a schedule."
+            },
+            {
+                "question": "Can I get notifications about upcoming shifts?",
+                "answer": "Yes, the app can send email notifications. Push notifications and SMS reminders may be available in future updates."
+            },
+            {
+                "question": "Can I export the schedule?",
+                "answer": "Yes, schedules can be exported to Excel (with automatic schedule formatting), TSV, CSV, and JSON."
+            }
+        ]
+    },
+    {
+        "category": "Compliance & Policies",
+        "questions": [
+            {
+                "question": "Does the app ensure compliance with labor laws and pediatric shift regulations?",
+                "answer": "Currently, users can set the minimum and maximum work hours for each pediatrician registered. In the future, we are considering implementing various global and regional labor laws to suit your needs."
+            },
+            {
+                "question": "How does the app prevent over-scheduling?",
+                "answer": "The system enforces fair distribution and flags potential burnout risks. All pediatricians are given equal (or approximately equal) number of work hours."
+            }
+        ]
+    },
+    {
+        "category": "Pricing & Subscription",
+        "questions": [
+            {
+                "question": "Do you offer a free trial version?",
+                "answer": "Yes, a free trial is available for new users. You can activate it from the Pricing page."
+            },
+            {
+                "question": "Are there different plans for small clinics vs. large hospitals?",
+                "answer": "Yes, there are three pre-defined plans for different corporate levels, and custom plans are supported as well."
+            }
+        ]
+    },
+    {
+        "category": "Technical Support & Troubleshooting",
+        "questions": [
+            {
+                "question": "What if my schedule doesn't look right?",
+                "answer": "To regenerate your schedule, check your dashboard settings (employees, shifts, holidays) and click 'Regenerate Schedule.' If issues persist, visit the Contact Us page to report a problem."
+            },
+            {
+                "question": "How do I contact support?",
+                "answer": "Go to the Contact Us page, choose a category (e.g., Technical Issue, Feature Request), describe your issue, and submit your request."
+            },
+            {
+                "question": "How do I report an issue or request a feature?",
+                "answer": "Visit the Contact Us page, select 'Feature Suggestion' or 'Report an Issue,' enter your message, and submit."
+            }
+        ]
+    }
+]

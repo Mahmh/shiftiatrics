@@ -105,3 +105,9 @@ export interface Settings {
     emailNtfEnabled: boolean
     emailNtfInterval: Interval
 }
+
+
+export interface FAQ {
+    question: string
+    answer: string | null
+}

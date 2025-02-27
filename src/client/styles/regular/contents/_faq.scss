@@ -1,0 +1,59 @@
+#faq-page {
+    @include vertical-flex;
+    gap: 40px;
+    width: 70%;
+    margin: 0 auto;
+
+    .section-faqs {
+        @include vertical-flex;
+
+        h2 {
+            font-size: 1.3rem;
+            font-weight: normal;
+        }
+
+        button {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+        }
+    }
+
+    .accordion {
+        border: 1px solid get-color('alpha-black-2');
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .accordion-item {
+        border-bottom: 1px solid get-color('alpha-black-2');
+        padding: 0 10px;
+    }
+
+    .accordion-header {
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+            background: get-color('alpha-black-2');
+        }
+    }
+
+    .accordion-content {
+        font-size: 1rem;
+        padding: 12px;
+    }
+
+    .chevron {
+        transition: transform 0.3s ease;
+    }
+
+    .chevron-rotated {
+        transform: rotate(180deg);
+    }
+}
