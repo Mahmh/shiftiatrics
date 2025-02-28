@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel
 
 ScheduleType = list[list[list[int]]]
@@ -37,3 +37,26 @@ class HolidayInfo(BaseModel):
     assigned_to: list[int]
     start_date: str
     end_date: str
+
+
+class ContactUsSubmissionData(BaseModel):
+    name: Optional[str] = None
+    email: str
+    query_type: Literal[
+        'Technical Issue',
+        'Bug Report',
+        'Feature Suggestion',
+        'Feature Feedback',
+        'Business Inquiry',
+        'Partnership & Collaboration',
+        'Billing & Payment Issue',
+        'Account Access Issue',
+        'Unable to Log In',
+        'Integration Request',
+        'Customization Inquiry',
+        'Data & Privacy Concerns',
+        'Job & Career Opportunities',
+        'General Inquiry',
+        'Other'
+    ]
+    description: str

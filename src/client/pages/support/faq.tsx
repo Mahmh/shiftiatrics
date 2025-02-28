@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import * as Accordion from "@radix-ui/react-accordion";
 import type { FAQ } from '@types'
 import RegularPage from '@/components/RegularPage'
-import FAQs from '@/public/faq.json'
+import FAQSections from '@/public/faq.json'
 
 const FAQItem = ({ question, answer }: FAQ) => {
     const [isOpen, setIsOpen] = useState(false)
@@ -41,8 +41,8 @@ const FAQAccordion = ({ questions }: { questions: FAQ[] }) => {
 
 export default function FAQPage() {
     return <RegularPage name='FAQ' id='faq-page'>
-        {FAQs.map(({ category, questions }) => (
-            <section key={category} className='section-faqs'>
+        {FAQSections.map(({ category, questions }) => (
+            <section key={category} className='faq-section'>
                 <h2>{category}</h2>
                 <FAQAccordion questions={questions} />
             </section>

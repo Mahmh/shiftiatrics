@@ -26,12 +26,14 @@ DEFAULT_RATE_LIMIT = os.getenv('DEFAULT_RATE_LIMIT')
 COOKIE_DOMAIN = None
 
 # Email
-SMTP_HOST = os.getenv('SMTP_HOST')
-SMTP_PORT = os.getenv('SMTP_PORT')
-SMTP_USER = os.getenv('SMTP_USER')
-SMTP_PASS = os.getenv('SMTP_PASS')
-MAIL_BROKER = os.getenv('MAIL_BROKER')
-MAIL_RESULT_BACKEND = os.getenv('MAIL_RESULT_BACKEND')
+MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+MAIL_FROM = os.getenv('MAIL_FROM')
+MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
+MAIL_SERVER = os.getenv('MAIL_SERVER')
+MAIL_TLS = bool(int(os.getenv('MAIL_TLS', '1')))
+MAIL_SSL = bool(int(os.getenv('MAIL_SSL', '0'))) 
+COMPANY_EMAIL = os.getenv('COMPANY_EMAIL')
 
 # OAuth
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -42,6 +44,6 @@ GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
 # Misc
-ENABLE_LOGGING = os.getenv('ENABLE_LOGGING', 'false').lower() == 'true'
+ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
 LOG_DIR = _locate('../logs/')
 SCHEDULE_ENGINE_DIR = _locate('../engine/engine.jar')

@@ -120,6 +120,7 @@ a {
     }
 }
 
+
 #dashboard-menu-btn {
     @include circle(70px);
     @include compressible;
@@ -133,6 +134,7 @@ a {
     padding: 10px 20px;
     box-shadow: $main-box-shadow;
 }
+
 
 .loading-screen {
     background-color: get-color('primary-blue-hover');
@@ -175,6 +177,7 @@ a {
     }
 }
 
+
 .backdrop {
     display: flex;
     justify-content: center;
@@ -198,5 +201,66 @@ a {
     &.closed {
         opacity: 0;
         pointer-events: none;
+    }
+}
+
+
+.dropdown {
+    display: inline-block;
+    position: relative;
+
+    label {
+        margin-right: 10px;
+    }
+
+    .dropdown-trigger {
+        @include themed-bgcolor('alpha-black-2', 'primary-blue');
+        @include themed-color('primary-text');
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 1rem;
+        padding: 10px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        outline: none;
+        transition: background-color 0.2s ease;
+
+        svg {
+            margin-left: 10px;
+        }
+    
+        &:hover {
+            @include themed-bgcolor('alpha-black-1', 'secondary-blue');
+        }
+    } 
+}
+
+.dropdown-menu {
+    @include vertical-flex;
+    @include themed-bgcolor('background', 'primary-blue');
+    margin: 4px 0;
+    z-index: 20;
+    min-width: 180px;
+    max-height: 250px;
+    overflow-y: scroll;
+    border-radius: 10px;
+    box-shadow: $main-box-shadow;
+    padding: 8px 0;
+    transform: translateY(-5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+
+    .dropdown-item {
+        @include themed-bgcolor('background', 'primary-blue');
+        @include themed-color('primary-text');
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: .9rem;
+        transition: background-color 0.2s ease;
+        outline: none;
+    
+        &:hover {
+            @include themed-bgcolor('alpha-black-2', 'secondary-blue');
+        }
     }
 }

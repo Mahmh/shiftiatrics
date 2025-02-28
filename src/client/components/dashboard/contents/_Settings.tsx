@@ -318,8 +318,8 @@ const PreferencesAndFunctionality = () => {
                 <Dropdown
                     label='Weekend days'
                     options={['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']}
-                    onSelect={changeWeekendDays}
-                    selected={selectedWeekendDays}
+                    selectedOption={selectedWeekendDays}
+                    setSelectedOption={changeWeekendDays}
                 />
                 <div className='horizontal-separator'></div>
                 <Switch label='Use minimum & maximum work hours for pediatricians' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
@@ -341,8 +341,8 @@ const PreferencesAndFunctionality = () => {
                 <Dropdown
                     label='When to send e-mail notifications'
                     options={['Daily', 'Weekly', 'Monthly']}
-                    onSelect={changeEmailNtfInterval}
-                    selected={selectedEmailNtfInterval}
+                    selectedOption={selectedEmailNtfInterval}
+                    setSelectedOption={changeEmailNtfInterval}
                 /> */}
             </div>
         </section>
