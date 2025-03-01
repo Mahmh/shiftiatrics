@@ -1,5 +1,6 @@
 #faq-page {
     @include vertical-flex;
+    @include breakpoint(600px) { width: 85% }
     gap: 40px;
     width: 70%;
     margin: 0 auto;
