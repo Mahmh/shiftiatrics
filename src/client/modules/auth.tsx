@@ -2,7 +2,7 @@ import { useRouter } from 'next/navigation'
 import { Request } from '@utils'
 import type { Account } from '@types'
 
-/** Checks if a user is logged in. */
+/** Returns false if the user is not logged in; otherwise, returns their account. */
 export const isLoggedIn = async (): Promise<Account | false> => {
     return await new Request(
         'accounts/log_in_account_with_cookies',

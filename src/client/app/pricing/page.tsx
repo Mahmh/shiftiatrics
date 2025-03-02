@@ -1,4 +1,3 @@
-import '@styles'
 import { Icon } from '@utils'
 import RegularPage from '@regpage'
 import checkIcon from '@icons/check.png'

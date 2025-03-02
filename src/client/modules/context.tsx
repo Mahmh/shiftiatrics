@@ -1,5 +1,6 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
+import { usePathname } from 'next/navigation'
 import { Request, getEmployeeById, hasScheduleForMonth } from '@utils'
 import { isLoggedIn } from '@auth'
 import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval } from '@types'
@@ -76,6 +77,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const darkThemeClassName = useMemo(() => settings.darkThemeEnabled ? 'dark-theme' : '', [settings.darkThemeEnabled])
     const openModal = useCallback(() => setIsModalOpen(true), [])
     const closeModal = useCallback(() => setIsModalOpen(false), [])
+    const pathname = usePathname()
 
     /** Collects whether a schedule is valid  */
     const setScheduleValidity = useCallback((validity: boolean, year: number, month: number) => {
@@ -232,12 +234,14 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [account.id, setSettings])
 
     const logInWithCookies = useCallback(async () => {
+        if (pathname === '/') return
         const response = await isLoggedIn()
         if (response !== false) setAccount(response)
     }, [setAccount])
 
     useEffect(() => {
         const fetchAllData = async () => {
+            if (pathname === '/') return
             if (await isLoggedIn()) {
                 const loadedEmployees = await loadEmployees()
                 await loadShifts()
@@ -255,6 +259,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
 
     useEffect(() => {
         const regenerateSchedules = async () => {
+            if (pathname === '/') return
             if (await isLoggedIn() && employees.length > 0) await loadSchedules(employees)
         }
         regenerateSchedules()
@@ -262,10 +267,12 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [account, employees, shifts, holidays])
 
     useEffect(() => {
-        if (!darkThemeClassName) return
-        document.documentElement.classList.add('dark-theme')
-        return () => { document.documentElement.classList.remove('dark-theme') }
-    }, [darkThemeClassName])
+        if (settings.darkThemeEnabled) {
+            document.documentElement.classList.add('dark-theme')
+        } else {
+            document.documentElement.classList.remove('dark-theme')
+        }
+    }, [settings.darkThemeEnabled])
     
     useEffect(() => {
         if (typeof window === 'undefined') return

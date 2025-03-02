@@ -1,4 +1,3 @@
-import '@styles'
 import RegularPage from '@/components/RegularPage'
 import { RouteCard } from '@utils'
 

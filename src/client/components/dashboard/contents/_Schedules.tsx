@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, MIN_YEAR, MAX_YEAR } from '@utils'
+import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName } from '@utils'
+import { MIN_YEAR, MAX_YEAR } from '@const'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
 import Sidebar from '../_Sidebar'
 import closeIcon from '@icons/close.png'

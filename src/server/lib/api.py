@@ -6,7 +6,7 @@ from src.server.db import Account, Employee, Shift, Schedule, Holiday, Settings,
 from src.server.lib.constants import WEB_SERVER_URL, COOKIE_DOMAIN, TOKEN_EXPIRY_SECONDS
 from src.server.lib.models import Cookies
 from src.server.lib.utils import log, errlog, todict, todicts
-from src.server.lib.exceptions import CookiesUnavailable, InvalidCookies, EndpointAuthError
+from src.server.lib.exceptions import CookiesUnavailable, InvalidCookies, EndpointAuthError, NonExistent
 
 ## Private
 def _authenticate(kwargs: dict[str, Any]) -> Optional[dict[str, str]]:
@@ -54,7 +54,9 @@ def endpoint(*, auth: bool = True):
                 result = await func(*args, **kwargs)
                 return _handle_return_type(result)
             except Exception as e:
-                errlog(func.__name__, e, 'engine')
+                errlog(func.__name__, e, 'api')
+                if type(e) is NonExistent and e.entity == 'account':
+                    return {'error': 'Invalid credentials'}
                 return {'error': str(e)}
         return wrapper
     return decorator
@@ -84,6 +86,6 @@ def store_cookies(cookies: Cookies, response: Response) -> None:
 
 def store_cookies_then_redirect(cookies: Cookies) -> RedirectResponse:
     """Stores the HttpOnly cookies in the client before redirecting, then redirects the client."""
-    response = RedirectResponse(WEB_SERVER_URL)
+    response = RedirectResponse(WEB_SERVER_URL + '/dashboard')
     store_cookies(cookies, response)
     return response

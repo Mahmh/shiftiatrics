@@ -1,9 +1,9 @@
 from typing import Optional
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy.orm import Session as _SessionType
 import unicodedata, re, bcrypt, uuid
-from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN
+from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime
 from src.server.lib.models import Credentials, Cookies
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
@@ -18,11 +18,14 @@ def dbsession(*, commit: bool = False):
                 # Sanitize credentials if the first parameter is of type `Credentials`
                 if args and isinstance(args[0], Credentials):
                     args = ( _sanitize_credentials(args[0]), ) + args[1:]
+
                 result = func(*args, session=session, **kwargs)
                 if commit: session.commit()
                 log(f'[{func.__name__}] args={args}\tkwargs={kwargs}\t{result}', 'db', 'DEBUG')
+
                 if type(result) in (Account, Token, Employee, Shift, Schedule, Holiday, Settings):
                     session.refresh(result)
+
                 return result
             except Exception as e:
                 session.rollback()
@@ -188,9 +191,16 @@ def _authenticate_credentials(cred: Credentials, *, session: _SessionType) -> Ac
     account = session.query(Account).filter_by(email=sanitized_cred.email).first()
     if not account:
         raise NonExistent('account', sanitized_cred.email)
+    
+    # If the user didn't provide a password (e.g., OAuth), perform a fake hash check to prevent timing attacks
+    if sanitized_cred.password is None or account.hashed_password is None:
+        bcrypt.checkpw(b'fake_attempt', FAKE_HASH.encode('utf-8'))  # Fake check for timing protection
+        raise InvalidCredentials(cred)
 
-    # Verify the provided password against the stored hashed password
-    if not bcrypt.checkpw(sanitized_cred.password.encode('utf-8'), account.hashed_password.encode('utf-8')):
+    # Verify the provided password against the stored hash
+    password_bytes = sanitized_cred.password.encode('utf-8')
+    stored_hash = account.hashed_password.encode('utf-8')
+    if not bcrypt.checkpw(password_bytes, stored_hash):
         raise InvalidCredentials(cred)
 
     return account

@@ -1,4 +1,4 @@
-import '@styles'
+'use client'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import * as Accordion from "@radix-ui/react-accordion";

@@ -1,8 +1,7 @@
-import '@styles'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import RegularPage from '@regpage'
-import { DOMAIN_NAME } from '@utils'
+import { DOMAIN_NAME } from '@const'
 
 const MARKDOWN_CONTENT = `
 ## 1. Introduction

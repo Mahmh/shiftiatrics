@@ -1,5 +1,5 @@
 from dotenv import load_dotenv; load_dotenv()
-import os
+import os, bcrypt
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # path with respect to this file
 _locate = lambda x: os.path.join(CURRENT_DIR, x)
@@ -21,6 +21,7 @@ MIN_EMAIL_LEN = int(os.getenv('MIN_EMAIL_LEN'))
 MAX_EMAIL_LEN = int(os.getenv('MAX_EMAIL_LEN'))
 MIN_PASSWORD_LEN = int(os.getenv('MIN_PASSWORD_LEN'))
 MAX_PASSWORD_LEN = int(os.getenv('MAX_PASSWORD_LEN'))
+FAKE_HASH = bcrypt.hashpw(b'fake_password', bcrypt.gensalt()).decode('utf-8')
 TOKEN_EXPIRY_SECONDS = int(os.getenv('TOKEN_EXPIRY_SECONDS'))
 DEFAULT_RATE_LIMIT = os.getenv('DEFAULT_RATE_LIMIT')
 COOKIE_DOMAIN = None

@@ -1,6 +1,6 @@
+import '@styles'
 import type { Metadata } from 'next'
 import { DashboardProvider } from '@context'
-import '@/styles/main.css'
 
 export const metadata: Metadata = {
     title: 'Shiftiatrics',

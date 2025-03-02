@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Icon, Request, Choice, MAX_WORK_HOURS } from '@utils'
+import { Icon, Request, Choice } from '@utils'
+import { MAX_WORK_HOURS } from '@const'
 import type { Employee, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'

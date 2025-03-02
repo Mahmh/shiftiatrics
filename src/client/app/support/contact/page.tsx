@@ -1,4 +1,4 @@
-import '@styles'
+'use client'
 import { useState, FormEvent, ChangeEvent } from 'react'
 import { Dropdown, Request } from '@utils'
 import RegularPage from '@regpage'

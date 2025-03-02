@@ -1,3 +1,4 @@
+'use client'
 import { useState, useContext } from 'react'
 import Image, { StaticImageData } from 'next/image'
 import ExcelJS from 'exceljs'
@@ -7,14 +8,6 @@ import Link from 'next/link'
 import routeIcon from '@icons/route.png'
 import { dashboardContext } from '@context'
 import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse } from '@types'
-
-// Constants
-export const DOMAIN_NAME = 'shiftiatrics.com'
-export const MIN_YEAR = 2023
-export const MAX_YEAR = 2025
-export const MAX_WORK_HOURS = 210 // hours per week
-export const TOO_MANY_REQS_MSG = 'You have sent too many requests. Please try again later.'
-
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (

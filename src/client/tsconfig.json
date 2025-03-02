@@ -23,6 +23,7 @@
       "@icons/*": ["./public/icons/*"],
       "@img/*": ["./public/img/*"],
       "@utils": ["./modules/utils.tsx"],
+      "@const": ["./modules/constants.tsx"],
       "@types": ["./modules/types.tsx"],
       "@context": ["./modules/context.tsx"],
       "@auth": ["./modules/auth.tsx"],
