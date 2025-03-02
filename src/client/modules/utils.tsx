@@ -1,12 +1,15 @@
-import ExcelJS from 'exceljs'
-import ReactDOM from 'react-dom'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useContext } from 'react'
 import Image, { StaticImageData } from 'next/image'
+import ExcelJS from 'exceljs'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
+import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import routeIcon from '@icons/route.png'
-import type { Account, MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse } from '@types'
+import { dashboardContext } from '@context'
+import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse } from '@types'
 
 // Constants
+export const DOMAIN_NAME = 'shiftiatrics.com'
 export const MIN_YEAR = 2023
 export const MAX_YEAR = 2025
 export const MAX_WORK_HOURS = 210 // hours per week
@@ -40,70 +43,6 @@ export const Switch = ({ label, handleClick, enabled }: { label: string, handleC
 
 
 /** Component for selecting an option from a dropdown list */
-// export const Dropdown = ({ label, options, onSelect, selected }: { label?: string, options: string[], onSelect: (option: string) => void, selected: string }) => {
-//     const [isOpen, setIsOpen] = useState(false)
-//     const dropdownRef = useRef<HTMLDivElement | null>(null)
-//     const dropdownButtonRef = useRef<HTMLDivElement | null>(null)
-//     const [dropdownPosition, setDropdownPosition] = useState<{ top: number, left: number, width: number }>({ top: 0, left: 0, width: 0 })
-
-//     const handleOptionClick = (option: string) => {
-//         onSelect(option)
-//         setIsOpen(false)
-//     }
-
-//     const handleClickOutside = (event: MouseEvent) => {
-//         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsOpen(false)
-//     }
-
-//     const updateDropdownPosition = () => {
-//         if (dropdownButtonRef.current) {
-//             const rect = dropdownButtonRef.current.getBoundingClientRect()
-//             setDropdownPosition({
-//                 top: rect.bottom + 5, // Small gap between the button and menu
-//                 left: rect.left,
-//                 width: rect.width, // Match the width of the button
-//             })
-//         }
-//     }
-
-//     useEffect(() => {
-//         if (isOpen) { updateDropdownPosition(); document.addEventListener('mousedown', handleClickOutside) }
-//         else document.removeEventListener('mousedown', handleClickOutside)
-//         return () => { document.removeEventListener('mousedown', handleClickOutside) }
-//     }, [isOpen])
-
-//     return <>
-//         <div className='dropdown-container' ref={dropdownRef}>
-//             {label && <label className='dropdown-label'>{label}</label>}
-//             <div
-//                 className={`dropdown ${isOpen ? 'dropdown-open' : ''}`}
-//                 ref={dropdownButtonRef}
-//                 onClick={() => setIsOpen(!isOpen)}
-//             >
-//                 <div className='dropdown-selected'>{selected || 'Select an option'}</div>
-//                 <div className='dropdown-arrow'>▼</div>
-//             </div>
-//         </div>
-//         {isOpen &&
-//             ReactDOM.createPortal(
-//                 <ul
-//                     className='dropdown-options'
-//                     style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: dropdownPosition.width }}
-//                     onMouseDown={e => e.stopPropagation()}
-//                 >
-//                     {options.map(option => 
-//                         <li key={option} className='dropdown-option' onClick={() => handleOptionClick(option)}>{option}</li>
-//                     )}
-//                 </ul>,
-//                 document.body // Render the dropdown options in the body
-//             )}
-//     </>
-// }
-import { useContext } from 'react'
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { ChevronDown } from 'lucide-react'
-import { dashboardContext } from '@/modules/context'
-
 export const Dropdown = ({ label, options, selectedOption, setSelectedOption }: {
     label?: string
     options: readonly string[]
@@ -132,6 +71,7 @@ export const Dropdown = ({ label, options, selectedOption, setSelectedOption }: 
                         align='start'
                         side='bottom'
                         sideOffset={4}
+                        style={{ overflowY: options.length > 3 ? 'scroll' : undefined }}
                     >
                         {options.map(option => (
                             <DropdownMenu.Item

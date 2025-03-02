@@ -2,10 +2,11 @@ import '@styles'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import RegularPage from '@regpage'
+import { DOMAIN_NAME } from '@utils'
 
 const MARKDOWN_CONTENT = `
 ## 1. Introduction
-Welcome to **Shiftiatrics** ("we," "our," or "us"). This Cookie Policy explains how and why we use cookies when you visit our website **shiftiatrics.com** ("Website").
+Welcome to **Shiftiatrics** ("we," "our," or "us"). This Cookie Policy explains how and why we use cookies when you visit our website **${DOMAIN_NAME}** ("Website").
 
 We use cookies primarily for authentication purposes, ensuring secure login and session maintenance. Additionally, if you choose to sign in using **"Continue with Google"**, third-party cookies from Google may be used for authentication. This policy outlines how we use cookies, what third-party services may be involved, and how you can manage your cookie preferences.
 
@@ -56,9 +57,9 @@ However, you can manage or delete cookies through your browser settings:
 We may update this Cookie Policy from time to time to reflect changes in legal requirements or our website’s functionality. The latest version will always be available on this page, with the **last updated** date at the top.
 
 ## 8. Contact Us
-If you have any questions about this Cookie Policy or how we use cookies, please contact us at:
+If you have any questions about this Cookie Policy or how we use cookies, please visit our [Contact Us](https://${DOMAIN_NAME}/support/contact) page.
 
-**Email:** [COMPANY_EMAIL]
+From there, you can submit your inquiry, and our team will respond as soon as possible.
 `
 
 export default function Cookies() {

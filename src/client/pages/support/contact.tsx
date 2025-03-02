@@ -29,11 +29,11 @@ type SubmissionData = {
     description: string
 }
 
-const defaultQueryType: QueryType = 'General Inquiry'
-const defaultSubmissionData: SubmissionData = { name: '', email: '', queryType: defaultQueryType, description: '' }
+const DEFAULT_QUERY_TYPE: QueryType = 'General Inquiry'
+const DEFAULT_SUBMISSION_DATA: SubmissionData = { name: '', email: '', queryType: DEFAULT_QUERY_TYPE, description: '' }
 
 export default function Contact() {
-    const [formData, setFormData] = useState<SubmissionData>(defaultSubmissionData)
+    const [formData, setFormData] = useState<SubmissionData>(DEFAULT_SUBMISSION_DATA)
     const [submitted, setSubmitted] = useState(false)
     const [errMsg, setErrMsg] = useState<string>('')
 

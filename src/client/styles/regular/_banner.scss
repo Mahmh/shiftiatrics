@@ -32,7 +32,7 @@
         transform: translateY(80%);
         animation: fadeIn .9s ease forwards .1s;
 
-        h1, p { color: get-color('background') }
+        h1, p, b { color: get-color('background') }
 
         h1 {
             @include breakpoint(2000px) { font-size: 3rem; text-align: center }
@@ -40,7 +40,7 @@
             margin: 0;
         }
 
-        p {
+        p, b {
             @include breakpoint(2000px) { font-size: 1.2rem }
             font-size: 1.3rem;
         }
