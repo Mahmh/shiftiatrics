@@ -6,7 +6,7 @@ from src.server.db import Account, Employee, Shift, Schedule, Holiday, Settings,
 from src.server.lib.constants import WEB_SERVER_URL, COOKIE_DOMAIN, TOKEN_EXPIRY_SECONDS
 from src.server.lib.models import Cookies
 from src.server.lib.utils import log, errlog, todict, todicts
-from src.server.lib.exceptions import CookiesUnavailable, InvalidCookies, EndpointAuthError, NonExistent
+from src.server.lib.exceptions import CookiesUnavailable, InvalidCookies, EndpointAuthError, NonExistent, EmailTaken
 
 ## Private
 def _authenticate(kwargs: dict[str, Any]) -> Optional[dict[str, str]]:
@@ -57,6 +57,8 @@ def endpoint(*, auth: bool = True):
                 errlog(func.__name__, e, 'api')
                 if type(e) is NonExistent and e.entity == 'account':
                     return {'error': 'Invalid credentials'}
+                elif type(e) is EmailTaken:
+                    return {'error': 'Something went wrong. Please try again or use a different email.'}
                 return {'error': str(e)}
         return wrapper
     return decorator

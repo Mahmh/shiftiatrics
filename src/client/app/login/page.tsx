@@ -13,11 +13,11 @@ export default function Login() {
     const { setAccount } = useContext(dashboardContext)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [error, setError] = useState<string|'X'>('X')
+    const [error, setError] = useState<string|null>(null)
     const [isLoading, setIsLoading] = useState(false)
 
     const handleLogin = async () => {
-        setError('X')
+        setError(null)
         setIsLoading(true)
 
         const sanitizedEmail = sanitizeInput(email)
@@ -72,7 +72,7 @@ export default function Login() {
                     <label>Password</label>
                     <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
                 </section>
-                {error && <p className='error' style={error === 'X' ? { visibility: 'hidden' } : {}}>{error}</p>}
+                <p className='error' style={error === null ? { visibility: 'hidden' } : {}}>{error}</p>
                 <button className='cred-submit-btn' onClick={handleLogin} disabled={isLoading}>
                     {isLoading ? 'Logging in...' : 'Log In'}
                 </button>

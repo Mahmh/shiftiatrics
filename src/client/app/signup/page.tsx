@@ -13,11 +13,17 @@ export default function Signup() {
     const { setAccount } = useContext(dashboardContext)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [error, setError] = useState<string|'X'>('X')
+    const [error, setError] = useState<string|null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [ToSAccepted, setToSAccepted] = useState(false)
 
     const handleSignup = async () => {
-        setError('X')
+        if (!ToSAccepted) {
+            setError('Before continuing, please accept the terms of service by checking the checkbox above.')
+            return
+        }
+
+        setError(null)
         setIsLoading(true)
 
         const sanitizedEmail = sanitizeInput(email)
@@ -67,7 +73,11 @@ export default function Signup() {
                     <label>Password</label>
                     <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} maxLength={32}/>
                 </section>
-                {error && <p className='error' style={error === 'X' ? { visibility: 'hidden' } : {}}>{error}</p>}
+                <section id='agree-to-tos-sec'>
+                    <input type='checkbox' onChange={e => setToSAccepted(e.target.checked)} required/>
+                    <label>I agree to Shiftiatrics&apos; <Link href='/legal/terms'>Terms of Service</Link>.</label>
+                </section>
+                <p className='error' style={error === null ? { visibility: 'hidden', margin: 0 } : {}}>{error}</p>
                 <button className='cred-submit-btn' onClick={handleSignup} disabled={isLoading}>
                     {isLoading ? 'Signing up...' : 'Sign Up'}
                 </button>
