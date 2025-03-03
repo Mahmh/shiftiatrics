@@ -1,6 +1,6 @@
 'use client'
-import { useState, FormEvent, ChangeEvent } from 'react'
-import { Dropdown, Request } from '@utils'
+import { useState, FormEvent, ChangeEvent, useEffect } from 'react'
+import { Dropdown, Request, setMetadata } from '@utils'
 import RegularPage from '@regpage'
 
 const QUERY_TYPES = [
@@ -61,6 +61,13 @@ export default function Contact() {
         })
         setSubmitted(true)
     }
+
+    useEffect(() => {
+        setMetadata({
+            title: 'Contact Us | Shiftiatrics',
+            description: 'Contact us to seek our help regarding your issues'
+        })
+    }, [])
 
     return (
         <RegularPage name='Contact Us' id='contact-page'>

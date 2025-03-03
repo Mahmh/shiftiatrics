@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import * as Accordion from "@radix-ui/react-accordion";
+import * as Accordion from "@radix-ui/react-accordion"
 import type { FAQ } from '@types'
+import { setMetadata } from '@utils'
 import RegularPage from '@/components/RegularPage'
 import FAQSections from '@/public/faq.json'
 
@@ -40,6 +41,13 @@ const FAQAccordion = ({ questions }: { questions: FAQ[] }) => {
 
 
 export default function FAQPage() {
+    useEffect(() => {
+        setMetadata({
+            title: 'FAQ | Shiftiatrics',
+            description: 'Frequently asked questions about Shiftiatrics'
+        })
+    }, [])
+
     return <RegularPage name='FAQ' id='faq-page'>
         {FAQSections.map(({ category, questions }) => (
             <section key={category} className='faq-section'>

@@ -1,5 +1,11 @@
-import RegularPage from '@/components/RegularPage'
+import { Metadata } from 'next'
 import { RouteCard } from '@utils'
+import RegularPage from '@/components/RegularPage'
+
+export const generateMetadata = async (): Promise<Metadata> => ({
+    title: `Legal | Shiftiatrics`,
+    description: `Legal information about Shiftiatrics`
+})
 
 export default function Legal() {
     return <RegularPage name='Legal'>

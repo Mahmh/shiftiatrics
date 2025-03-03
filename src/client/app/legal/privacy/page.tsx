@@ -1,7 +1,13 @@
+import { Metadata } from 'next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import RegularPage from '@regpage'
 import { DOMAIN_NAME } from '@const'
+
+export const generateMetadata = async (): Promise<Metadata> => ({
+    title: `Privacy Policy | Shiftiatrics`,
+    description: `Privacy Policy of Shiftiatrics`
+})
 
 const MARKDOWN_CONTENT = `
 ## 1. Introduction
@@ -70,7 +76,7 @@ From there, you can submit your inquiry, and our team will respond as soon as po
 `
 
 export default function Privacy() {
-    return <RegularPage name='Privacy Policy' id='privacy-policy'>
+    return <RegularPage id='privacy-policy'>
         <section>
             <h1>Privacy Policy</h1>
             <p>Last updated: March 1, 2025</p>

@@ -1,11 +1,11 @@
 'use client'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { Request, sanitizeInput, validateInput } from '@utils'
+import { Request, sanitizeInput, validateInput, setMetadata } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
 import { isLoggedIn, ContinueWithGoogle } from '@auth'
 import { dashboardContext } from '@context'
+import Link from 'next/link'
 import RegularPage from '@regpage'
 
 export default function Signup() {
@@ -42,6 +42,13 @@ export default function Signup() {
             }
         ).post({ email: sanitizedEmail, password: sanitizedPassword })
     }
+
+    useEffect(() => {
+        setMetadata({
+            title: 'Sign Up | Shiftiatrics',
+            description: 'Create an account to view your dashboard'
+        })
+    }, [])
 
     useEffect(() => {
         (async () => {

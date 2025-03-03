@@ -1,6 +1,7 @@
 'use client'
 import { useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { setMetadata } from '@utils'
 import { isLoggedIn } from '@auth'
 import { dashboardContext } from '@context'
 import DashboardPage from '@/components/dashboard/DashboardPage'
@@ -9,6 +10,13 @@ export default function Dashboard() {
     const { setAccount } = useContext(dashboardContext)
     const router = useRouter()
     const [authChecked, setAuthChecked] = useState(false)
+
+    useEffect(() => {
+        setMetadata({
+            title: 'Dashboard | Shiftiatrics',
+            description: 'Control and generate shift schedules for your registered pediatricians'
+        })
+    }, [])
 
     useEffect(() => {
         const checkLoginStatus = async () => {

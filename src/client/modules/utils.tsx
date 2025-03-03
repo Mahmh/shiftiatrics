@@ -97,6 +97,24 @@ export const RouteCard = ({ href, h, p }: { href: string, h: string, p: string }
 )
 
 
+/** Function for setting metadata in client components */
+export const setMetadata = ({ title, description }: { title: string, description: string }) => {
+    document.title = title
+
+    // Update the meta description
+    const metaDescription = document.querySelector('meta[name="description"]')
+    if (metaDescription) {
+        metaDescription.setAttribute('content', description)
+    } else {
+        // If no meta tag exists, create one
+        const newMeta = document.createElement('meta')
+        newMeta.name = 'description'
+        newMeta.content = description
+        document.head.appendChild(newMeta)
+    }
+}
+
+
 /**
  * Converts time from 24-hour format to AM/PM format
  * @param time Time in 24-hour format

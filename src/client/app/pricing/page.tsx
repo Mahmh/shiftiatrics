@@ -1,6 +1,12 @@
+import { Metadata } from 'next'
 import { Icon } from '@utils'
 import RegularPage from '@regpage'
 import checkIcon from '@icons/check.png'
+
+export const generateMetadata = async (): Promise<Metadata> => ({
+    title: `Pricing | Shiftiatrics`,
+    description: `Pricing plans for using Shiftiatrics`
+})
 
 const PricingCard = ({ title, titleBg, price, features }: { title: string, titleBg: string, price: string, features: string[] }) => {
     const isCustom = isNaN(parseInt(price[1]))

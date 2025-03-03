@@ -1,7 +1,13 @@
+import { Metadata } from 'next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import RegularPage from '@regpage'
 import { DOMAIN_NAME } from '@const'
+
+export const generateMetadata = async (): Promise<Metadata> => ({
+    title: `Cookie Policy | Shiftiatrics`,
+    description: `Cookie Policy of Shiftiatrics`
+})
 
 const MARKDOWN_CONTENT = `
 ## 1. Introduction
@@ -62,7 +68,7 @@ From there, you can submit your inquiry, and our team will respond as soon as po
 `
 
 export default function Cookies() {
-    return <RegularPage name='Cookie Policy' id='cookie-policy'>
+    return <RegularPage id='cookie-policy'>
         <section>
             <h1>Cookie Policy</h1>
             <p>Last updated: March 1, 2025</p>
