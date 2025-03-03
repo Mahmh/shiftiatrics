@@ -25,7 +25,7 @@ We provide an **automated shift scheduling** platform that allows users to manag
 ## 4. Authentication & Cookies
 - We use **authentication cookies** to verify users and allow them access to their accounts.
 - These cookies **do not track** users beyond authentication and account-related settings.
-- For more details, refer to our **[Privacy Policy](https://${DOMAIN_NAME}/legal/privacy)**.
+- For more details, refer to our **[Privacy Policy](/legal/privacy)**.
 
 ## 5. User Responsibilities
 By using our services, you agree to:
@@ -36,7 +36,7 @@ By using our services, you agree to:
 - Ensure that any pediatrician names, minimum and maximum working hours, schedules, or personal data you input comply with applicable labor and privacy laws.
 
 ## 6. Data & Privacy
-- Your **personal data** (e.g., email, scheduling settings) is handled per our **[Privacy Policy](https://${DOMAIN_NAME}/legal/privacy)**.
+- Your **personal data** (e.g., email, scheduling settings) is handled per our **[Privacy Policy](/legal/privacy)**.
 - We **do not sell your data** to third parties.
 - You are responsible for ensuring that any pediatrician names or scheduling data you input do not violate privacy laws.
 
@@ -71,7 +71,7 @@ By using our services, you agree to:
 These Terms are governed by the laws of **Qatar**. Any disputes shall be resolved in the appropriate courts within this jurisdiction.
 
 ## 13. Contact Us
-If you have any questions about these Terms, please visit our [Contact Us](https://${DOMAIN_NAME}/support/contact) page.
+If you have any questions about these Terms, please visit our [Contact Us](/support/contact) page.
 
 From there, you can submit your inquiry, and our team will respond as soon as possible.
 `

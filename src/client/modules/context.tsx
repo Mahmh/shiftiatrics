@@ -267,6 +267,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [account, employees, shifts, holidays])
 
     useEffect(() => {
+        if (pathname !== '/dashboard') return
         if (settings.darkThemeEnabled) {
             document.documentElement.classList.add('dark-theme')
         } else {

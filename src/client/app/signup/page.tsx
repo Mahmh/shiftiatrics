@@ -63,7 +63,7 @@ export default function Signup() {
     }, [router])
 
     return (
-        <RegularPage name='Sign Up' id='signup-page' transparentHeader={true} footerMarginTop={false}>
+        <RegularPage id='signup-page' transparentHeader={true} footerMarginTop={false}>
             <div id='mid-container'>
                 <section>
                     <label>Email</label>

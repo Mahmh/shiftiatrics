@@ -8,7 +8,7 @@ export const generateMetadata = async (): Promise<Metadata> => ({
 })
 
 export default function Support() {
-    return <RegularPage name='Support'>
+    return <RegularPage>
         <section className='route-card-container'>
             <RouteCard
                 href='/support/contact'

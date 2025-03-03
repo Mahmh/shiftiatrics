@@ -25,7 +25,7 @@ const PricingCard = ({ title, titleBg, price, features }: { title: string, title
 }
 
 export default function Pricing() {
-    return <RegularPage name='Pricing' id='pricing-page' transparentHeader={true} footerMarginTop={false}>
+    return <RegularPage id='pricing-page' transparentHeader={true} footerMarginTop={false}>
         <h1>Pricing Plans</h1>
         <p>Choose the plan that fits your needs, and get started auto-scheduling right away!</p>
         <div className='pricing-cards'>

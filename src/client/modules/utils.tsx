@@ -567,7 +567,7 @@ export class ScheduleExporter {
 
         const link = document.createElement('a')
         link.setAttribute('href', fileContent)
-        link.setAttribute('download', `${getMonthName(this.month).slice(0, 3)}_${this.year}_schedule.json`)
+        link.setAttribute('download', `${getMonthName(this.month).slice(0, 3)}-${this.year}-Schedule.json`)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -601,7 +601,7 @@ export class ScheduleExporter {
 
         const link = document.createElement('a')
         link.setAttribute('href', encodedUri)
-        link.setAttribute('download', `${getMonthName(this.month).slice(0, 3)}_${this.year}_schedule.${extension}`)
+        link.setAttribute('download', `${getMonthName(this.month).slice(0, 3)}-${this.year}-Schedule.${extension}`)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)

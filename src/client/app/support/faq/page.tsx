@@ -48,7 +48,7 @@ export default function FAQPage() {
         })
     }, [])
 
-    return <RegularPage name='FAQ' id='faq-page'>
+    return <RegularPage id='faq-page'>
         {FAQSections.map(({ category, questions }) => (
             <section key={category} className='faq-section'>
                 <h2>{category}</h2>

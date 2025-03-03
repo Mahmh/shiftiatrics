@@ -70,7 +70,7 @@ export default function Contact() {
     }, [])
 
     return (
-        <RegularPage name='Contact Us' id='contact-page'>
+        <RegularPage id='contact-page'>
             <h1>Contact Us</h1>
             <p>We&apos;re here to help! Reach out for support or inquiries.</p>
 

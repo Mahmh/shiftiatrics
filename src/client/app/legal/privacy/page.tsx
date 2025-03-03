@@ -35,7 +35,7 @@ We use your information to:
 - Comply with legal obligations
 
 ## 4. Cookies and Tracking Technologies
-We use **only essential cookies** for authentication purposes. These cookies allow users to securely log in and access their accounts, which store their preferences (e.g., dark theme, scheduling settings). If you use **Google OAuth** for login, Google may place third-party cookies. For more details, refer to our **[Cookie Policy](https://${DOMAIN_NAME}/legal/cookies)**.
+We use **only essential cookies** for authentication purposes. These cookies allow users to securely log in and access their accounts, which store their preferences (e.g., dark theme, scheduling settings). If you use **Google OAuth** for login, Google may place third-party cookies. For more details, refer to our **[Cookie Policy](/legal/cookies)**.
 
 ## 5. How We Share Your Information
 We do **not** sell or rent your personal data. However, we may share information with:
@@ -61,7 +61,7 @@ Depending on your jurisdiction, you may have the right to:
 - Withdraw consent where applicable
 - Request data portability
 
-To exercise these rights, please visit our [Contact Us](https://${DOMAIN_NAME}/support/contact) page and submit your request. Our team will review and respond accordingly.
+To exercise these rights, please visit our [Contact Us](/support/contact) page and submit your request. Our team will review and respond accordingly.
 
 ## 9. Third-Party Links
 Our Website may contain links to external sites. We are **not responsible** for their privacy practices. Please review their Privacy Policies.
@@ -70,7 +70,7 @@ Our Website may contain links to external sites. We are **not responsible** for 
 We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.
 
 ## 11. Contact Us
-If you have any questions about this Privacy Policy, please visit our [Contact Us](https://${DOMAIN_NAME}/support/contact) page.
+If you have any questions about this Privacy Policy, please visit our [Contact Us](/support/contact) page.
 
 From there, you can submit your inquiry, and our team will respond as soon as possible.
 `

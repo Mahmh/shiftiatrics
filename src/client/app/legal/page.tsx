@@ -8,7 +8,7 @@ export const generateMetadata = async (): Promise<Metadata> => ({
 })
 
 export default function Legal() {
-    return <RegularPage name='Legal'>
+    return <RegularPage>
         <section className='route-card-container'>
             <RouteCard 
                 href='/legal/terms' 

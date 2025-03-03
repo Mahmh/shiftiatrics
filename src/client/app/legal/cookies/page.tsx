@@ -62,7 +62,7 @@ However, you can manage or delete cookies through your browser settings:
 We may update this Cookie Policy from time to time to reflect changes in legal requirements or our website’s functionality. The latest version will always be available on this page, with the **last updated** date at the top.
 
 ## 8. Contact Us
-If you have any questions about this Cookie Policy or how we use cookies, please visit our [Contact Us](https://${DOMAIN_NAME}/support/contact) page.
+If you have any questions about this Cookie Policy or how we use cookies, please visit our [Contact Us](/support/contact) page.
 
 From there, you can submit your inquiry, and our team will respond as soon as possible.
 `

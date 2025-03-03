@@ -62,7 +62,7 @@ export default function Login() {
     }, [router])
     
     return (
-        <RegularPage name='Log In' id='login-page' transparentHeader={true} footerMarginTop={false}>
+        <RegularPage id='login-page' transparentHeader={true} footerMarginTop={false}>
             <div id='mid-container'>
                 <section>
                     <label>Email</label>

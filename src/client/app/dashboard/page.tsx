@@ -32,5 +32,5 @@ export default function Dashboard() {
     }, [router, setAccount])
 
     if (!authChecked) return null // Prevent rendering before auth check completes
-    return <DashboardPage />
+    return <DashboardPage/>
 }
