@@ -61,26 +61,50 @@ def log_in_account_with_cookies(cookies: Cookies, *, session: _SessionType) -> A
 
 @dbsession(commit=True)
 def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session: _SessionType) -> tuple[Account, str]:
-    """Logs in a Google user, creating an account if it doesn't exist."""
+    """Logs in a Google user, creating an account if it doesn't exist, or linking if needed."""
+    
+    # Check if an account exists with the provided OAuth ID
     account = session.query(Account).filter(Account.oauth_id == oauth_id).first()
 
     if account:
+        # If the OAuth account exists, update the token and log in
         account.oauth_token = access_token
         token_obj = _get_token_from_account(account.account_id, session=session)
-    else:
-        account = Account(
-            email=email,
-            hashed_password=None,  # No password for OAuth users
-            oauth_provider='google',
-            oauth_token=access_token,
-            oauth_id=oauth_id  # Permanent Google User ID
-        )
-        session.add(account)
+        return account, token_obj.token
+
+    # Check if an account exists with the same email (but may not be linked to OAuth)
+    existing_account = session.query(Account).filter(Account.email == email).first()
+
+    if existing_account:
+        if existing_account.oauth_id:
+            # If email exists but is already linked to another OAuth ID, reject login
+            raise ValueError("This email is already linked to a different OAuth account.")
+        
+        # If the account exists but was created via email/password, allow linking
+        existing_account.oauth_provider = 'google'
+        existing_account.oauth_token = access_token
+        existing_account.oauth_id = oauth_id  # Link Google account
         session.commit()
-        session.refresh(account)
-        token_obj = Token(account_id=account.account_id, **_generate_new_token())
-        session.add(token_obj)
-    return account, token_obj.token
+
+        token_obj = _get_token_from_account(existing_account.account_id, session=session)
+        return existing_account, token_obj.token
+
+    # No existing email/password account, create a new OAuth account
+    new_account = Account(
+        email=email,
+        hashed_password=None,  # No password for OAuth users
+        oauth_provider='google',
+        oauth_token=access_token,
+        oauth_id=oauth_id
+    )
+    session.add(new_account)
+    session.commit()
+    session.refresh(new_account)
+
+    token_obj = Token(account_id=new_account.account_id, **_generate_new_token())
+    session.add(token_obj)
+    
+    return new_account, token_obj.token
 
 
 @dbsession(commit=True)
