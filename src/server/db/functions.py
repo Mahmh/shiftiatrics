@@ -61,37 +61,48 @@ def log_in_account_with_cookies(cookies: Cookies, *, session: _SessionType) -> A
 
 @dbsession(commit=True)
 def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session: _SessionType) -> tuple[Account, str]:
-    """Logs in a Google user, creating an account if it doesn't exist, or linking if needed."""
-    
-    # Check if an account exists with the provided OAuth ID
+    """Logs in a Google user, handling cases where they changed their email in your web app."""
+
+    # Step 1: Find the account by OAuth ID (Primary Key)
     account = session.query(Account).filter(Account.oauth_id == oauth_id).first()
 
     if account:
-        # If the OAuth account exists, update the token and log in
+        # Step 2: Store OAuth email only the first time
+        if account.oauth_email is None:
+            account.oauth_email = email  # Store original Google email (first-time login)
+        
+        # Step 3: If the user changed their email in the web app, do NOT overwrite it.
+        # Only update email if it's empty (i.e., first-time login)
+        if not account.email:
+            account.email = email  # Set email for first-time login only
+        
+        # Step 4: Update OAuth token
         account.oauth_token = access_token
         token_obj = _get_token_from_account(account.account_id, session=session)
         return account, token_obj.token
 
-    # Check if an account exists with the same email (but may not be linked to OAuth)
+    # Step 5: If no matching OAuth ID, check if an account exists with the same email
     existing_account = session.query(Account).filter(Account.email == email).first()
 
     if existing_account:
         if existing_account.oauth_id:
-            # If email exists but is already linked to another OAuth ID, reject login
-            raise ValueError("This email is already linked to a different OAuth account.")
-        
-        # If the account exists but was created via email/password, allow linking
+            # If email exists but is already linked to another OAuth ID, prevent hijacking
+            raise ValueError('This email is already linked to a different OAuth account.')
+
+        # Otherwise, link the existing email/password account to Google OAuth
         existing_account.oauth_provider = 'google'
         existing_account.oauth_token = access_token
         existing_account.oauth_id = oauth_id  # Link Google account
+        existing_account.oauth_email = email  # Store the original OAuth email
         session.commit()
 
         token_obj = _get_token_from_account(existing_account.account_id, session=session)
         return existing_account, token_obj.token
 
-    # No existing email/password account, create a new OAuth account
+    # Step 6: No matching account, create a new one
     new_account = Account(
-        email=email,
+        email=email,  # First-time login, set email
+        oauth_email=email,  # Store OAuth email for future reference
         hashed_password=None,  # No password for OAuth users
         oauth_provider='google',
         oauth_token=access_token,
@@ -103,7 +114,7 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session:
 
     token_obj = Token(account_id=new_account.account_id, **_generate_new_token())
     session.add(token_obj)
-    
+
     return new_account, token_obj.token
 
 

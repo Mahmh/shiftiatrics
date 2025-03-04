@@ -11,7 +11,8 @@ CREATE TABLE accounts (
     hashed_password VARCHAR(128), -- Null for OAuth users
     oauth_provider VARCHAR(16),
     oauth_token VARCHAR(2048),
-    oauth_id VARCHAR(64) UNIQUE
+    oauth_id VARCHAR(64) UNIQUE,
+    oauth_email VARCHAR(256) UNIQUE -- Email can change, but OAuth email cannot
 );
 
 CREATE TABLE tokens (

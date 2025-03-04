@@ -17,6 +17,7 @@ class Account(Base):
     oauth_provider = Column(String(16), nullable=True)
     oauth_token = Column(String(2048), nullable=True)
     oauth_id = Column(String(64), unique=True, nullable=True)
+    oauth_email = Column(String, unique=True, nullable=True)
     __repr__ = lambda self: f'Account({self.account_id})'
 
 
