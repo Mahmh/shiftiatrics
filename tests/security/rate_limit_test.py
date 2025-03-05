@@ -9,7 +9,7 @@ from tests.utils import ctxtest
 client = TestClient(app)
 CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
 create_account = lambda: client.post('/accounts/signup', json=CRED)
-login = lambda: client.post('/accounts/login', json=CRED)
+login = lambda: client.post('/auth/login', json=CRED)
 
 @ctxtest(disable_rate_limiting=False)
 def setup_and_teardown():
@@ -55,7 +55,7 @@ def test_rate_limit_signup():
 
 
 def test_rate_limit_login():
-    response = hit_endpoint('/accounts/login', method='post', times=5, json=CRED)
+    response = hit_endpoint('/auth/login', method='post', times=5, json=CRED)
     assert response.status_code == 429
 
 

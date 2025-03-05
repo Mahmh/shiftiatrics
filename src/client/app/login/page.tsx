@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { Request, sanitizeInput, validateInput, setMetadata } from '@utils'
+import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
 import { isLoggedIn, ContinueWithGoogle } from '@auth'
 import { dashboardContext } from '@context'
@@ -22,7 +22,7 @@ export default function Login() {
 
         const sanitizedEmail = sanitizeInput(email)
         const sanitizedPassword = sanitizeInput(password)
-        const validationError = validateInput(sanitizedEmail, sanitizedPassword)
+        const validationError = validateCred(sanitizedEmail, sanitizedPassword)
         if (validationError) {
             setError(validationError)
             setIsLoading(false)
@@ -30,7 +30,7 @@ export default function Login() {
         }
 
         await new Request(
-            'accounts/login',
+            'auth/login',
             (data: { account_id: number, email: string, password: string }) => {
                 setIsLoading(false)
                 setAccount({ id: data.account_id, email: data.email })
@@ -73,9 +73,14 @@ export default function Login() {
                     <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
                 </section>
                 <p className='error' style={error === null ? { visibility: 'hidden' } : {}}>{error}</p>
-                <button className='cred-submit-btn' onClick={handleLogin} disabled={isLoading}>
-                    {isLoading ? 'Logging in...' : 'Log In'}
-                </button>
+                <section id='login-btns'>
+                    <button className='cred-submit-btn' onClick={handleLogin} disabled={isLoading}>
+                        {isLoading ? 'Logging in...' : 'Log In'}
+                    </button>
+                    <button className='cred-submit-btn' id='forgot-pass-btn' onClick={() => router.push('/reset-password')}>
+                        Forgot Password
+                    </button>
+                </section>
                 <p>Don&apos;t have an account? <Link href='/signup'>Sign Up</Link></p>
                 <ContinueWithGoogle/>
             </div>

@@ -1,41 +1,71 @@
-from typing import Optional
+from typing import Optional, Callable, Any, Literal
 from functools import wraps
 from datetime import datetime
 from sqlalchemy.orm import Session as _SessionType
-import unicodedata, re, bcrypt, uuid
+import unicodedata, re, bcrypt, uuid, inspect
 from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH
-from src.server.lib.utils import log, errlog, get_token_expiry_datetime
+from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
 from src.server.db.tables import Session, Account, Token, Employee, Shift, Schedule, Holiday, Settings
 
+def _handle_args(args: tuple) -> tuple:
+    # Sanitize credentials if the first parameter is of type `Credentials`
+    if args and isinstance(args[0], Credentials):
+        args = ( _sanitize_credentials(args[0]), ) + args[1:]
+    return args
+
+
+def _handle_result(commit: bool, func: Callable, result: Any, args: tuple, kwargs: dict[str, Any], *, session: _SessionType) -> None:
+    if commit: session.commit()
+    log(f'[{func.__name__}] args={args}\tkwargs={kwargs}\t{result}', 'db', 'DEBUG')
+
+    if isinstance(result, (Account, Token, Employee, Shift, Schedule, Holiday, Settings)):
+        session.refresh(result)
+    return result
+
+
+def _handle_exception(e: Exception, func: Callable, *, session: _SessionType) -> None:
+    session.rollback()
+    is_auth = (type(e) in (EmailTaken, InvalidCredentials)) or (type(e) is NonExistent and e.entity == 'account')
+    errlog(func.__name__, e, 'auth' if is_auth else 'db')
+    raise e
+
+
 def dbsession(*, commit: bool = False):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            session = Session()
-            try:
-                # Sanitize credentials if the first parameter is of type `Credentials`
-                if args and isinstance(args[0], Credentials):
-                    args = ( _sanitize_credentials(args[0]), ) + args[1:]
+    def decorator(func: Callable):
+        is_async = inspect.iscoroutinefunction(func)
 
-                result = func(*args, session=session, **kwargs)
-                if commit: session.commit()
-                log(f'[{func.__name__}] args={args}\tkwargs={kwargs}\t{result}', 'db', 'DEBUG')
-
-                if type(result) in (Account, Token, Employee, Shift, Schedule, Holiday, Settings):
-                    session.refresh(result)
-
-                return result
-            except Exception as e:
-                session.rollback()
-                is_auth = (type(e) in (EmailTaken, InvalidCredentials)) or (type(e) is NonExistent and e.entity == 'account')
-                errlog(func.__name__, e, 'auth' if is_auth else 'db')
-                raise e
-            finally:
-                session.close()
-        return wrapper
+        if is_async:
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                session = Session()
+                try:
+                    args = _handle_args(args)
+                    result = await func(*args, session=session, **kwargs)
+                    _handle_result(commit, func, result, args, kwargs, session=session)
+                    return result
+                except Exception as e:
+                    _handle_exception(e, func, session=session)
+                finally:
+                    session.close()
+            return async_wrapper
+        else:
+            @wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                session = Session()
+                try:
+                    args = _handle_args(args)
+                    result = func(*args, session=session, **kwargs) 
+                    _handle_result(commit, func, result, args, kwargs, session=session)
+                    return result
+                except Exception as e:
+                    _handle_exception(e, func, session=session)
+                finally:
+                    session.close()
+            return sync_wrapper
     return decorator
+
 
 
 def _check_email_is_not_registered(sanitized_email: str, *, session: _SessionType) -> None:
@@ -206,11 +236,12 @@ def _authenticate_credentials(cred: Credentials, *, session: _SessionType) -> Ac
     return account
 
 
-def _generate_new_token() -> dict[str, str | datetime]:
+def _generate_new_token(token_type: Literal['auth', 'reset'] = 'auth') -> dict[str, str | datetime]:
     """Generates & returns a new authentication token with an expiry date."""
     return {
         'token': str(uuid.uuid4()),
-        'expires_at': get_token_expiry_datetime()
+        'expires_at': get_token_expiry_datetime(),
+        'token_type': token_type
     }
 
 
@@ -254,3 +285,32 @@ def _validate_cookies(cookies: Cookies, *, session: _SessionType) -> Account:
     account = _check_account(token_obj.account_id, session=session)
     log(f'Validated cookies: {cookies}', 'auth')
     return account
+
+
+def _get_email_from_reset_token(reset_token: str, *, session: _SessionType) -> str:
+    """
+    Retrieves the email associated with a valid, non-expired reset token.
+    
+    Args:
+        reset_token (str): The token provided by the user.
+    
+    Returns:
+        str: The email of the associated account.
+
+    Raises:
+        ValueError: If the token is invalid, expired, or not found.
+    """
+    token_obj = session.query(Token).filter(
+        Token.token == reset_token,
+        Token.token_type == 'reset',
+        Token.expires_at > utcnow()  # Ensure token is still valid
+    ).first()
+
+    if not token_obj:
+        raise ValueError('Invalid or expired reset token.')
+
+    account = session.query(Account).filter(Account.account_id == token_obj.account_id).first()
+    if not account:
+        raise ValueError('No account associated with this reset token.')
+
+    return account.email

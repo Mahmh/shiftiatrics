@@ -2,10 +2,14 @@ from typing import Any, Optional
 from datetime import date, time, datetime
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.orm import Session as _SessionType
-from src.server.lib.utils import log, parse_date, parse_time, get_token_expiry_datetime
+
+from src.server.lib.utils import log, parse_date, parse_time
 from src.server.lib.models import Credentials, Cookies, ScheduleType
 from src.server.lib.exceptions import CookiesUnavailable
 from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, IntervalEnum
+from src.server.lib.constants import WEB_SERVER_URL
+from src.server.lib.emails import send_email
+
 from .tables import Account, Token, Employee, Shift, Schedule, Holiday, Settings
 from .utils import (
     dbsession,
@@ -27,10 +31,63 @@ from .utils import (
     _create_new_token,
     _get_token_from_account,
     _renew_token,
-    _validate_cookies
+    _validate_cookies,
+    _get_email_from_reset_token
 )
 
 ## Account
+@dbsession(commit=True)
+def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, str]:
+    """Creates an account with the provided credentials. Returns the account and a new or the given token."""
+    _check_email_is_not_registered(_sanitize_email(cred.email), session=session)
+    cred = _sanitize_credentials(cred)
+    account = Account(email=cred.email, hashed_password=_hash_password(cred.password))
+    session.add(account)
+    session.commit()
+    token = _create_new_token(account.account_id, session=session)
+    log(f'Successful account creating for email: {account.email}', 'auth')
+    return account, token
+
+
+@dbsession(commit=True)
+def update_account(cookies: Cookies, updates: dict, *, session: _SessionType) -> Account:
+    """Modifies an account's attributes based on the provided updates."""
+    account = _validate_cookies(cookies, session=session)
+
+    # Update the account attributes
+    ALLOWED_FIELDS = {'email', 'new_password'}
+    for key, value in updates.items():
+        if key not in ALLOWED_FIELDS:
+            raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        if key == 'email':
+            email = _sanitize_email(value)
+            _check_email_is_not_registered(email, session=session)
+            setattr(account, key, email)
+        elif key == 'new_password':
+            password = _sanitize_password(value)
+            hashed_password = _hash_password(password)
+            setattr(account, 'hashed_password', hashed_password)
+
+    if 'email' in updates and 'new_password' in updates:
+        log(f'Modified account: {account}; email has changed to {updates["email"]}, and password has changed', 'auth')
+    elif 'new_password' in updates:
+        log(f'Modified account: {account}; only the password has changed', 'auth')
+    else:
+        log(f'Modified account: {account}; updates: {updates}', 'auth')
+
+    return account
+
+
+@dbsession(commit=True)
+def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
+    """Deletes an account and all of its associated objects."""
+    account = _validate_cookies(cookies, session=session)
+    session.delete(account)
+    log(f'Deleted account: {account}', 'auth')
+
+
+
+## Auth
 @dbsession()
 def log_in_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, str]:
     """
@@ -62,6 +119,7 @@ def log_in_account_with_cookies(cookies: Cookies, *, session: _SessionType) -> A
 @dbsession(commit=True)
 def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session: _SessionType) -> tuple[Account, str]:
     """Logs in a Google user, handling cases where they changed their email in your web app."""
+    email = _sanitize_email(email)
 
     # Step 1: Find the account by OAuth ID (Primary Key)
     account = session.query(Account).filter(Account.oauth_id == oauth_id).first()
@@ -119,58 +177,60 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session:
 
 
 @dbsession(commit=True)
-def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, str]:
-    """Creates an account with the provided credentials. Returns the account and a new or the given token."""
-    _check_email_is_not_registered(_sanitize_email(cred.email), session=session)
-    cred = _sanitize_credentials(cred)
-    account = Account(email=cred.email, hashed_password=_hash_password(cred.password))
-    session.add(account)
+async def request_reset_password(email: str, *, session: _SessionType) -> str:
+    """Sends a password reset email to users with a password set, even if they have OAuth."""
+    email = _sanitize_email(email)
+    account = session.query(Account).filter(Account.email == email).first()
+    safe_msg = 'If this email exists, a reset link will be sent.'  # Prevents user enumeration attacks
+
+    if not account: return safe_msg
+    if not account.hashed_password: raise ValueError(
+        'This account does not have a password. Use OAuth (e.g., Continue with Google) to log in.'
+    )
+
+    # Generate a password reset token & send email with reset link
+    reset_token = _generate_new_token('reset')
+    session.add(Token(account_id=account.account_id, **reset_token))
+
+    reset_link = f'{WEB_SERVER_URL}/reset-password?token={reset_token["token"]}'
+    await send_email(
+        subject='Reset Your Password',
+        body=f'<a href="{reset_link}">Click here to reset your password</a>',
+        receipents=[account.email]
+    )
+
+    return safe_msg
+
+
+@dbsession(commit=True)
+def reset_password(new_password: str, reset_token: str, *, session: _SessionType) -> str:
+    """Resets a user's password after verifying the reset token (when logged-out), without affecting OAuth login."""
+    new_password = _sanitize_password(new_password)
+    
+    # Verify the reset token
+    email = _get_email_from_reset_token(reset_token, session=session)
+    if not email:
+        raise ValueError('Invalid or expired reset token.')
+
+    # Find the account by email
+    account = session.query(Account).filter(Account.email == email).first()
+    if not account:
+        raise ValueError('Account not found.')
+
+    if not account.hashed_password:
+        raise ValueError('This account does not have a password. Use OAuth to log in.')
+
+    # Hash and store the new password
+    account.hashed_password = _hash_password(new_password)
+    # Delete the used reset token
+    session.query(Token).filter(Token.token == reset_token, Token.token_type == 'reset').delete()
     session.commit()
-    token = _create_new_token(account.account_id, session=session)
-    log(f'Successful account creating for email: {account.email}', 'auth')
-    return account, token
 
-
-@dbsession(commit=True)
-def update_account(cookies: Cookies, updates: dict, *, session: _SessionType) -> Account:
-    """Modifies an account's attributes based on the provided updates."""
-    account = _validate_cookies(cookies, session=session)
-
-    # Update the account attributes
-    ALLOWED_FIELDS = {'email', 'new_password'}
-    for key, value in updates.items():
-        if key not in ALLOWED_FIELDS:
-            raise ValueError(f'"{key}" is not a valid attribute to modify.')
-        if key == 'email':
-            email = _sanitize_email(value)
-            _check_email_is_not_registered(email, session=session)
-            setattr(account, key, email)
-        elif key == 'new_password':
-            password = _sanitize_password(value)
-            hashed_password = _hash_password(password)
-            setattr(account, 'hashed_password', hashed_password)
-
-    if 'email' in updates and 'new_password' in updates:
-        log(f'Modified account: {account}; email has changed to {updates["email"]}, and password has changed', 'auth')
-    elif 'new_password' in updates:
-        log(f'Modified account: {account}; only the password has changed', 'auth')
-    else:
-        log(f'Modified account: {account}; updates: {updates}', 'auth')
-
-    return account
-
-
-@dbsession(commit=True)
-def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
-    """Deletes an account and all of its associated objects."""
-    account = _validate_cookies(cookies, session=session)
-    session.delete(account)
-    log(f'Deleted account: {account}', 'auth')
+    return 'Password reset successfully. You can now log in with your new password or continue using OAuth.'
 
 
 
-
-## Emoloyee
+## Employee
 @dbsession()
 def get_all_employees_of_account(account_id: int, *, session: _SessionType) -> list[Employee]:
     """Returns all employees in the database."""

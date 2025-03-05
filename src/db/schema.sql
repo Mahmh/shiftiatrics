@@ -3,6 +3,7 @@
 -- Types
 CREATE TYPE weekend_days_enum AS ENUM ('Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday');
 CREATE TYPE interval_enum AS ENUM ('Daily', 'Weekly', 'Monthly');
+CREATE TYPE token_type_enum AS ENUM ('auth', 'reset');
 
 -- Tables
 CREATE TABLE accounts (
@@ -16,10 +17,12 @@ CREATE TABLE accounts (
 );
 
 CREATE TABLE tokens (
-    account_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
+    token_id SERIAL PRIMARY KEY,
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     token VARCHAR(256) UNIQUE NOT NULL,
+    token_type token_type_enum NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP
+    expires_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE employees (

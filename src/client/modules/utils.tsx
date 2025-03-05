@@ -185,9 +185,21 @@ export const sanitizeInput = (input: string): string => {
 
 
 /** Validates input credentials */
-export const validateInput = (email: string, password: string): string | null => {
+export const validateCred = (email: string, password: string): string | null => {
+    const emailError = validateEmail(email)
+    const passwordError = validatePassword(password)
+    if (emailError) return emailError
+    if (passwordError) return passwordError
+    return null 
+}
+
+export const validateEmail = (email: string): string | null => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) return 'Invalid email format.'
+    return null
+}
+
+export const validatePassword = (password: string): string | null => {
     if (password.length < 8) return 'Password must be at least 8 characters long.'
     return null
 }
@@ -233,6 +245,17 @@ export class Request {
     }
 
     /**
+     * Performs a POST request
+     * @returns The output of the inputted callback function
+     */
+    public async post(requestData: object = {}): Promise<any> {
+        const response = await fetch(this.endpointUrl, this.getPayload('POST', requestData))
+        if (!response.ok) return this.errorHandler(`${response.status} HTTP error`)
+        const data: EndpointResponse = await response.json()
+        return 'error' in data ? this.errorHandler(data.error) : this.responseCallback(data)
+    }
+
+    /**
      * Performs a PATCH request
      * @returns The output of the inputted callback function
      */
@@ -244,11 +267,12 @@ export class Request {
     }
 
     /**
-     * Performs a POST request
+     * Performs a PUT request
      * @returns The output of the inputted callback function
      */
-    public async post(requestData: object = {}): Promise<any> {
-        const response = await fetch(this.endpointUrl, this.getPayload('POST', requestData))
+    public async put(requestData: object = {}): Promise<any> {
+        console.log(this.getPayload('PUT', requestData))
+        const response = await fetch(this.endpointUrl, this.getPayload('PUT', requestData))
         if (!response.ok) return this.errorHandler(`${response.status} HTTP error`)
         const data: EndpointResponse = await response.json()
         return 'error' in data ? this.errorHandler(data.error) : this.responseCallback(data)
@@ -270,7 +294,7 @@ export class Request {
      * @param method REST API Method
      * @returns The appropriate payload for the method
      */
-    private getPayload(method: string, requestData: object): Record<string, string|object|undefined> {
+    private getPayload(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE', requestData: object): Record<string, string|object|undefined> {
         const payload: Record<string, string|object|undefined> = {
             method: method,
             headers: method !== 'GET' ? { 'Content-Type': 'application/json' } : undefined,

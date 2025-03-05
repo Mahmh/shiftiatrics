@@ -6,7 +6,7 @@ from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo,
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies
 from src.server.lib.types import WeekendDays, Interval
 from src.server.db import (
-    log_in_account, log_in_account_with_cookies, create_account, update_account, delete_account,
+    create_account, update_account, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
@@ -27,33 +27,6 @@ settings_router = APIRouter()
 
 # Endpoints
 ## Account
-@account_router.get('/accounts/log_in_account_with_cookies')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint(auth=False)
-async def log_in_account_with_cookies_(request: Request) -> dict:
-    cookies = get_cookies(request)
-    if cookies.account_id is None: return {'error': 'Account ID is either invalid or not found'}
-    elif cookies.token is None: return {'error': 'Token is either invalid or not found'}
-    else: return log_in_account_with_cookies(cookies)
-
-
-@account_router.post('/accounts/login')
-@limiter.limit('5/minute')
-@endpoint(auth=False)
-async def login_account(cred: Credentials, response: Response, request: Request) -> dict:
-    account, token = log_in_account(cred)
-    store_cookies(Cookies(account_id=account.account_id, token=token), response)
-    return account
-
-
-@account_router.get('/accounts/logout')
-@limiter.limit('5/minute')
-@endpoint(auth=False)
-async def logout_account(response: Response, request: Request) -> dict:
-    clear_cookies(response)
-    return {'detail': 'Logged out successfully'}
-
-
 @account_router.post('/accounts/signup')
 @limiter.limit('10/minute')
 @endpoint(auth=False)

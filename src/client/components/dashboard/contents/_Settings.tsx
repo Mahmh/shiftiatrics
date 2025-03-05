@@ -43,7 +43,7 @@ const Account = () => {
     const logOut = useCallback(async () => {
         exitAccount()
         await new Request(
-            `accounts/logout`,
+            `auth/logout`,
             () => { setAccount(nullAccount); router.push('/dashboard') }
         ).get()
     }, [router, setAccount, exitAccount])

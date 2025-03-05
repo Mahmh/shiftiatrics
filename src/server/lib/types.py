@@ -13,3 +13,7 @@ class WeekendDaysEnum(Enum):
     SAT_SUN = 'Saturday & Sunday'
     FRI_SAT = 'Friday & Saturday'
     SUN_MON = 'Sunday & Monday'
+
+class TokenTypeEnum(Enum):
+    AUTH = 'auth'
+    RESET = 'reset'

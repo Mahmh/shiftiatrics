@@ -1,97 +1,115 @@
-#signup-page, #login-page {
+#signup-page, #login-page, #reset-password-page {
     background: linear-gradient(
         to bottom right,
         get-color('banner-blue-0', $lp: true),
         get-color('banner-blue-1', $lp: true)
     );
     padding: 20px;
+}
 
-    #mid-container {
+#mid-container {
+    @include vertical-flex;
+    @include breakpoint(855px) {
+        background-color: transparent;
+        width: 40%;
+        box-shadow: none;
+    }
+    background-color: get-color('secondary-blue', $lp: true);
+    align-items: center;
+    width: 100%;
+    max-width: 650px;
+    padding: 50px 30px;
+    padding-bottom: 30px;
+    margin: 150px auto;
+    border-radius: 10px;
+    box-shadow: $main-box-shadow;
+    transition: none;
+
+    section {
         @include vertical-flex;
-        @include breakpoint(855px) {
-            background-color: transparent;
-            width: 40%;
+        @include breakpoint(600px) { max-width: 170% }
+        margin-bottom: 15px;
+        width: 450px;
+        max-width: 450px;
+
+        label {
+            color: get-color('background');
+            margin-bottom: 5px;
+        }
+
+        input {
+            @include themed-bgcolor('background');
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px get-color('alpha-white');
+        }
+    }
+
+    #agree-to-tos-sec {
+        width: auto;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+
+        label {
+            margin: 0;
+            a { color: get-color('primary-blue') }
+        }
+        
+        input {
+            scale: .4;
+            width: 50px;
+            height: 50px;
             box-shadow: none;
         }
-        background-color: get-color('secondary-blue', $lp: true);
-        align-items: center;
-        width: 100%;
-        max-width: 650px;
-        padding: 50px 30px;
-        padding-bottom: 30px;
-        margin: 150px auto;
+    }
+
+    .error {
+        @include themed-color('primary-red');
+        @include breakpoint(855px) { width: 170% }
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    .cred-submit-btn {
+        @include compressible(.96);
+        @include themed-bgcolor('primary-blue');
+        @include themed-color('background');
+        padding: 10px 40px;
         border-radius: 10px;
-        box-shadow: $main-box-shadow;
-        transition: none;
+        margin-bottom: 15px;
+        &:hover { @include themed-bgcolor('primary-blue-hover') }
+    }
 
-        section {
-            @include vertical-flex;
-            @include breakpoint(600px) { max-width: 170% }
-            margin-bottom: 15px;
-            width: 450px;
-            max-width: 450px;
-    
-            label {
-                color: get-color('background');
-                margin-bottom: 5px;
-            }
-    
-            input {
-                @include themed-bgcolor('background');
-                width: 100%;
-                padding: 10px;
-                border-radius: 10px;
-                box-shadow: 0 0 10px get-color('alpha-white');
-            }
-        }
+    p {
+        @include breakpoint(600px) { width: 170% }
+        color: get-color('background');
+        text-align: center;
+        margin-bottom: 0;
 
-        #agree-to-tos-sec {
-            width: auto;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
+        a {
+            @include themed-color('primary-blue');
+            &:hover { text-decoration: underline }
+        }
+    }
 
-            label {
-                margin: 0;
-                a { color: get-color('primary-blue') }
-            }
-            
-            input {
-                scale: .4;
-                width: 50px;
-                height: 50px;
-                box-shadow: none;
-            }
-        }
-    
-        .error {
-            @include themed-color('primary-red');
-            @include breakpoint(855px) { width: 170% }
-            margin-top: 5px;
-            margin-bottom: 15px;
-        }
-    
-        .cred-submit-btn {
-            @include compressible(.96);
-            @include themed-bgcolor('primary-blue');
-            @include themed-color('background');
-            padding: 10px 40px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            &:hover { @include themed-bgcolor('primary-blue-hover') }
-        }
-    
-        p {
-            @include breakpoint(600px) { width: 170% }
-            color: get-color('background');
-            text-align: center;
-            margin-bottom: 0;
-    
-            a {
-                @include themed-color('primary-blue');
-                &:hover { text-decoration: underline }
-            }
+    h1 {
+        font-size: 1.6rem;
+        color: get-color('background');
+        text-align: center;
+    }
+
+    #login-btns {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 20px;
+
+        #forgot-pass-btn {
+            background-color: get-color('alpha-white');
+            &:hover { background-color: #ffffff48 }
         }
     }
 

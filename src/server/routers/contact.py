@@ -1,11 +1,10 @@
 from textwrap import dedent
 from fastapi import APIRouter, Request
-from fastapi_mail import FastMail, MessageSchema
 from src.server.rate_limit import limiter
 from src.server.lib.api import endpoint
 from src.server.lib.models import ContactUsSubmissionData
-from src.server.lib.emails import conf
 from src.server.lib.constants import COMPANY_EMAIL
+from src.server.lib.emails import send_email
 
 contact_router = APIRouter()
 
@@ -26,22 +25,14 @@ def _get_email_body(data: ContactUsSubmissionData) -> str:
     ''')
 
 
-async def _send_email(data: ContactUsSubmissionData) -> None:
-    # MAIL_USERNAME -> COMPANY_EMAIL -> data.email
-    message = MessageSchema(
-        subject='Shiftiatrics: New Contact Us Submission',
-        recipients=[COMPANY_EMAIL],
-        body=_get_email_body(data),
-        subtype='html',
-        reply_to=[data.email]
-    )
-    fm = FastMail(conf)
-    await fm.send_message(message)
-
-
 @contact_router.post('/contact')
 @limiter.limit('1/minute')
 @endpoint(auth=False)
 async def contact_us(data: ContactUsSubmissionData, request: Request) -> dict:
-    await _send_email(data)
+    await send_email(
+        subject='New Contact Us Submission',
+        recipients=[COMPANY_EMAIL],
+        body=_get_email_body(data),
+        reply_to=[data.email]
+    )
     return {'detail': 'Submission successful'}

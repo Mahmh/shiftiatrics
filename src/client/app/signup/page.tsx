@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
-import { Request, sanitizeInput, validateInput, setMetadata } from '@utils'
+import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
 import { isLoggedIn, ContinueWithGoogle } from '@auth'
 import { dashboardContext } from '@context'
@@ -28,7 +28,7 @@ export default function Signup() {
 
         const sanitizedEmail = sanitizeInput(email)
         const sanitizedPassword = sanitizeInput(password)
-        const validationError = validateInput(sanitizedEmail, sanitizedPassword)
+        const validationError = validateCred(sanitizedEmail, sanitizedPassword)
         if (validationError) {
             setError(validationError)
             setIsLoading(false)

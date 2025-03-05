@@ -5,7 +5,7 @@ import type { Account } from '@types'
 /** Returns false if the user is not logged in; otherwise, returns their account. */
 export const isLoggedIn = async (): Promise<Account | false> => {
     return await new Request(
-        'accounts/log_in_account_with_cookies',
+        'auth/log_in_account_with_cookies',
         (data) => 'account_id' in data && 'email' in data ? { id: data.account_id, email: data.email } : false,
         () => false
     ).get()

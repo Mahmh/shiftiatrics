@@ -25,23 +25,6 @@ def test_create_account_email_taken():
         create_account(CRED)
 
 
-def test_log_in_account():
-    account = log_in_account(CRED)[0]
-    assert account.email == CRED.email
-
-
-def test_log_in_account_invalid_credentials():
-    invalid_credentials = Credentials(email='testuser@gmail.com', password='wrongpass')
-    with pytest.raises(InvalidCredentials):
-        log_in_account(invalid_credentials)
-
-
-def test_log_in_account_nonexistent_user():
-    nonexistent_credentials = Credentials(email='nonexistent@hotmail.com', password='!#nopass##')
-    with pytest.raises(NonExistent):
-        log_in_account(nonexistent_credentials)
-
-
 def test_delete_account(setup_and_teardown):
     cookies = setup_and_teardown
     delete_account(cookies)

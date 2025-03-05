@@ -7,7 +7,7 @@ client = TestClient(app)
 CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
 CRED2 = {'email': 'testuser2@gmail.com', 'password': 'testpass2'}
 create_account = lambda cred: client.post('/accounts/signup', json=cred)
-login = lambda: client.post('/accounts/login', json=CRED)
+login = lambda: client.post('/auth/login', json=CRED)
 
 @ctxtest()
 def setup_and_teardown():
@@ -29,7 +29,7 @@ def test_retrieve_cookies():
     assert response.status_code == 200
     client.cookies.set('account_id', response.cookies.get('account_id'))
     client.cookies.set('auth_token', response.cookies.get('auth_token'))
-    response = client.get('/accounts/log_in_account_with_cookies')
+    response = client.get('/auth/log_in_account_with_cookies')
     assert response.status_code == 200
     assert response.json().get('account_id') == 2
 
@@ -39,7 +39,7 @@ def test_clear_cookies():
     assert response.status_code == 200
     client.cookies.set('account_id', response.cookies.get('account_id'))
     client.cookies.set('auth_token', response.cookies.get('auth_token'))
-    response = client.get('/accounts/logout')
+    response = client.get('/auth/logout')
     assert response.status_code == 200
     assert response.cookies.get('account_id') == None
     assert response.cookies.get('auth_token') == None
@@ -48,7 +48,7 @@ def test_clear_cookies():
 def test_invalid_cookies():
     client.cookies.set('account_id', 'invalid')
     client.cookies.set('auth_token', 'invalid')
-    response = client.get('/accounts/log_in_account_with_cookies')
+    response = client.get('/auth/log_in_account_with_cookies')
     assert response.status_code == 200
     assert response.json()['error'] == 'Account ID is either invalid or not found'
 

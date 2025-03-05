@@ -1,8 +1,8 @@
-from sqlalchemy import create_engine, text, Column, Integer, String, Boolean, ForeignKey, Date, Time, Enum
+from sqlalchemy import create_engine, func, Column, Integer, String, Boolean, ForeignKey, Date, DateTime, Time, Enum
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base
 from src.server.lib.constants import ENGINE_URL
-from src.server.lib.types import WeekendDaysEnum, IntervalEnum
+from src.server.lib.types import WeekendDaysEnum, IntervalEnum, TokenTypeEnum
 
 engine = create_engine(ENGINE_URL)
 Session = sessionmaker(bind=engine)
@@ -10,7 +10,7 @@ Base = declarative_base()
 
 
 class Account(Base):
-    __tablename__ = "accounts"
+    __tablename__ = 'accounts'
     account_id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(256), unique=True, nullable=False)
     hashed_password = Column(String(128), nullable=True)
@@ -23,10 +23,17 @@ class Account(Base):
 
 class Token(Base):
     __tablename__ = 'tokens'
-    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    token_id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     token = Column(String(256), unique=True, nullable=False)
-    created_at = Column(Date, default=text('CURRENT_TIMESTAMP'))
-    expires_at = Column(Date, nullable=True)
+    token_type = Column(
+        Enum(TokenTypeEnum, name='token_type_enum', values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        server_default='auth',
+        default=TokenTypeEnum.AUTH.value
+    )
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
     __repr__ = lambda self: f'Token({self.account_id})'
 
 

@@ -1,11 +1,12 @@
 from urllib.parse import urlencode
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Response, Query, Body
 from fastapi.responses import RedirectResponse
 import httpx, jwt
 from src.server.rate_limit import limiter
 from src.server.db import log_in_with_google
-from src.server.lib.models import Cookies
-from src.server.lib.api import endpoint, store_cookies_then_redirect
+from src.server.lib.models import Credentials, Cookies
+from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, store_cookies_then_redirect
+from src.server.db.functions import log_in_account, log_in_account_with_cookies, request_reset_password, reset_password
 from src.server.lib.constants import (
     WEB_SERVER_URL,
     DEFAULT_RATE_LIMIT,
@@ -18,6 +19,50 @@ from src.server.lib.constants import (
 
 auth_router = APIRouter()
 
+
+@auth_router.get('/auth/log_in_account_with_cookies')
+@limiter.limit(DEFAULT_RATE_LIMIT)
+@endpoint(auth=False)
+async def log_in_account_with_cookies_(request: Request) -> dict:
+    cookies = get_cookies(request)
+    if cookies.account_id is None: return {'error': 'Account ID is either invalid or not found'}
+    elif cookies.token is None: return {'error': 'Token is either invalid or not found'}
+    else: return log_in_account_with_cookies(cookies)
+
+
+@auth_router.post('/auth/login')
+@limiter.limit('5/minute')
+@endpoint(auth=False)
+async def login_account(cred: Credentials, response: Response, request: Request) -> dict:
+    account, token = log_in_account(cred)
+    store_cookies(Cookies(account_id=account.account_id, token=token), response)
+    return account
+
+
+@auth_router.get('/auth/logout')
+@limiter.limit('5/minute')
+@endpoint(auth=False)
+async def logout_account(response: Response, request: Request) -> dict:
+    clear_cookies(response)
+    return {'detail': 'Logged out successfully'}
+
+
+@auth_router.post('/auth/request_reset_password')
+@limiter.limit('3/minute')
+@endpoint(auth=False)
+async def request_reset_password_(request: Request, email: str = Body(..., embed=True)) -> dict:
+    return {'detail': await request_reset_password(email)}
+
+
+@auth_router.put('/auth/reset_password')
+@limiter.limit('3/minute')
+@endpoint(auth=False)
+async def reset_password_(request: Request, new_password: str = Body(..., embed=True), reset_token: str = Body(..., embed=True)) -> dict:
+    return {'detail': reset_password(new_password, reset_token)}
+
+
+
+## OAuth
 @auth_router.get('/auth/google')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint(auth=False)

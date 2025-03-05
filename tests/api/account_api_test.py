@@ -15,7 +15,7 @@ def setup_and_teardown():
 
 # Tests
 def test_login_account():
-    response = client.post('/accounts/login', json=CRED)
+    response = client.post('/auth/login', json=CRED)
     assert response.status_code == 200
     assert response.cookies.get('account_id') == '1'
     assert response.cookies.get('auth_token') != None

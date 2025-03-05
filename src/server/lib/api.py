@@ -46,6 +46,7 @@ def _set_cookie(key: str, value: str, response: Response) -> None:
 
 ## Public
 def endpoint(*, auth: bool = True):
+    """If `auth` is true, then the wrapped endpoint requires credentials via cookies."""
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
