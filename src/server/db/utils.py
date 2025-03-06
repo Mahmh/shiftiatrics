@@ -202,6 +202,12 @@ def _hash_password(sanitized_password: str) -> str:
     return bcrypt.hashpw(sanitized_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
+def _verify_password(input_password: str, stored_hash: str) -> bool:
+    """Compares the input password with its stored hash securely."""
+    input_password = _sanitize_password(input_password)
+    return bcrypt.checkpw(input_password.encode('utf-8'), stored_hash.encode('utf-8'))
+
+
 def _authenticate_credentials(cred: Credentials, *, session: _SessionType) -> Account:
     """
     Authenticates credentials to ensure the account exists and the password matches the stored hash.
@@ -229,9 +235,7 @@ def _authenticate_credentials(cred: Credentials, *, session: _SessionType) -> Ac
         raise InvalidCredentials(cred)
 
     # Verify the provided password against the stored hash
-    password_bytes = sanitized_cred.password.encode('utf-8')
-    stored_hash = account.hashed_password.encode('utf-8')
-    if not bcrypt.checkpw(password_bytes, stored_hash):
+    if not _verify_password(sanitized_cred.password, account.hashed_password):
         raise InvalidCredentials(cred)
 
     return account

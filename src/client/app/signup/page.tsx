@@ -3,8 +3,9 @@ import { useRouter } from 'next/navigation'
 import { useContext, useEffect, useState } from 'react'
 import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
-import { isLoggedIn, ContinueWithGoogle } from '@auth'
+import { isLoggedIn, ContinueWithGoogle, parseAccount } from '@auth'
 import { dashboardContext } from '@context'
+import type { AccountResponse } from '@types'
 import Link from 'next/link'
 import RegularPage from '@regpage'
 
@@ -37,9 +38,9 @@ export default function Signup() {
 
         await new Request(
             'accounts/signup',
-            (data: { account_id: number, email: string, password: string }) => {
+            (data: AccountResponse) => {
                 setIsLoading(false)
-                setAccount({ id: data.account_id, email: data.email })
+                setAccount(parseAccount(data))
                 router.push('/dashboard')
             },
             (error) => {

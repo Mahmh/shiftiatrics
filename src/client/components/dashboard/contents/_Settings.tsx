@@ -3,8 +3,9 @@ import { useRouter } from 'next/navigation'
 import { dashboardContext, nullAccount } from '@context'
 import { Choice, Switch, Dropdown, Request } from '@utils'
 import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
+import { parseAccount } from '@auth'
 // import type { WeekendDays, InputEvent, Interval } from '@types'
-import type { WeekendDays, InputEvent } from '@types'
+import type { WeekendDays, InputEvent, AccountResponse } from '@types'
 import Sidebar from '../_Sidebar'
 import LoadingScreen from '@/components/_LoadingScreen'
 
@@ -106,13 +107,9 @@ const Account = () => {
 
             const confirmEdit = async () => {
                 await new Request(
-                    'accounts',
-                    (resAccount: { account_id: number, email: string, email_verified: boolean }) => {
-                        setAccount({
-                            ...resAccount,
-                            id: resAccount.account_id,
-                            emailVerified: resAccount.email_verified
-                        })
+                    'accounts/email',
+                    (data: AccountResponse) => {
+                        setAccount(parseAccount(data))
                         closeModal()
                     },
                     (error) => {
@@ -156,21 +153,36 @@ const Account = () => {
     /** Displays a modal for creating a new password */
     const openChangePasswordModal = useCallback(() => {
         const ChangePasswordModalContent = () => {
+            const [tempCurrentPassword, setCurrentPassword] = useState('')
             const [tempNewPassword, setNewPassword] = useState('')
             const [tempConfirmPassword, setConfirmPassword] = useState('')
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempNewPassword.trim().length < 3)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(true)
             const [error, setError] = useState('')
+
+            const validateInputs = (current: string, newPass: string, confirmPass: string) => {
+                setConfirmDisabled(
+                    current.trim().length < 3 ||
+                    newPass.trim().length < 3 ||
+                    confirmPass.trim().length < 3
+                )
+            }
+
+            const handleCurrentPasswordChange = (e: InputEvent) => {
+                const currentPassword = e.target.value
+                setCurrentPassword(currentPassword)
+                validateInputs(currentPassword, tempNewPassword, tempConfirmPassword)
+            }
 
             const handleNewPasswordChange = (e: InputEvent) => {
                 const newPassword = e.target.value
                 setNewPassword(newPassword)
-                setConfirmDisabled(newPassword.trim().length < 1)
+                validateInputs(tempCurrentPassword, newPassword, tempConfirmPassword)
             }
 
             const handleConfirmPasswordChange = (e: InputEvent) => {
                 const confirmPassword = e.target.value
                 setConfirmPassword(confirmPassword)
-                setConfirmDisabled(tempNewPassword.trim().length < 1)
+                validateInputs(tempCurrentPassword, tempNewPassword, confirmPassword)
             }
 
             const confirmEdit = async () => {
@@ -180,13 +192,9 @@ const Account = () => {
                 }
 
                 await new Request(
-                    'accounts',
-                    (resAccount: { account_id: number, email: string, email_verified: boolean }) => {
-                        setAccount({
-                            ...resAccount,
-                            id: resAccount.account_id,
-                            emailVerified: resAccount.email_verified
-                        })
+                    'accounts/password',
+                    (data: AccountResponse) => {
+                        setAccount(parseAccount(data))
                         closeModal()
                     },
                     (error) => {
@@ -197,11 +205,26 @@ const Account = () => {
                             : error
                         )
                     }
-                ).patch({ new_password: tempNewPassword })
+                ).patch({ 
+                    current_password: tempCurrentPassword,
+                    new_password: tempNewPassword 
+                })
             }
 
             return <>
                 <h2>Change Password</h2>
+                
+                <section className='modal-input-sec'>
+                    <label style={{ marginRight: 10 }}>Current password: </label>
+                    <input
+                        type='password'
+                        placeholder='Current password'
+                        value={tempCurrentPassword}
+                        onChange={handleCurrentPasswordChange}
+                        maxLength={32}
+                    />
+                </section>
+
                 <section className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>New password: </label>
                     <input
@@ -212,6 +235,7 @@ const Account = () => {
                         maxLength={32}
                     />
                 </section>
+
                 <section className='modal-input-sec'>
                     <label style={{ marginRight: 10 }}>Confirm password: </label>
                     <input
@@ -222,7 +246,9 @@ const Account = () => {
                         maxLength={32}
                     />
                 </section>
+
                 {error && <p className='error'>{error}</p>}
+
                 <button
                     onClick={confirmEdit}
                     disabled={isConfirmDisabled}
@@ -236,6 +262,98 @@ const Account = () => {
         setModalContent(<ChangePasswordModalContent/>)
         openModal()
     }, [setAccount, openModal, closeModal, setModalContent])
+
+    /** Displays a modal for setting a new password (OAuth-only users) */
+    const openSetPasswordModal = useCallback(() => {
+        const SetPasswordModalContent = () => {
+            const [tempNewPassword, setNewPassword] = useState('')
+            const [tempConfirmPassword, setConfirmPassword] = useState('')
+            const [isConfirmDisabled, setConfirmDisabled] = useState(true)
+            const [error, setError] = useState('')
+
+            const validateInputs = (newPass: string, confirmPass: string) => {
+                setConfirmDisabled(newPass.trim().length < 3 || confirmPass.trim().length < 3)
+            }
+
+            const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const newPassword = e.target.value
+                setNewPassword(newPassword)
+                validateInputs(newPassword, tempConfirmPassword)
+            }
+
+            const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const confirmPassword = e.target.value
+                setConfirmPassword(confirmPassword)
+                validateInputs(tempNewPassword, confirmPassword)
+            }
+
+            const confirmEdit = async () => {
+                if (tempNewPassword.trim() !== tempConfirmPassword.trim()) {
+                    setError('Make sure both entered passwords exactly match.')
+                    return
+                }
+
+                await new Request(
+                    'accounts/password',
+                    (data: AccountResponse) => {
+                        setAccount(parseAccount(data))
+                        closeModal()
+                    },
+                    (error) => {
+                        if (error.includes('429')) {
+                            setError(TOO_MANY_REQS_MSG)
+                            return
+                        }
+                        setError(
+                            error.includes('Invalid cookies') 
+                            ? 'Session has expired. Please log out then log in again to set your password.'
+                            : error
+                        )
+                    }
+                ).patch({ new_password: tempNewPassword })
+            }
+
+            return <>
+                <h2>Set Password</h2>
+
+                <section className='modal-input-sec'>
+                    <label style={{ marginRight: 10 }}>New password: </label>
+                    <input
+                        type='password'
+                        placeholder='New password'
+                        value={tempNewPassword}
+                        onChange={handleNewPasswordChange}
+                        maxLength={32}
+                    />
+                </section>
+
+                <section className='modal-input-sec'>
+                    <label style={{ marginRight: 10 }}>Confirm password: </label>
+                    <input
+                        type='password'
+                        placeholder='Confirm password'
+                        value={tempConfirmPassword}
+                        onChange={handleConfirmPasswordChange}
+                        maxLength={32}
+                    />
+                </section>
+
+                {error && <p className='error'>{error}</p>}
+
+                <button
+                    onClick={confirmEdit}
+                    disabled={isConfirmDisabled}
+                    id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+                >
+                    Set Password
+                </button>
+            </>
+        }
+
+        setModalContent(<SetPasswordModalContent/>)
+        openModal()
+    }, [setAccount, openModal, closeModal, setModalContent])
+
 
     /** Displays a modal for verifying the account's email */
     const openVerifyEmailModal = useCallback(() => {
@@ -291,7 +409,9 @@ const Account = () => {
                 <section id='account-actions-card'>
                     {!account.emailVerified && <button id='verify-email-btn' onClick={openVerifyEmailModal}>Verify Email</button>}
                     <button className='edit-account-btn' onClick={openChangeEmailModal}>Change Email</button>
-                    <button className='edit-account-btn' onClick={openChangePasswordModal}>Change Password</button>
+                    <button className='edit-account-btn' onClick={account.isOAuthOnly ? openSetPasswordModal : openChangePasswordModal}>
+                        {account.isOAuthOnly ? 'Set Password' : 'Change Password'}
+                    </button>
                     <button id='log-out-btn' onClick={openLogOutModal}>Log Out</button>
                     <button id='delete-account-btn' onClick={openDeleteModal}>Delete Account</button>
                 </section>

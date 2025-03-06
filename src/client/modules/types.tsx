@@ -18,7 +18,7 @@ export type YearToSchedules = Map<number, Schedule[]>
 export type YearToSchedulesValidity = Map<number, Map<number, boolean>>
 
 
-// Context
+// Interfaces
 export interface ContextProps {
     content: ContentName
     setContent: SetState<ContentName>
@@ -60,14 +60,20 @@ export interface ContextProps {
     closeModal: () => void
 }
 
+export interface AccountResponse {
+    account_id: number
+    email: string
+    hashed_password: string | null
+    email_verified: boolean
+    oauth_provider: string
+}
 
-// Entities
 export interface Account {
     id: number
     email: string
     emailVerified: boolean
+    isOAuthOnly: boolean
 }
-
 
 export interface Employee {
     id: number
@@ -106,7 +112,6 @@ export interface Settings {
     emailNtfEnabled: boolean
     emailNtfInterval: Interval
 }
-
 
 export interface FAQ {
     question: string

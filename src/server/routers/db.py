@@ -1,12 +1,12 @@
-from typing import Literal
-from fastapi import APIRouter, Request, Response
+from typing import Literal, Optional
+from fastapi import APIRouter, Request, Response, Body
 from src.server.rate_limit import limiter
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
 from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies
 from src.server.lib.types import WeekendDays, Interval
 from src.server.db import (
-    create_account, update_account, delete_account,
+    create_account, change_email, change_password, set_password, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
@@ -36,11 +36,21 @@ async def create_new_account(cred: Credentials, response: Response, request: Req
     return account
 
 
-@account_router.patch('/accounts')
+@account_router.patch('/accounts/email')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-async def update_existing_account(updates: dict[Literal['email', 'new_password'], str], request: Request) -> dict:
-    return update_account(get_cookies(request), updates)
+async def change_email_endpoint(request: Request, email: str = Body(..., embed=True)) -> dict:
+    return change_email(get_cookies(request), email)
+
+
+@account_router.patch('/accounts/password')
+@limiter.limit(DEFAULT_RATE_LIMIT)
+@endpoint()
+async def change_password_endpoint(request: Request, current_password: Optional[str] = Body(None, embed=True), new_password: str = Body(..., embed=True)) -> dict:
+    if current_password:
+        return change_password(get_cookies(request), current_password, new_password)
+    else:
+        return set_password(get_cookies(request), new_password)
 
 
 @account_router.delete('/accounts')

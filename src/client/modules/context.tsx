@@ -18,7 +18,7 @@ const nullSettings: Settings = {
     emailNtfEnabled: false,
     emailNtfInterval: 'Monthly'
 }
-export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false }
+export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, isOAuthOnly: false }
 
 export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,

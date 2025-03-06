@@ -26,6 +26,7 @@ from .utils import (
     _sanitize_password,
     _sanitize_credentials,
     _hash_password,
+    _verify_password,
     _authenticate_credentials,
     _create_new_token,
     _get_token_from_account,
@@ -44,36 +45,54 @@ def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account
     session.add(account)
     session.commit()
     token = _create_new_token(account.account_id, session=session)
-    log(f'Successful account creation for email: {account.email}', 'auth')
+    log(f'Successful account creation for email: {account.email}', 'account')
     return account, token
 
 
 @dbsession(commit=True)
-def update_account(cookies: Cookies, updates: dict, *, session: _SessionType) -> Account:
-    """Modifies an account's attributes based on the provided updates."""
+def change_email(cookies: Cookies, new_email: str, *, session: _SessionType) -> Account:
+    """Updates the account's email after validation."""
+    account = _validate_cookies(cookies, session=session)
+    new_email = _sanitize_email(new_email)
+    _check_email_is_not_registered(new_email, session=session)
+    account.email = new_email
+    account.email_verified = False
+    log(f'Modified account: {account}; email has changed to {new_email}', 'account')
+    return account
+
+
+@dbsession(commit=True)
+def change_password(cookies: Cookies, current_password: str, new_password: str, *, session: _SessionType) -> Account:
+    """Updates the account's password after validation."""
     account = _validate_cookies(cookies, session=session)
 
-    # Update the account attributes
-    ALLOWED_FIELDS = {'email', 'new_password'}
-    for key, value in updates.items():
-        if key not in ALLOWED_FIELDS:
-            raise ValueError(f'"{key}" is not a valid attribute to modify.')
-        if key == 'email':
-            email = _sanitize_email(value)
-            _check_email_is_not_registered(email, session=session)
-            setattr(account, key, email)
-        elif key == 'new_password':
-            password = _sanitize_password(value)
-            hashed_password = _hash_password(password)
-            setattr(account, 'hashed_password', hashed_password)
+    if not account.hashed_password:
+        raise ValueError('This account uses OAuth only. You cannot set a password.')
 
-    if 'email' in updates and 'new_password' in updates:
-        log(f'Modified account: {account}; email has changed to {updates["email"]}, and password has changed', 'auth')
-    elif 'new_password' in updates:
-        log(f'Modified account: {account}; only the password has changed', 'auth')
-    else:
-        log(f'Modified account: {account}; updates: {updates}', 'auth')
+    if not _verify_password(current_password, account.hashed_password):
+        raise ValueError('Incorrect current password.')
 
+    new_password = _sanitize_password(new_password)
+    account.hashed_password = _hash_password(new_password)
+    log(f'Modified account: {account}; password has changed', 'account')
+    return account
+
+
+@dbsession(commit=True)
+def set_password(cookies: Cookies, new_password: str, *, session: _SessionType) -> Account:
+    """Allows OAuth-only users to set a password for the first time."""
+    account = _validate_cookies(cookies, session=session)
+
+    if account.hashed_password:
+        raise ValueError('You already have a password set.')
+
+    if not account.oauth_email or not account.oauth_provider:
+        raise ValueError('Only OAuth users can set a password for the first time.')
+
+    new_password = _sanitize_password(new_password)
+    account.hashed_password = _hash_password(new_password)
+
+    log(f'Account {account.account_id} (OAuth: {account.oauth_provider}) has set a password for the first time.', 'account')
     return account
 
 
@@ -82,7 +101,7 @@ def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
     """Deletes an account and all of its associated objects."""
     account = _validate_cookies(cookies, session=session)
     session.delete(account)
-    log(f'Deleted account: {account}', 'auth')
+    log(f'Deleted account: {account}', 'account')
 
 
 

@@ -6,6 +6,7 @@ from .utils import (
     _sanitize_password,
     _sanitize_credentials,
     _hash_password,
+    _verify_password,
     _authenticate_credentials,
     _renew_token,
     _generate_new_token,
