@@ -65,6 +65,7 @@ export interface ContextProps {
 export interface Account {
     id: number
     email: string
+    emailVerified: boolean
 }
 
 

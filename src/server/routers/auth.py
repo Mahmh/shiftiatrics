@@ -6,7 +6,14 @@ from src.server.rate_limit import limiter
 from src.server.db import log_in_with_google
 from src.server.lib.models import Credentials, Cookies
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, store_cookies_then_redirect
-from src.server.db.functions import log_in_account, log_in_account_with_cookies, request_reset_password, reset_password
+from src.server.db.functions import (
+    log_in_account,
+    log_in_account_with_cookies,
+    request_reset_password,
+    reset_password,
+    request_verify_email,
+    verify_email
+)
 from src.server.lib.constants import (
     WEB_SERVER_URL,
     DEFAULT_RATE_LIMIT,
@@ -54,11 +61,25 @@ async def request_reset_password_(request: Request, email: str = Body(..., embed
     return {'detail': await request_reset_password(email)}
 
 
-@auth_router.put('/auth/reset_password')
+@auth_router.patch('/auth/reset_password')
 @limiter.limit('3/minute')
 @endpoint(auth=False)
 async def reset_password_(request: Request, new_password: str = Body(..., embed=True), reset_token: str = Body(..., embed=True)) -> dict:
     return {'detail': reset_password(new_password, reset_token)}
+
+
+@auth_router.post('/auth/request_verify_email')
+@limiter.limit('3/minute')
+@endpoint()
+async def request_verify_email_(request: Request, email: str = Body(..., embed=True)) -> dict:
+    return {'detail': await request_verify_email(email)}
+
+
+@auth_router.patch('/auth/verify_email')
+@limiter.limit('3/minute')
+@endpoint(auth=False)
+async def verify_email_(request: Request, verify_token: str = Body(..., embed=True)) -> dict:
+    return {'detail': verify_email(verify_token)}
 
 
 

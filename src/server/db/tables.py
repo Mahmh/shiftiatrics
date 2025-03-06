@@ -14,6 +14,7 @@ class Account(Base):
     account_id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(256), unique=True, nullable=False)
     hashed_password = Column(String(128), nullable=True)
+    email_verified = Column(Boolean, nullable=False, server_default='false', default=False)
     oauth_provider = Column(String(16), nullable=True)
     oauth_token = Column(String(2048), nullable=True)
     oauth_id = Column(String(64), unique=True, nullable=True)
@@ -25,7 +26,7 @@ class Token(Base):
     __tablename__ = 'tokens'
     token_id = Column(Integer, primary_key=True, autoincrement=True)
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
-    token = Column(String(256), unique=True, nullable=False)
+    token = Column(String(64), unique=True, nullable=False)
     token_type = Column(
         Enum(TokenTypeEnum, name='token_type_enum', values_callable=lambda x: [e.value for e in x]),
         nullable=False,

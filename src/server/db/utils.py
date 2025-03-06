@@ -1,11 +1,12 @@
-from typing import Optional, Callable, Any, Literal
+from typing import Optional, Callable, Any
 from functools import wraps
 from datetime import datetime
 from sqlalchemy.orm import Session as _SessionType
-import unicodedata, re, bcrypt, uuid, inspect
+import unicodedata, re, bcrypt, inspect, secrets
 from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies
+from src.server.lib.types import TokenType
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
 from src.server.db.tables import Session, Account, Token, Employee, Shift, Schedule, Holiday, Settings
 
@@ -27,7 +28,7 @@ def _handle_result(commit: bool, func: Callable, result: Any, args: tuple, kwarg
 
 def _handle_exception(e: Exception, func: Callable, *, session: _SessionType) -> None:
     session.rollback()
-    is_auth = (type(e) in (EmailTaken, InvalidCredentials)) or (type(e) is NonExistent and e.entity == 'account')
+    is_auth = (type(e) in (EmailTaken, InvalidCredentials, CookiesUnavailable, InvalidCookies)) or (type(e) is NonExistent and e.entity == 'account')
     errlog(func.__name__, e, 'auth' if is_auth else 'db')
     raise e
 
@@ -236,32 +237,32 @@ def _authenticate_credentials(cred: Credentials, *, session: _SessionType) -> Ac
     return account
 
 
-def _generate_new_token(token_type: Literal['auth', 'reset'] = 'auth') -> dict[str, str | datetime]:
+def _generate_new_token(token_type: TokenType = 'auth') -> dict[str, str | datetime]:
     """Generates & returns a new authentication token with an expiry date."""
     return {
-        'token': str(uuid.uuid4()),
+        'token': secrets.token_urlsafe(32),
         'expires_at': get_token_expiry_datetime(),
         'token_type': token_type
     }
 
 
-def _create_new_token(account_id: int, *, session: _SessionType) -> str:
+def _create_new_token(account_id: int, token_type: Optional[TokenType] = None, *, session: _SessionType) -> str:
     """Creates a new authentication token for the client."""
-    token_obj = Token(account_id=account_id, **_generate_new_token())
+    token_obj = Token(account_id=account_id, **_generate_new_token(token_type))
     session.add(token_obj)
     session.commit()
     log(f'New token created for account ID {account_id}: {token_obj.token}', 'auth')
     return token_obj.token
 
 
-def _get_token_from_account(account_id: int, *, session: _SessionType) -> Optional[Token]:
+def _get_token_from_account(account_id: int, token_type: Optional[TokenType] = None, *, session: _SessionType) -> Optional[Token]:
     """Attempts to retrieve an already created token from a given account ID."""
-    return session.query(Token).filter_by(account_id=account_id).first()
+    return session.query(Token).filter_by(account_id=account_id, token_type=token_type).first()
 
 
 def _renew_token(account_id: int, *, session: _SessionType) -> str:
-    """Renews an existing token of an account by generating a new token and updating the expiry date."""
-    token_obj = _get_token_from_account(account_id, session=session)
+    """Renews an existing auth token of an account by generating a new token and updating the expiry date."""
+    token_obj = _get_token_from_account(account_id, 'auth', session=session)
     if token_obj is None: raise NonExistent('token', account_id)
     new_token = _generate_new_token()
     token_obj.token = new_token['token']
@@ -287,7 +288,7 @@ def _validate_cookies(cookies: Cookies, *, session: _SessionType) -> Account:
     return account
 
 
-def _get_email_from_reset_token(reset_token: str, *, session: _SessionType) -> str:
+def _get_email_from_token(token: str, token_type: TokenType, *, session: _SessionType) -> str:
     """
     Retrieves the email associated with a valid, non-expired reset token.
     
@@ -301,16 +302,16 @@ def _get_email_from_reset_token(reset_token: str, *, session: _SessionType) -> s
         ValueError: If the token is invalid, expired, or not found.
     """
     token_obj = session.query(Token).filter(
-        Token.token == reset_token,
-        Token.token_type == 'reset',
+        Token.token == token,
+        Token.token_type == token_type,
         Token.expires_at > utcnow()  # Ensure token is still valid
     ).first()
 
     if not token_obj:
-        raise ValueError('Invalid or expired reset token.')
+        raise ValueError(f'Invalid or expired {token_type} token.')
 
     account = session.query(Account).filter(Account.account_id == token_obj.account_id).first()
     if not account:
-        raise ValueError('No account associated with this reset token.')
+        raise ValueError(f'No account associated with this {token_type} token.')
 
     return account.email

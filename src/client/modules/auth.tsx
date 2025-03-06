@@ -6,7 +6,11 @@ import type { Account } from '@types'
 export const isLoggedIn = async (): Promise<Account | false> => {
     return await new Request(
         'auth/log_in_account_with_cookies',
-        (data) => 'account_id' in data && 'email' in data ? { id: data.account_id, email: data.email } : false,
+        (data) => (
+            'account_id' in data && 'email' in data && 'email_verified' 
+            ? { id: data.account_id, email: data.email, emailVerified: data.email_verified } 
+            : false
+        ),
         () => false
     ).get()
 }

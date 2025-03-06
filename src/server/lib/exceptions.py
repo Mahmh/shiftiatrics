@@ -19,7 +19,7 @@ class NonExistent(Exception):
         self.entity = entity
         msg = ''
         if type(identifier) is int: msg = f'{entity.title()} with ID "{identifier}" does not exist.'
-        else: msg = f'{entity.title()} with name "{identifier}" does not exist.'
+        else: msg = f'{entity.title()} with email "{identifier}" does not exist.'
         super().__init__(msg)
 
 

@@ -35,7 +35,7 @@ def test_renew_token(setup_and_teardown):
 def test_get_token_from_account(setup_and_teardown):
     account_id, _ = setup_and_teardown
     with Session() as session:
-        token_obj = _get_token_from_account(account_id, session=session)
+        token_obj = _get_token_from_account(account_id, 'auth', session=session)
         assert token_obj is not None
         assert len(token_obj.token)
         assert token_obj.account_id == account_id
@@ -44,7 +44,7 @@ def test_get_token_from_account(setup_and_teardown):
 def test_validate_cookies(setup_and_teardown):
     account_id, _ = setup_and_teardown
     with Session() as session:
-        token_obj = _get_token_from_account(account_id, session=session)
+        token_obj = _get_token_from_account(account_id, 'auth', session=session)
         cookies = Cookies(account_id=account_id, token=token_obj.token)
         account = _validate_cookies(cookies, session=session)
         assert account is not None
@@ -54,7 +54,7 @@ def test_validate_cookies(setup_and_teardown):
 def test_invalidate_expired_cookies(setup_and_teardown):
     account_id, _ = setup_and_teardown
     with Session() as session:
-        token_obj = _get_token_from_account(account_id, session=session)
+        token_obj = _get_token_from_account(account_id, 'auth', session=session)
         cookies = Cookies(account_id=account_id, token=token_obj.token)
         # Simulate token expiry
         token_obj.expires_at = datetime.now() - timedelta(days=1)
@@ -66,7 +66,7 @@ def test_invalidate_expired_cookies(setup_and_teardown):
 def test_renew_expired_token(setup_and_teardown):
     account_id, old_token = setup_and_teardown
     with Session() as session:
-        token_obj = _get_token_from_account(account_id, session=session)
+        token_obj = _get_token_from_account(account_id, 'auth', session=session)
         # Simulate token expiry
         token_obj.expires_at = datetime.now() - timedelta(days=1)
         session.commit()

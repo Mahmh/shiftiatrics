@@ -3,6 +3,7 @@ from enum import Enum
 
 WeekendDays = Literal['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']
 Interval = Literal['Daily', 'Weekly', 'Monthly']
+TokenType = Literal['auth', 'reset', 'verify']
 
 class IntervalEnum(Enum):
     DAILY = 'Daily'
@@ -17,3 +18,4 @@ class WeekendDaysEnum(Enum):
 class TokenTypeEnum(Enum):
     AUTH = 'auth'
     RESET = 'reset'
+    VERIFY = 'verify'

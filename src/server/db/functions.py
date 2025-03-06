@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session as _SessionType
 
 from src.server.lib.utils import log, parse_date, parse_time
 from src.server.lib.models import Credentials, Cookies, ScheduleType
-from src.server.lib.exceptions import CookiesUnavailable
+from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, IntervalEnum
 from src.server.lib.constants import WEB_SERVER_URL
 from src.server.lib.emails import send_email
@@ -27,12 +27,11 @@ from .utils import (
     _sanitize_credentials,
     _hash_password,
     _authenticate_credentials,
-    _generate_new_token,
     _create_new_token,
     _get_token_from_account,
     _renew_token,
     _validate_cookies,
-    _get_email_from_reset_token
+    _get_email_from_token
 )
 
 ## Account
@@ -45,7 +44,7 @@ def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account
     session.add(account)
     session.commit()
     token = _create_new_token(account.account_id, session=session)
-    log(f'Successful account creating for email: {account.email}', 'auth')
+    log(f'Successful account creation for email: {account.email}', 'auth')
     return account, token
 
 
@@ -95,7 +94,7 @@ def log_in_account(cred: Credentials, *, session: _SessionType) -> tuple[Account
     Creates a new token if either no token is given in the cookies, or the cookies are invalid.
     """
     account = _authenticate_credentials(cred, session=session)
-    retrieved_token_obj = _get_token_from_account(account.account_id, session=session)
+    retrieved_token_obj = _get_token_from_account(account.account_id, 'auth', session=session)
 
     if retrieved_token_obj is None:
         token = _create_new_token(account.account_id, session=session)
@@ -136,7 +135,7 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session:
         
         # Step 4: Update OAuth token
         account.oauth_token = access_token
-        token_obj = _get_token_from_account(account.account_id, session=session)
+        token_obj = _get_token_from_account(account.account_id, 'auth', session=session)
         return account, token_obj.token
 
     # Step 5: If no matching OAuth ID, check if an account exists with the same email
@@ -152,28 +151,28 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session:
         existing_account.oauth_token = access_token
         existing_account.oauth_id = oauth_id  # Link Google account
         existing_account.oauth_email = email  # Store the original OAuth email
+        existing_account.email_verified = True
         session.commit()
 
-        token_obj = _get_token_from_account(existing_account.account_id, session=session)
+        token_obj = _get_token_from_account(existing_account.account_id, 'auth', session=session)
         return existing_account, token_obj.token
 
     # Step 6: No matching account, create a new one
     new_account = Account(
         email=email,  # First-time login, set email
-        oauth_email=email,  # Store OAuth email for future reference
         hashed_password=None,  # No password for OAuth users
+        email_verified=True,
         oauth_provider='google',
         oauth_token=access_token,
-        oauth_id=oauth_id
+        oauth_id=oauth_id,
+        oauth_email=email  # Store OAuth email for future reference
     )
     session.add(new_account)
     session.commit()
     session.refresh(new_account)
 
-    token_obj = Token(account_id=new_account.account_id, **_generate_new_token())
-    session.add(token_obj)
-
-    return new_account, token_obj.token
+    token = _create_new_token(new_account.account_id, session=session)
+    return new_account, token
 
 
 @dbsession(commit=True)
@@ -189,10 +188,9 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
     )
 
     # Generate a password reset token & send email with reset link
-    reset_token = _generate_new_token('reset')
-    session.add(Token(account_id=account.account_id, **reset_token))
+    reset_token = _create_new_token(account.account_id, 'reset', session=session)
+    reset_link = f'{WEB_SERVER_URL}/reset-password?token={reset_token}'
 
-    reset_link = f'{WEB_SERVER_URL}/reset-password?token={reset_token["token"]}'
     await send_email(
         subject='Reset Your Password',
         body=f'<a href="{reset_link}">Click here to reset your password</a>',
@@ -206,17 +204,12 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
 def reset_password(new_password: str, reset_token: str, *, session: _SessionType) -> str:
     """Resets a user's password after verifying the reset token (when logged-out), without affecting OAuth login."""
     new_password = _sanitize_password(new_password)
-    
-    # Verify the reset token
-    email = _get_email_from_reset_token(reset_token, session=session)
-    if not email:
-        raise ValueError('Invalid or expired reset token.')
+    email = _get_email_from_token(reset_token, 'reset', session=session)
 
     # Find the account by email
     account = session.query(Account).filter(Account.email == email).first()
     if not account:
-        raise ValueError('Account not found.')
-
+        raise NonExistent('account', email)
     if not account.hashed_password:
         raise ValueError('This account does not have a password. Use OAuth to log in.')
 
@@ -227,6 +220,48 @@ def reset_password(new_password: str, reset_token: str, *, session: _SessionType
     session.commit()
 
     return 'Password reset successfully. You can now log in with your new password or continue using OAuth.'
+
+
+@dbsession(commit=True)
+async def request_verify_email(email: str, *, session: _SessionType) -> str:
+    """Sends an email verification link to users who need to verify their email."""
+    email = _sanitize_email(email)
+    account = session.query(Account).filter(Account.email == email).first()
+    safe_msg = 'If this email exists, a verification link will be sent.'  # Prevents user enumeration attacks
+
+    if not account: return safe_msg
+    if account.email_verified: raise ValueError('Your email is already verified.')
+
+    # Generate a verification token & send email with verification link
+    verify_token = _create_new_token(account.account_id, 'verify', session=session)
+    verify_link = f'{WEB_SERVER_URL}/verify-email?token={verify_token}'
+
+    await send_email(
+        subject='Verify Your Email',
+        body=f'<a href="{verify_link}">Click here to verify your email</a>',
+        receipents=[account.email]
+    )
+
+    return safe_msg
+
+
+@dbsession(commit=True)
+def verify_email(verify_token: str, *, session: _SessionType) -> str:
+    """Verifies a user's email using the provided verification token."""
+    email = _get_email_from_token(verify_token, 'verify', session=session)
+
+    # Find the associated account
+    account = session.query(Account).filter(Account.email == email).first()
+    if not account: raise NonExistent('account', email)
+    if account.email_verified: return 'Your email is already verified.'
+
+    # Mark email as verified
+    account.email_verified = True
+    # Delete the used verification token
+    session.query(Token).filter(Token.token == verify_token, Token.token_type == 'verify').delete()
+    session.commit()
+
+    return 'Email verified successfully!'
 
 
 

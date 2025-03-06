@@ -3,13 +3,14 @@
 -- Types
 CREATE TYPE weekend_days_enum AS ENUM ('Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday');
 CREATE TYPE interval_enum AS ENUM ('Daily', 'Weekly', 'Monthly');
-CREATE TYPE token_type_enum AS ENUM ('auth', 'reset');
+CREATE TYPE token_type_enum AS ENUM ('auth', 'reset', 'verify');
 
 -- Tables
 CREATE TABLE accounts (
     account_id SERIAL PRIMARY KEY,
     email VARCHAR(256) UNIQUE NOT NULL,
     hashed_password VARCHAR(128), -- Null for OAuth users
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     oauth_provider VARCHAR(16),
     oauth_token VARCHAR(2048),
     oauth_id VARCHAR(64) UNIQUE,
@@ -19,7 +20,7 @@ CREATE TABLE accounts (
 CREATE TABLE tokens (
     token_id SERIAL PRIMARY KEY,
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
-    token VARCHAR(256) UNIQUE NOT NULL,
+    token VARCHAR(64) UNIQUE NOT NULL,
     token_type token_type_enum NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL

@@ -108,7 +108,7 @@ const WithResetToken = ({ resetToken }: { resetToken: string }) => {
                 )
             },
             false
-        ).put({ new_password: password, reset_token: resetToken })
+        ).patch({ new_password: password, reset_token: resetToken })
     }
 
     return submitted

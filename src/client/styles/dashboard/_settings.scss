@@ -7,6 +7,12 @@
     gap: 35px;
     margin-left: 0;
 
+    .horizontal-separator {
+        @include themed-bgcolor('dark-gray', 'secondary-blue');
+        height: 2px;
+        margin: 10px 0;
+    }
+
     .settings-cards {
         @include breakpoint(1550px) { width: 75% }
         @include breakpoint(1050px) { width: 86% }
@@ -16,20 +22,14 @@
         margin: 0 auto;
         gap: 30px;
     }
-
-    .horizontal-separator {
-        @include themed-bgcolor('dark-gray', 'secondary-blue');
-        height: 2px;
-        margin: 10px 0;
-    }
-
+    
     .settings-card {
         @include themed-bgcolor('alpha-white', 'primary-blue-hover');
         box-shadow: $main-box-shadow;
         border-radius: 10px;
         overflow: hidden;
         transition: background-color 250ms ease;
-
+    
         .settings-title {
             @include themed-bgcolor('primary-blue');
             color: get-color('background');
@@ -38,103 +38,128 @@
             margin: 0;
         }
     }
+}
 
-    .card-content {
+
+#account-card .card-content {
+    @include breakpoint(1550px) {
+        flex-direction: column !important;
+    }
+    flex-direction: row !important;
+    justify-content: space-between !important;
+}
+
+
+#settings-content .card-content {
+    @include vertical-flex;
+    gap: 6px;
+    padding: 20px 30px;
+    padding-bottom: 25px;
+    transition: background-color 250ms ease;
+
+    h1 {
+        @include breakpoint(2000px) { max-width: 30ch }
+        @include breakpoint(1850px) { max-width: 25ch }
+        @include breakpoint(1670px) { max-width: 20ch }
+        @include breakpoint(1550px) { max-width: 100% }
+        @include themed-color('primary-text');
+        font-size: 2.3rem;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        transition: color 250ms ease;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 35ch;
+    }
+
+    label, ul li {
+        @include themed-color('primary-text');
+        margin: 5px 0;
+        transition: color 250ms ease;
+    }
+
+    div {
+        @include breakpoint(725px) { align-items: unset }
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #account-actions-card {
         @include vertical-flex;
-        gap: 6px;
-        padding: 20px 30px;
-        padding-bottom: 25px;
-        transition: background-color 250ms ease;
-    
-        h1 {
-            @include themed-color('primary-text');
-            font-size: 2.3rem;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            transition: color 250ms ease;
-        }
+        gap: 10px;
+        margin-top: 30px;
+        border-radius: 20px;
 
-        label, ul li {
-            @include themed-color('primary-text');
-            margin: 5px 0;
-            transition: color 250ms ease;
-        }
+        button {
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            min-width: 300px;
 
-        div {
-            @include breakpoint(725px) { align-items: unset }
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+            &.edit-account-btn {
+                @include themed-bgcolor('primary-blue', 'secondary-blue');
+                &:hover { @include themed-bgcolor('primary-blue-hover', 'primary-blue') }
+            }
 
-        #account-actions-card {
-            @include vertical-flex;
-            gap: 10px;
-            margin-top: 30px;
-            border-radius: 20px;
+            &#verify-email-btn {
+                @include themed-bgcolor('secondary-blue', 'secondary-blue-hover');
+                &:hover { @include themed-bgcolor('secondary-blue-hover', 'secondary-blue') }
+            }
 
-            button {
-                color: white;
-                padding: 10px;
-                border-radius: 10px;
+            &#log-out-btn {
+                @include themed-bgcolor('gray');
+                &:hover { @include themed-bgcolor('alpha-black-0', 'light-gray') }
+            }
 
-                &.edit-account-btn {
-                    @include themed-bgcolor('primary-blue', 'secondary-blue');
-                    &:hover { @include themed-bgcolor('primary-blue-hover', 'primary-blue') }
-                }
-
-                &#log-out-btn {
-                    @include themed-bgcolor('gray');
-                    &:hover { @include themed-bgcolor('alpha-black-0', 'light-gray') }
-                }
-
-                &#delete-account-btn {
-                    @include themed-bgcolor('primary-red');
-                    &:hover { @include themed-bgcolor('primary-red-hover') }
-                }
+            &#delete-account-btn {
+                @include themed-bgcolor('primary-red');
+                &:hover { @include themed-bgcolor('primary-red-hover') }
             }
         }
+    }
 
-        .switch-div {
-            @include breakpoint(725px) { flex-direction: column }
-            display: flex;
-            justify-content: space-between;
-            &, label { cursor: pointer }
+    .switch-div {
+        @include breakpoint(725px) { flex-direction: column }
+        display: flex;
+        justify-content: space-between;
+        &, label { cursor: pointer }
 
-            button {
-                @include themed-bgcolor('gray', 'light-gray');
-                display: inline-block;
-                position: relative;
-                width: 55px;
-                height: 25px;
-                border-radius: 25px;
-                padding: 4px;
-                transition: background-color 0.3s ease;
+        button {
+            @include themed-bgcolor('gray', 'light-gray');
+            display: inline-block;
+            position: relative;
+            width: 55px;
+            height: 25px;
+            border-radius: 25px;
+            padding: 4px;
+            transition: background-color 0.3s ease;
 
-                .switch-circle {
-                    position: absolute;
-                    top: 50%;
-                    left: 4px;
-                    transform: translateX(0) translateY(-50%);
-                    width: 20px;
-                    height: 20px;
-                    background: #fff;
-                    border-radius: 50%;
-                    box-shadow: $main-box-shadow;
-                    transition: transform 200ms ease;
-                }
+            .switch-circle {
+                position: absolute;
+                top: 50%;
+                left: 4px;
+                transform: translateX(0) translateY(-50%);
+                width: 20px;
+                height: 20px;
+                background: #fff;
+                border-radius: 50%;
+                box-shadow: $main-box-shadow;
+                transition: transform 200ms ease;
+            }
 
-                &.switch-btn-enabled {
-                    background: get-color('primary-blue');
-                    .switch-circle { transform: translateX(26px) translateY(-50%) }
-                }
+            &.switch-btn-enabled {
+                background: get-color('primary-blue');
+                .switch-circle { transform: translateX(26px) translateY(-50%) }
             }
         }
+    }
 
-        .disabled-setting-input {
-            @include themed-bgcolor('light-gray');
-            @include themed-color('gray');
-            box-shadow: none;
-        }
+    .disabled-setting-input {
+        @include themed-bgcolor('light-gray');
+        @include themed-color('gray');
+        box-shadow: none;
     }
 }

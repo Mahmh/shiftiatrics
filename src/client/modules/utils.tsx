@@ -267,18 +267,6 @@ export class Request {
     }
 
     /**
-     * Performs a PUT request
-     * @returns The output of the inputted callback function
-     */
-    public async put(requestData: object = {}): Promise<any> {
-        console.log(this.getPayload('PUT', requestData))
-        const response = await fetch(this.endpointUrl, this.getPayload('PUT', requestData))
-        if (!response.ok) return this.errorHandler(`${response.status} HTTP error`)
-        const data: EndpointResponse = await response.json()
-        return 'error' in data ? this.errorHandler(data.error) : this.responseCallback(data)
-    }
-
-    /**
      * Performs a DELETE request
      * @returns The output of the inputted callback function
      */
@@ -294,7 +282,7 @@ export class Request {
      * @param method REST API Method
      * @returns The appropriate payload for the method
      */
-    private getPayload(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE', requestData: object): Record<string, string|object|undefined> {
+    private getPayload(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', requestData: object): Record<string, string|object|undefined> {
         const payload: Record<string, string|object|undefined> = {
             method: method,
             headers: method !== 'GET' ? { 'Content-Type': 'application/json' } : undefined,

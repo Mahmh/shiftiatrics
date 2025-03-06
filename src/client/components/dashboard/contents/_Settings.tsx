@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState, useMemo } from 'react'
+import { useCallback, useContext, useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { dashboardContext, nullAccount } from '@context'
 import { Choice, Switch, Dropdown, Request } from '@utils'
@@ -38,6 +38,7 @@ const Account = () => {
         return `${numSchedules} schedule${numSchedules === 1 ? '' : 's'} generated`
     }, [countSchedules])
     const holidayCountText = useMemo(() => `${holidays.length} holiday${holidays.length === 1 ? '' : 's'} assigned`, [holidays.length])
+    const emailVerifiedText = useMemo(() => `Email is ${account.emailVerified ? '' : 'not'} verified`,  [account.emailVerified])
 
     /** Logs out of the account */
     const logOut = useCallback(async () => {
@@ -71,6 +72,7 @@ const Account = () => {
 
             return <>
                 <h1>Delete Your Account?</h1>
+                <p>This action cannot be undone. Are you sure you want to delete it?</p>
                 {error && <p className='error'>{error}</p>}
                 <Choice onYes={deleteAccount} onNo={closeModal}/>
             </>
@@ -83,6 +85,7 @@ const Account = () => {
     const openLogOutModal = useCallback(() => {
         setModalContent(<>
             <h1>Log Out?</h1>
+            <p>You can log in back again later.</p>
             <Choice onYes={logOut} onNo={closeModal}/>
         </>)
         openModal()
@@ -104,8 +107,12 @@ const Account = () => {
             const confirmEdit = async () => {
                 await new Request(
                     'accounts',
-                    (resAccount: { account_id: number, email: string }) => {
-                        setAccount({ ...resAccount, id: resAccount.account_id })
+                    (resAccount: { account_id: number, email: string, email_verified: boolean }) => {
+                        setAccount({
+                            ...resAccount,
+                            id: resAccount.account_id,
+                            emailVerified: resAccount.email_verified
+                        })
                         closeModal()
                     },
                     (error) => {
@@ -174,8 +181,12 @@ const Account = () => {
 
                 await new Request(
                     'accounts',
-                    (resAccount: { account_id: number, email: string }) => {
-                        setAccount({ ...resAccount, id: resAccount.account_id })
+                    (resAccount: { account_id: number, email: string, email_verified: boolean }) => {
+                        setAccount({
+                            ...resAccount,
+                            id: resAccount.account_id,
+                            emailVerified: resAccount.email_verified
+                        })
                         closeModal()
                     },
                     (error) => {
@@ -226,6 +237,43 @@ const Account = () => {
         openModal()
     }, [setAccount, openModal, closeModal, setModalContent])
 
+    /** Displays a modal for verifying the account's email */
+    const openVerifyEmailModal = useCallback(() => {
+        const VerifyEmailModalContent = () => {
+            const [error, setError] = useState<string|null>(null)
+            const [isLoading, setIsLoading] = useState(false)
+
+            const requestVerifyEmail = async () => {
+                setIsLoading(true)
+                await new Request(
+                    'auth/request_verify_email',
+                    () => setIsLoading(false),
+                    (error) => {
+                        setIsLoading(false)
+                        if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
+                        setError(error)
+                    }
+                ).post({ email: account.email })
+            }
+
+            useEffect(() => { requestVerifyEmail() }, [])
+
+            return <>
+                <h1>Verify Your Email</h1>
+                <p>
+                    {
+                        isLoading 
+                        ? 'Sending email verification request...'
+                        : error || 'We have sent you an email verification request to your email. Please check your inbox and follow the instructions to verify your email.'
+                    }
+                </p>
+            </>
+        }
+    
+        setModalContent(<VerifyEmailModalContent/>)
+        openModal()
+    }, [account.email, openModal, setModalContent])
+
     return exitingAccount ? <LoadingScreen/> : (
         <section id='account-card' className='settings-card'>
             <h3 className='settings-title'>Account</h3>
@@ -237,9 +285,11 @@ const Account = () => {
                         <li>{employeeCountText}</li>
                         <li>{shiftCountText}</li>
                         <li>{holidayCountText}</li>
+                        <li>{emailVerifiedText}</li>
                     </ul>
                 </section>
                 <section id='account-actions-card'>
+                    {!account.emailVerified && <button id='verify-email-btn' onClick={openVerifyEmailModal}>Verify Email</button>}
                     <button className='edit-account-btn' onClick={openChangeEmailModal}>Change Email</button>
                     <button className='edit-account-btn' onClick={openChangePasswordModal}>Change Password</button>
                     <button id='log-out-btn' onClick={openLogOutModal}>Log Out</button>
