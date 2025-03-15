@@ -31,15 +31,28 @@
         }
     }
 
-    #header-btn {
-        @include compressible(.96);
-        background-color: get-color('primary-blue');
-        color: get-color('background');
-        padding: 10px 25px;
-        margin-right: 60px;
-        border-radius: 10px;
-        text-decoration: none;
-        &:hover { background-color: get-color('primary-blue-hover', $lp: true) }
+    #header-btns {
+        display: flex;
+        gap: 20px;
+        margin-right: 50px;
+ 
+        .header-btn {
+            @include compressible(.96);
+            color: get-color('background');
+            padding: 10px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+
+            &#signup {
+                background-color: get-color('primary-blue');
+                &:hover { background-color: get-color('primary-blue-hover', $lp: true) }
+            }
+
+            &#login {
+                background-color: get-color('secondary-blue', $lp: true);
+                &:hover { background-color: get-color('alpha-black', $lp: true) }
+            }
+        }
     }
 
     #header-menu-btn {
@@ -50,16 +63,17 @@
     }
 }
 
+
 .backdrop {
     #header-links {
         @include vertical-flex;
         border-radius: 10px;
         background-color: get-color('banner-blue-1', $lp: true);
         position: relative;
-        top: 100%;
+        top: 50%;
         bottom: 0;
         width: 100vw;
-        height: 40%;
+        height: 50vh;
         margin: 0;
         padding: 20px 0;
         box-shadow: 0 0 15px get-color('banner-blue-1', $lp: true);
@@ -78,8 +92,12 @@
                 background-color: get-color('primary-blue');
             }
         }
+
+        #header-btns {
+            @include vertical-flex
+        }
     }
 
-    &.open   #header-links { top: 30% }
-    &.closed #header-links { top: 50% }
+    &.open   #header-links { top: 30vh }
+    &.closed #header-links { top: 50vh }
 }

@@ -1,8 +1,10 @@
 from dotenv import load_dotenv; load_dotenv()
 import os, bcrypt
+from src.server.lib.models import SubscriptionInfo, PlanDetails
+from src.server.lib.types import PricingPlanName
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # path with respect to this file
-_locate = lambda x: os.path.join(CURRENT_DIR, x)
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # path with respect to this file
+_locate = lambda x: os.path.join(_CURRENT_DIR, x)
 
 # Net
 BACKEND_SERVER_URL = os.getenv('BACKEND_SERVER_URL', 'http://localhost:8000')
@@ -15,6 +17,16 @@ PSQL_DB = os.getenv('POSTGRES_DB')
 PSQL_USER = os.getenv('POSTGRES_USER')
 PSQL_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 ENGINE_URL = f'postgresql+psycopg2://{PSQL_USER}:{PSQL_PASSWORD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
+PRICING = {
+    'basic': 19.99,
+    'standard': 69.99,
+    'premium': 99.99
+}
+PREDEFINED_PRICING_PLANS: dict[PricingPlanName, SubscriptionInfo] = {
+    'basic': SubscriptionInfo(plan='basic', price=PRICING['basic'], plan_details=PlanDetails(max_num_pediatricians=5, max_num_shifts_per_day=2)),
+    'standard': SubscriptionInfo(plan='standard', price=PRICING['standard'], plan_details=PlanDetails(max_num_pediatricians=12, max_num_shifts_per_day=4)),
+    'premium': SubscriptionInfo(plan='premium', price=PRICING['premium'], plan_details=PlanDetails(max_num_pediatricians=99, max_num_shifts_per_day=99))
+}
 
 # Security
 MIN_EMAIL_LEN = int(os.getenv('MIN_EMAIL_LEN'))
@@ -43,8 +55,9 @@ GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_REDIRECT_URI = f'{BACKEND_SERVER_URL}/auth/google/callback'
 GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+REDIRECT_PRICING_PAGE = '/pricing?next=dashboard'
 
 # Misc
 ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
 LOG_DIR = _locate('../logs/')
-SCHEDULE_ENGINE_DIR = _locate('../engine/engine.jar')
+SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')

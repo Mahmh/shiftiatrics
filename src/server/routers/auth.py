@@ -1,11 +1,16 @@
+from typing import Optional
 from urllib.parse import urlencode
 from fastapi import APIRouter, HTTPException, Request, Response, Query, Body
 from fastapi.responses import RedirectResponse
 import httpx, jwt
+
 from src.server.rate_limit import limiter
-from src.server.db import log_in_with_google
+from src.server.db import log_in_with_google, has_used_trial
 from src.server.lib.models import Credentials, Cookies
+from src.server.lib.types import PricingPlanName
+from src.server.lib.utils import todict
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, store_cookies_then_redirect
+
 from src.server.db.functions import (
     log_in_account,
     log_in_account_with_cookies,
@@ -14,6 +19,7 @@ from src.server.db.functions import (
     request_verify_email,
     verify_email
 )
+
 from src.server.lib.constants import (
     WEB_SERVER_URL,
     DEFAULT_RATE_LIMIT,
@@ -21,29 +27,36 @@ from src.server.lib.constants import (
     GOOGLE_CLIENT_SECRET,
     GOOGLE_AUTH_URL,
     GOOGLE_REDIRECT_URI,
-    GOOGLE_TOKEN_URL
+    GOOGLE_TOKEN_URL,
+    REDIRECT_PRICING_PAGE
 )
 
 auth_router = APIRouter()
 
 
 @auth_router.get('/auth/log_in_account_with_cookies')
-@limiter.limit(DEFAULT_RATE_LIMIT)
+@limiter.limit('60/minute')
 @endpoint(auth=False)
 async def log_in_account_with_cookies_(request: Request) -> dict:
     cookies = get_cookies(request)
-    if cookies.account_id is None: return {'error': 'Account ID is either invalid or not found'}
-    elif cookies.token is None: return {'error': 'Token is either invalid or not found'}
-    else: return log_in_account_with_cookies(cookies)
+    if cookies.account_id is None:
+        return {'error': 'Account ID is either invalid or not found'}
+    elif cookies.token is None:
+        return {'error': 'Token is either invalid or not found'}
+    else:
+        account, sub = log_in_account_with_cookies(cookies)
+        if not has_used_trial(account.account_id):
+            return {'redirect': REDIRECT_PRICING_PAGE}
+        return {'account': todict(account), 'subscription': todict(sub)}
 
 
 @auth_router.post('/auth/login')
 @limiter.limit('5/minute')
 @endpoint(auth=False)
 async def login_account(cred: Credentials, response: Response, request: Request) -> dict:
-    account, token = log_in_account(cred)
+    account, sub, token = log_in_account(cred)
     store_cookies(Cookies(account_id=account.account_id, token=token), response)
-    return account
+    return {'account': todict(account), 'subscription': todict(sub)}
 
 
 @auth_router.get('/auth/logout')
@@ -87,7 +100,7 @@ async def verify_email_(request: Request, verify_token: str = Body(..., embed=Tr
 @auth_router.get('/auth/google')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint(auth=False)
-async def continue_with_google(request: Request) -> dict:
+async def continue_with_google(request: Request, plan_name: Optional[PricingPlanName] = Query(None)) -> dict:
     '''Redirects users to Google's OAuth login page'''
     params = {
         'client_id': GOOGLE_CLIENT_ID,
@@ -96,13 +109,16 @@ async def continue_with_google(request: Request) -> dict:
         'redirect_uri': GOOGLE_REDIRECT_URI,
         'access_type': 'online'
     }
+
+    if plan_name:
+        params['state'] = plan_name
     return {'login_url': f'{GOOGLE_AUTH_URL}?{urlencode(params)}'}
 
 
 @auth_router.get('/auth/google/callback')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint(auth=False)
-async def google_callback(request: Request, code: str = Query(None), error: str = Query(None)) -> RedirectResponse:
+async def google_callback(request: Request, code: str = Query(None), error: str = Query(None), state: Optional[PricingPlanName] = Query(None)) -> RedirectResponse:
     '''Handles Google's OAuth callback, gets user info, and starts a session.'''
     if error or code is None:
         return RedirectResponse(WEB_SERVER_URL)
@@ -135,5 +151,6 @@ async def google_callback(request: Request, code: str = Query(None), error: str 
     if not oauth_id:
         raise HTTPException(status_code=400, detail='Invalid ID token')
 
-    account, token = log_in_with_google(email, access_token, oauth_id)
-    return store_cookies_then_redirect(Cookies(account_id=account.account_id, token=token))
+    account, _, token = log_in_with_google(email, access_token, oauth_id, state)
+    cookies = Cookies(account_id=account.account_id, token=token)
+    return store_cookies_then_redirect(cookies)

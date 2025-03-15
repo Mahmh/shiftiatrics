@@ -128,8 +128,8 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                 </>
             )
         }
-    
-        setModalContent(<EditModalContent />)
+
+        setModalContent(<EditModalContent/>)
         openModal()
     }
 
@@ -161,7 +161,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
 
 
 export default function Employees() {
-    const { account, employees, settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(dashboardContext)
+    const { account, subscription, employees, settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(dashboardContext)
 
     /** Displays a modal for adding an employee */
     const openAddModal = () => {
@@ -273,7 +273,21 @@ export default function Employees() {
             )
         }
     
-        setModalContent(<AddModalContent />)
+        const SubLimitModalContent = () => {
+            return <>
+                <h1>Pediatrician Limit Reached</h1>
+                <p>
+                You have reached the maximum number of pediatricians allowed ({subscription.planDetails.maxNumPediatricians}). 
+                Please upgrade your plan to add more.
+                </p>
+            </>
+        }
+
+        setModalContent(
+            employees.length < subscription.planDetails.maxNumPediatricians 
+            ? <AddModalContent/>
+            : <SubLimitModalContent/>
+        )
         openModal()
     }
 

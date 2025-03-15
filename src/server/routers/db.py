@@ -2,9 +2,10 @@ from typing import Literal, Optional
 from fastapi import APIRouter, Request, Response, Body
 from src.server.rate_limit import limiter
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
-from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
+from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo, SubscriptionInfo
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies
 from src.server.lib.types import WeekendDays, Interval
+from src.server.lib.utils import todict
 from src.server.db import (
     create_account, change_email, change_password, set_password, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
@@ -30,10 +31,10 @@ settings_router = APIRouter()
 @account_router.post('/accounts/signup')
 @limiter.limit('10/minute')
 @endpoint(auth=False)
-async def create_new_account(cred: Credentials, response: Response, request: Request) -> dict:
-    account, token = create_account(cred)
+async def create_new_account(cred: Credentials, sub_info: SubscriptionInfo, response: Response, request: Request) -> dict:
+    account, sub, token = create_account(cred, sub_info)
     store_cookies(Cookies(account_id=account.account_id, token=token), response)
-    return account
+    return {'account': todict(account), 'subscription': todict(sub)}
 
 
 @account_router.patch('/accounts/email')

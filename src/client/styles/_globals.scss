@@ -114,6 +114,7 @@ a {
     
     .card-container {
         @include vertical-flex;
+        @include themed-bgcolor('background');
         gap: 15px;
         padding: 20px;
         padding-top: 90px;

@@ -1,14 +1,15 @@
 from typing import Optional, Callable, Any
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session as _SessionType
+from sqlalchemy.sql import exists
 import unicodedata, re, bcrypt, inspect, secrets
-from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH
+from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PRICING, PREDEFINED_PRICING_PLANS
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
-from src.server.lib.models import Credentials, Cookies
-from src.server.lib.types import TokenType
+from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
+from src.server.lib.types import TokenType, PricingPlanName
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
-from src.server.db.tables import Session, Account, Token, Employee, Shift, Schedule, Holiday, Settings
+from src.server.db.tables import Session, Account, Token, Employee, Shift, Schedule, Holiday, Settings, Subscription
 
 def _handle_args(args: tuple) -> tuple:
     # Sanitize credentials if the first parameter is of type `Credentials`
@@ -34,7 +35,7 @@ def _handle_exception(e: Exception, func: Callable, *, session: _SessionType) ->
 
 
 def dbsession(*, commit: bool = False):
-    def decorator(func: Callable):
+    def decorator(func: Callable) -> Callable:
         is_async = inspect.iscoroutinefunction(func)
 
         if is_async:
@@ -319,3 +320,97 @@ def _get_email_from_token(token: str, token_type: TokenType, *, session: _Sessio
         raise ValueError(f'No account associated with this {token_type} token.')
 
     return account.email
+
+
+def _validate_sub_info(account_id: int, sub_info: SubscriptionInfo, *, session: _SessionType) -> dict:
+    """Computes & returns subscription info for a given account and plan."""
+    
+    # If the plan is custom, ensure the user doesn't already have one
+    if sub_info.plan == 'custom':
+        has_custom_plan = session.query(
+            exists().where(
+                (Subscription.account_id == account_id) &
+                (Subscription.plan == 'custom')
+            )
+        ).scalar()
+
+        if has_custom_plan:
+            raise ValueError('User already has a custom plan.')
+
+        if sub_info.price <= 0:
+            raise ValueError('Custom plan price must be greater than zero.')
+
+        price = sub_info.price
+        expires_at = sub_info.expires_at
+    else:
+        # Check if the user has already used a free trial for this plan
+        has_used_trial = session.query(
+            exists().where(
+                (Subscription.account_id == account_id) &
+                (Subscription.price == 0.0)
+            )
+        ).scalar()
+
+        # Set price to 0.0 if the user has NOT used a free trial for this plan
+        price = 0.0 if not has_used_trial else sub_info.price
+        expires_at = utcnow() + timedelta(days=7) if price == 0.0 else utcnow() + timedelta(days=30)
+
+    return dict(
+        account_id=account_id,
+        plan=sub_info.plan,
+        price=price,
+        expires_at=expires_at,
+        plan_details=dict(sub_info.plan_details)
+    )
+
+
+def _get_active_sub(account_id: int, *, session: _SessionType) -> Optional[Subscription]:
+    """Returns the latest active subscription for the given account, or None if no active subscription exists."""
+    return session.query(Subscription).filter(
+        Subscription.account_id == account_id,
+        Subscription.expires_at > utcnow()  # Only active subscriptions
+    ).order_by(Subscription.expires_at.desc()).first()
+
+
+def _has_used_trial(account_id: int, *, session: _SessionType) -> bool:
+    """Returns True if the user has ever used a free trial on any plan (price=0.0), otherwise False."""
+    return session.query(
+        session.query(Subscription).filter(
+            Subscription.account_id == account_id,
+            Subscription.price == 0.0
+        ).exists()
+    ).scalar()
+
+
+@dbsession()
+def has_used_trial(account_id: int, *, session: _SessionType) -> bool:
+    """Public version of `_has_used_trial`."""
+    return _has_used_trial(account_id, session=session)
+
+
+def _get_or_create_auth_token(account_id: int, *, session: _SessionType) -> Token:
+    """Either creates or retrieves an existing auth token from a given account and returns it."""
+    token_obj = _get_token_from_account(account_id, 'auth', session=session)
+    if token_obj is None or utcnow() > token_obj.expires_at.replace(tzinfo=timezone.utc):
+        token = _create_new_token(account_id, session=session)
+    else:
+        token = token_obj.token
+    return token
+
+
+def _get_or_create_sub(account_id: int, plan_name: Optional[PricingPlanName] = None, *, session: _SessionType) -> Optional[Subscription]:
+    """Gets the active subscription or creates a new one if a plan is provided. Ensures the user gets only ONE free trial ever."""
+    has_used_trial = _has_used_trial(account_id, session=session)
+    sub = _get_active_sub(account_id, session=session)
+
+    # Prevent OAuth user from logging out in order to start a free trial on another plan
+    if has_used_trial and sub.plan != plan_name:
+        return sub
+
+    if plan_name and (sub is None or sub.plan != plan_name):
+        sub_info = _validate_sub_info(account_id, PREDEFINED_PRICING_PLANS[plan_name], session=session)
+        sub = Subscription(**sub_info)
+        session.add(sub)
+        session.commit()
+        log(f'Subscription created for account ID {account_id}: {sub}', 'subscription')
+    return sub

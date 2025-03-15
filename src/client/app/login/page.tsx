@@ -1,17 +1,16 @@
 'use client'
-import { useRouter } from 'next/navigation'
-import { useContext, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
-import { isLoggedIn, ContinueWithGoogle, parseAccount } from '@auth'
-import { dashboardContext } from '@context'
-import type { AccountResponse } from '@types'
+import { isLoggedIn, ContinueWithGoogle } from '@auth'
 import Link from 'next/link'
 import RegularPage from '@regpage'
 
 export default function Login() {
     const router = useRouter()
-    const { setAccount } = useContext(dashboardContext)
+    const params = useSearchParams()
+    const plan = params.get('plan')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string|null>(null)
@@ -32,9 +31,8 @@ export default function Login() {
 
         await new Request(
             'auth/login',
-            (data: AccountResponse) => {
+            () => {
                 setIsLoading(false)
-                setAccount(parseAccount(data))
                 router.push('/dashboard')
             },
             (error) => {
@@ -58,7 +56,8 @@ export default function Login() {
 
     useEffect(() => {
         (async () => {
-            if (await isLoggedIn()) router.push('/dashboard')
+            const res = await isLoggedIn()
+            if (res && !('redirect' in res)) router.push('/dashboard')
         })()
     }, [router])
     
@@ -82,7 +81,7 @@ export default function Login() {
                         Forgot Password
                     </button>
                 </section>
-                <p>Don&apos;t have an account? <Link href='/signup'>Sign Up</Link></p>
+                <p>Don&apos;t have an account? <Link href={`/signup?plan=${plan}`}>Sign Up</Link></p>
                 <ContinueWithGoogle/>
             </div>
         </RegularPage>

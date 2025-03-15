@@ -21,10 +21,10 @@ export default function Footer({ marginTop }: { marginTop?: boolean }) {
     return (
         <footer className='lp-footer' style={!marginTop ? { marginTop: 0 } : {}}>
             <Section 
-                title="About Us" 
+                title="Company" 
                 links={[
-                    { href: '/about/company', text: 'Company' },
-                    { href: '/about/team', text: 'Team' },
+                    { href: '/about', text: 'About Us' },
+                    { href: '/support/contact?query_type=partnership', text: 'Partnership' },
                 ]}
             />
             <Section 

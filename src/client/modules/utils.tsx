@@ -7,7 +7,8 @@ import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import routeIcon from '@icons/route.png'
 import { dashboardContext } from '@context'
-import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse } from '@types'
+import { PRICING_PLANS } from '@const'
+import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PricingPlanName } from '@types'
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -193,15 +194,30 @@ export const validateCred = (email: string, password: string): string | null => 
     return null 
 }
 
+/** Validates email input */
 export const validateEmail = (email: string): string | null => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) return 'Invalid email format.'
     return null
 }
 
+/** Validates password input */
 export const validatePassword = (password: string): string | null => {
     if (password.length < 8) return 'Password must be at least 8 characters long.'
     return null
+}
+
+/** Converts PricingPlan into an object that can be processed by the back-end server */
+export const pySerializePlan = (name: PricingPlanName) => {
+    const plan = PRICING_PLANS.filter(p => p.name === name)[0]
+    return {
+        plan: plan.name,
+        price: plan.price,
+        plan_details: {
+            max_num_pediatricians:  plan.details?.maxNumPediatricians,
+            max_num_shifts_per_day: plan.details?.maxNumShiftsPerDay
+        }
+    }
 }
 
 

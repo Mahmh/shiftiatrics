@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, LiteralString
 from functools import wraps
 from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
@@ -13,7 +13,7 @@ def _authenticate(kwargs: dict[str, Any]) -> Optional[dict[str, str]]:
     """Requires credentials (in cookies) to prevent unauthorized clients from accessing sensitive endpoints."""
     try:
         cookies = get_cookies(kwargs['request'])
-        account = log_in_account_with_cookies(cookies)
+        account = log_in_account_with_cookies(cookies)[0]
         if 'account_id' in kwargs:
             if account.account_id != kwargs['account_id']:
                 raise EndpointAuthError()
@@ -87,8 +87,8 @@ def store_cookies(cookies: Cookies, response: Response) -> None:
     _set_cookie('auth_token', cookies.token, response)
 
 
-def store_cookies_then_redirect(cookies: Cookies) -> RedirectResponse:
+def store_cookies_then_redirect(cookies: Cookies, endpoint_url: LiteralString = '/dashboard') -> RedirectResponse:
     """Stores the HttpOnly cookies in the client before redirecting, then redirects the client."""
-    response = RedirectResponse(WEB_SERVER_URL + '/dashboard')
+    response = RedirectResponse(WEB_SERVER_URL + endpoint_url)
     store_cookies(cookies, response)
     return response

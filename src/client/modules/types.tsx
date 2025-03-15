@@ -5,12 +5,15 @@ type SetState<T> = Dispatch<SetStateAction<T>>
 export type ReadonlyChildren = Readonly<{children: React.ReactNode}>
 export type EndpointResponse = object | { error: string }
 export type InputEvent = ChangeEvent<HTMLInputElement>
+export type AccountAndSubResponse = { account: AccountResponse, subscription: SubscriptionResponse | null }
+export type AccountAndSub = { account: Account, subscription: Subscription | null }
 
 export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December'
 export type WeekendDays =  'Saturday & Sunday' | 'Friday & Saturday' | 'Sunday & Monday'
 export type Interval =  'Daily' | 'Weekly' | 'Monthly'
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
-export type ContentName = 'schedules' | 'employees' | 'shifts' | 'holidays' | 'settings' | 'support'
+export type ContentName = 'schedules' | 'employees' | 'shifts' | 'holidays' | 'settings' | 'support' | 'subscription'
+export type PricingPlanName = 'basic' | 'standard' | 'premium' | 'custom'
 
 export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][][]
@@ -25,6 +28,9 @@ export interface ContextProps {
 
     account: Account
     setAccount: SetState<Account>
+
+    subscription: Subscription | null
+    setSubscription: SetState<Subscription | null>
 
     employees: Employee[]
     setEmployees: SetState<Employee[]>
@@ -66,6 +72,19 @@ export interface AccountResponse {
     hashed_password: string | null
     email_verified: boolean
     oauth_provider: string
+}
+
+export interface SubscriptionResponse {
+    subscription_id: number
+    account_id: number
+    plan: PricingPlanName
+    price: number
+    created_at: string
+    expires_at: string
+    plan_details: {
+        max_num_pediatricians: number
+        max_num_shifts_per_day: number
+    }
 }
 
 export interface Account {
@@ -116,4 +135,32 @@ export interface Settings {
 export interface FAQ {
     question: string
     answer: string | null
+}
+
+
+// Subscription & Plans
+export interface PlanDetails {
+    maxNumPediatricians: number
+    maxNumShiftsPerDay: number
+}
+
+export interface PricingPlan {
+    name: PricingPlanName
+    price: number | string
+    titleBg: string
+    link: string
+    features: string[]
+    details?: PlanDetails
+}
+
+export interface SubscriptionInfo {
+    plan: PricingPlanName
+    price: number
+    planDetails: PlanDetails
+}
+
+export interface Subscription extends SubscriptionInfo {
+    id: number
+    createdAt: string
+    expiresAt: string
 }

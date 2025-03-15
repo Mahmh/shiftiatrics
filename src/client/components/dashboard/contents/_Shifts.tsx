@@ -14,12 +14,12 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             const [tempName, setTempName] = useState(name)
             const [tempStartTime, setStartTime] = useState(startTime)
             const [tempEndTime, setEndTime] = useState(endTime)
-            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 3)
+            const [isConfirmDisabled, setConfirmDisabled] = useState(tempName.trim().length < 1)
 
             const handleNameChange = (e: InputEvent) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 3 || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length < 1 || !tempStartTime || !tempEndTime)
             }
 
             const handleStartTimeChange = (e: InputEvent) => {
@@ -114,7 +114,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
 }
 
 export default function Shifts() {
-    const { account, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
+    const { account, subscription, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
 
     const openAddModal = () => {
         const AddModalContent = () => {
@@ -185,7 +185,21 @@ export default function Shifts() {
             </>
         }
 
-        setModalContent(<AddModalContent/>)
+        const SubLimitModalContent = () => {
+            return <>
+                <h1>Shift Limit Reached</h1>
+                <p>
+                You have reached the maximum number of shifts allowed per day ({subscription.planDetails.maxNumShiftsPerDay}).
+                Please upgrade your plan to schedule more.
+                </p>
+            </>
+        }
+
+        setModalContent(
+            shifts.length < subscription.planDetails.maxNumShiftsPerDay 
+            ? <AddModalContent/>
+            : <SubLimitModalContent/>
+        )
         openModal()
     }
 
@@ -197,11 +211,17 @@ export default function Shifts() {
                     <button onClick={openAddModal}>Add New Shift</button>
                 </section>
             </section>
-            {shifts.length === 0 && <p className='header-msg'>No shifts registered. You could add &quot;Day&quot;, &quot;Evening&quot;, &quot;Night&quot;, or any shift name that you find suitable for your use case.</p>}
+            {
+                shifts.length === 0 && 
+                <p className='header-msg'>
+                    No shifts registered.
+                    You could add &quot;Day&quot;, &quot;Evening&quot;, &quot;Night&quot;, or any shift name that you find suitable for your use case.
+                </p>
+            }
         </header>
         {shifts.length > 0 && (
             <div className='card-container'>
-                {shifts.map((shift) => (
+                {shifts.map(shift => (
                     <ShiftCard
                         id={shift.id}
                         name={shift.name}

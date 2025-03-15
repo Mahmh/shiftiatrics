@@ -1,15 +1,70 @@
 'use client'
-import { useContext, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { setMetadata } from '@utils'
+import { getMonthName, setMetadata } from '@utils'
 import { isLoggedIn } from '@auth'
 import { dashboardContext } from '@context'
+import type { Subscription } from '@types'
 import DashboardPage from '@/components/dashboard/DashboardPage'
 
 export default function Dashboard() {
-    const { setAccount } = useContext(dashboardContext)
     const router = useRouter()
+    const { setAccount, setSubscription, openModal, setModalContent } = useContext(dashboardContext)
     const [authChecked, setAuthChecked] = useState(false)
+
+    const PlanExpiredModalContent = () => <>
+        <h1>Your Subscription Has Expired</h1>
+        <p>
+            Your access has been paused because your subscription has expired. Renew now to continue enjoying all features.
+        </p>
+        <button>Renew or Upgrade Now</button>
+    </>
+
+
+    const checkIsSubExpiringSoon = useCallback((subscription: Subscription) => {
+        const now = new Date()
+        const expiryDate = new Date(subscription.expiresAt)
+        const timeDiff = expiryDate.getTime() - now.getTime()
+        const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+        if (daysLeft === 3) {
+            setModalContent(<>
+                <h1>Subscription Expiring Soon</h1>
+                <p>
+                    Your current plan will expire in {daysLeft} day(s) on {getMonthName(expiryDate.getUTCMonth())} {expiryDate.getUTCDate()}, {expiryDate.getUTCFullYear()}.
+                    To avoid service interruptions, upgrade now and continue enjoying all features.
+                </p>
+                <button>Renew or Upgrade Now</button>
+            </>)
+            openModal()
+        }
+    }, [openModal, setModalContent])
+
+
+    const checkLoginStatus = useCallback(async () => {
+        const res = await isLoggedIn()
+        if (res === false) {
+            router.push('/'); return
+        } else if ('redirect' in res) {
+            router.push(res.redirect); return
+        }
+
+        setAccount(res.account)
+        setSubscription(res.subscription)
+        setAuthChecked(true) // Ensure rendering only happens after auth check
+
+        if (res.subscription === null) {
+            setModalContent(<PlanExpiredModalContent/>)
+            openModal()
+            return
+        }
+
+        checkIsSubExpiringSoon(res.subscription)        
+    }, [router, checkIsSubExpiringSoon, setAccount, setSubscription, openModal, setModalContent,])
+
+
+    useEffect(() => {
+        checkLoginStatus()
+    }, [router, checkLoginStatus])
 
     useEffect(() => {
         setMetadata({
@@ -18,18 +73,6 @@ export default function Dashboard() {
         })
     }, [])
 
-    useEffect(() => {
-        const checkLoginStatus = async () => {
-            const account = await isLoggedIn()
-            if (!account) {
-                router.push('/')
-            } else {
-                setAccount(account)
-                setAuthChecked(true) // Ensure rendering only happens after auth check
-            }
-        }
-        checkLoginStatus()
-    }, [router, setAccount])
 
     if (!authChecked) return null // Prevent rendering before auth check completes
     return <DashboardPage/>

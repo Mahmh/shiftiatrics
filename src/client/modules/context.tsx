@@ -3,7 +3,7 @@ import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } f
 import { usePathname } from 'next/navigation'
 import { Request, getEmployeeById, hasScheduleForMonth } from '@utils'
 import { isLoggedIn } from '@auth'
-import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval } from '@types'
+import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval, Subscription } from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
@@ -18,6 +18,14 @@ const nullSettings: Settings = {
     emailNtfEnabled: false,
     emailNtfInterval: 'Monthly'
 }
+const nullSub: Subscription = {
+    id: -Infinity,
+    plan: 'basic',
+    price: -Infinity,
+    planDetails: { maxNumPediatricians: -Infinity, maxNumShiftsPerDay: -Infinity },
+    createdAt: '',
+    expiresAt: ''
+}
 export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, isOAuthOnly: false }
 
 export const dashboardContext = createContext<ContextProps>({
@@ -26,6 +34,9 @@ export const dashboardContext = createContext<ContextProps>({
 
     account: nullAccount,
     setAccount: () => {},
+
+    subscription: nullSub,
+    setSubscription: () => {},
 
     employees: [],
     setEmployees: () => {},
@@ -64,6 +75,7 @@ export const dashboardContext = createContext<ContextProps>({
 export function DashboardProvider({ children }: ReadonlyChildren) {
     const [content, setContent] = useState<ContentName>(defaultContent)
     const [account, setAccount] = useState<Account>(nullAccount)
+    const [subscription, setSubscription] = useState<Subscription>(nullSub)
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
@@ -235,14 +247,18 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
 
     const logInWithCookies = useCallback(async () => {
         if (pathname === '/') return
-        const response = await isLoggedIn()
-        if (response !== false) setAccount(response)
+        const res = await isLoggedIn()
+        if (res && !('redirect' in res)) {
+            setAccount(res.account)
+            setSubscription(res.subscription)
+        }
     }, [setAccount])
 
     useEffect(() => {
         const fetchAllData = async () => {
             if (pathname === '/') return
-            if (await isLoggedIn()) {
+            const res = await isLoggedIn()
+            if (res && !('redirect' in res)) {
                 const loadedEmployees = await loadEmployees()
                 await loadShifts()
                 await loadSchedules(loadedEmployees)
@@ -260,7 +276,8 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     useEffect(() => {
         const regenerateSchedules = async () => {
             if (pathname === '/') return
-            if (await isLoggedIn() && employees.length > 0) await loadSchedules(employees)
+            const res = await isLoggedIn()
+            if (res && !('redirect' in res) && employees.length > 0) await loadSchedules(employees)
         }
         regenerateSchedules()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -292,6 +309,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     return (
         <dashboardContext.Provider value={{
             account, setAccount,
+            subscription, setSubscription,
             content, setContent,
             employees, setEmployees, loadEmployees, validateEmployeeById,
             shifts, setShifts, loadShifts,

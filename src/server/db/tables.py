@@ -1,12 +1,30 @@
-from sqlalchemy import create_engine, func, Column, Integer, String, Boolean, ForeignKey, Date, DateTime, Time, Enum
+from sqlalchemy import (
+    create_engine,
+    func,
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    Date,
+    DateTime,
+    Time,
+    Enum,
+    ForeignKey,
+    CheckConstraint,
+    UniqueConstraint,
+    Numeric
+)
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base
 from src.server.lib.constants import ENGINE_URL
-from src.server.lib.types import WeekendDaysEnum, IntervalEnum, TokenTypeEnum
+from src.server.lib.types import WeekendDaysEnum, IntervalEnum, TokenTypeEnum, PricingPlanEnum
+
 
 engine = create_engine(ENGINE_URL)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
+_values_callable = lambda x: [e.value for e in x]
 
 
 class Account(Base):
@@ -28,14 +46,30 @@ class Token(Base):
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     token = Column(String(64), unique=True, nullable=False)
     token_type = Column(
-        Enum(TokenTypeEnum, name='token_type_enum', values_callable=lambda x: [e.value for e in x]),
+        Enum(TokenTypeEnum, name='token_type_enum', values_callable=_values_callable),
         nullable=False,
         server_default='auth',
         default=TokenTypeEnum.AUTH.value
     )
-    created_at = Column(DateTime, default=func.now(), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
     expires_at = Column(DateTime, nullable=False)
     __repr__ = lambda self: f'Token({self.account_id})'
+
+
+class Subscription(Base):
+    __tablename__ = 'subscriptions'
+    subscription_id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
+    plan = Column(
+        Enum(PricingPlanEnum, name='pricing_plan_enum', values_callable=_values_callable),
+        nullable=False
+    )
+    price = Column(Numeric(7, 2), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    expires_at = Column(DateTime, nullable=False)
+    plan_details = Column(JSONB, nullable=True)
+    __table_args__ = (CheckConstraint('price >= 0', name='positive_price'),)
+    __repr__ = lambda self: f'Subscription({self.account_id})'
 
 
 class Employee(Base):
@@ -87,7 +121,7 @@ class Settings(Base):
     multi_emps_in_shift_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
     multi_shifts_one_emp_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
     weekend_days = Column(
-        Enum(WeekendDaysEnum, name='weekend_days_enum', values_callable=lambda x: [e.value for e in x]),
+        Enum(WeekendDaysEnum, name='weekend_days_enum', values_callable=_values_callable),
         nullable=False,
         server_default='Saturday & Sunday',
         default=WeekendDaysEnum.SAT_SUN.value
@@ -95,7 +129,7 @@ class Settings(Base):
     max_emps_in_shift = Column(Integer, nullable=False, server_default='1', default=1)
     email_ntf_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
     email_ntf_interval = Column(
-        Enum(IntervalEnum, name='interval_enum', values_callable=lambda x: [e.value for e in x]),
+        Enum(IntervalEnum, name='interval_enum', values_callable=_values_callable),
         nullable=False,
         server_default='Monthly',
         default=IntervalEnum.MONTHLY.value

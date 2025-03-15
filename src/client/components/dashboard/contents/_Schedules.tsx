@@ -191,7 +191,7 @@ export default function Schedules() {
                             )) 
                             : <p>
                                 No pediatrician was assigned a shift in this month.
-                                Please ensure you have entered correct information, and then regenerate the schedule.
+                                Please ensure you have entered correct information, then regenerate the schedule.
                             </p>
                         : <p>Loading...</p>
                     }

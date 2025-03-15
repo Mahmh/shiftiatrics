@@ -1,3 +1,4 @@
+from typing import Optional
 from datetime import date, time, datetime, timezone, timedelta
 import logging, os
 from src.server.lib.constants import ENABLE_LOGGING, LOG_DIR, TOKEN_EXPIRY_SECONDS
@@ -60,11 +61,12 @@ def get_token_expiry_datetime() -> datetime:
     return utcnow() + timedelta(seconds=TOKEN_EXPIRY_SECONDS)
 
 
-def todict(obj: object):
+def todict(obj: object) -> Optional[dict]:
     """Converts a SQLAlchemy object to a dictionary."""
+    if obj is None: return None
     return {col.name: getattr(obj, col.name) for col in obj.__table__.columns}
 
 
-def todicts(objs: list[object]):
+def todicts(objs: list[object]) -> list[Optional[dict]]:
     """Converts a list of SQLAlchemy objects to a list of dictionaries."""
     return [todict(obj) for obj in objs]

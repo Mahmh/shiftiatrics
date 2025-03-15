@@ -4,6 +4,7 @@
 CREATE TYPE weekend_days_enum AS ENUM ('Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday');
 CREATE TYPE interval_enum AS ENUM ('Daily', 'Weekly', 'Monthly');
 CREATE TYPE token_type_enum AS ENUM ('auth', 'reset', 'verify');
+CREATE TYPE pricing_plan_enum AS ENUM ('basic', 'standard', 'premium', 'custom');
 
 -- Tables
 CREATE TABLE accounts (
@@ -22,8 +23,18 @@ CREATE TABLE tokens (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     token VARCHAR(64) UNIQUE NOT NULL,
     token_type token_type_enum NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE subscriptions (
+    subscription_id SERIAL PRIMARY KEY,
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    plan pricing_plan_enum NOT NULL,
+    price NUMERIC(7,2) NOT NULL CHECK (price >= 0), -- If price=0 => free trial
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    plan_details JSONB NULL
 );
 
 CREATE TABLE employees (

@@ -1,16 +1,16 @@
 from typing import Any, Optional
-from datetime import date, time, datetime
+from datetime import date, time, timezone
 from sqlalchemy.dialects.postgresql import array
 from sqlalchemy.orm import Session as _SessionType
 
-from src.server.lib.utils import log, parse_date, parse_time
-from src.server.lib.models import Credentials, Cookies, ScheduleType
+from src.server.lib.utils import log, parse_date, parse_time, utcnow
+from src.server.lib.models import Credentials, Cookies, ScheduleType, SubscriptionInfo
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
-from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, IntervalEnum
+from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, IntervalEnum, PricingPlanName
 from src.server.lib.constants import WEB_SERVER_URL
 from src.server.lib.emails import send_email
 
-from .tables import Account, Token, Employee, Shift, Schedule, Holiday, Settings
+from .tables import Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
 from .utils import (
     dbsession,
     _check_email_is_not_registered,
@@ -32,21 +32,35 @@ from .utils import (
     _get_token_from_account,
     _renew_token,
     _validate_cookies,
-    _get_email_from_token
+    _get_email_from_token,
+    _validate_sub_info,
+    _get_active_sub,
+    _get_or_create_auth_token,
+    _get_or_create_sub
 )
 
 ## Account
 @dbsession(commit=True)
-def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, str]:
+def create_account(cred: Credentials, sub_info: SubscriptionInfo, *, session: _SessionType) -> tuple[Account, Subscription, str]:
     """Creates an account with the provided credentials. Returns the account and a new or the given token."""
     _check_email_is_not_registered(_sanitize_email(cred.email), session=session)
     cred = _sanitize_credentials(cred)
+
+    # Step 1: Create account
     account = Account(email=cred.email, hashed_password=_hash_password(cred.password))
     session.add(account)
+    session.commit()  # Commit to generate account_id
+
+    # Step 2: Create subscription
+    sub_info = _validate_sub_info(account.account_id, sub_info, session=session)
+    sub = Subscription(**sub_info)
+    session.add(sub)
     session.commit()
+
+    # Step 3: Generate token
     token = _create_new_token(account.account_id, session=session)
-    log(f'Successful account creation for email: {account.email}', 'account')
-    return account, token
+    log(f'Successful account creation for email: "{account.email}", Subscription: {sub_info}', 'account')
+    return account, sub, token
 
 
 @dbsession(commit=True)
@@ -107,57 +121,65 @@ def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
 
 ## Auth
 @dbsession()
-def log_in_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, str]:
+def log_in_account(cred: Credentials, *, session: _SessionType) -> tuple[Account, Optional[Subscription], str]:
     """
     Authenticate an account based on the provided credentials.
-    Creates a new token if either no token is given in the cookies, or the cookies are invalid.
+    Retrieves the active subscription and creates a new token if needed.
     """
     account = _authenticate_credentials(cred, session=session)
     retrieved_token_obj = _get_token_from_account(account.account_id, 'auth', session=session)
 
+    # Check if a token is valid or needs to be renewed
     if retrieved_token_obj is None:
         token = _create_new_token(account.account_id, session=session)
-    elif datetime.now() > retrieved_token_obj.expires_at:
+    elif utcnow() > retrieved_token_obj.expires_at.replace(tzinfo=timezone.utc):
         token = _renew_token(account.account_id, session=session)
     else:
         token = retrieved_token_obj.token
+
+    # Retrieve the active subscription for the account
+    sub = _get_active_sub(account.account_id, session=session)
     log(f'Successful login for email: {cred.email}', 'auth')
-    return account, token
+    return account, sub, token
 
 
 @dbsession()
-def log_in_account_with_cookies(cookies: Cookies, *, session: _SessionType) -> Account:
+def log_in_account_with_cookies(cookies: Cookies, *, session: _SessionType) -> tuple[Account, Optional[Subscription]]:
     """Authenticate an account based on the given cookies."""
     if not cookies.available(): raise CookiesUnavailable(cookies)
     account = _validate_cookies(cookies, session=session)
+    sub = _get_active_sub(account.account_id, session=session)
     log(f'Successful login with cookies for email: {account.email}', 'auth')
-    return account
+    return account, sub
 
 
 @dbsession(commit=True)
-def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session: _SessionType) -> tuple[Account, str]:
-    """Logs in a Google user, handling cases where they changed their email in your web app."""
+def log_in_with_google(email: str, access_token: str, oauth_id: str, plan_name: Optional[PricingPlanName] = None, *, session: _SessionType) -> tuple[Account, Optional[Subscription], str]:
+    """Logs in a Google user, handling cases where they changed their email in your web app. 
+    If `plan_name` is provided, it creates a new subscription; otherwise, returns the existing subscription.
+    Ensures the user can only receive one free trial, regardless of plan.
+    """
     email = _sanitize_email(email)
-
-    # Step 1: Find the account by OAuth ID (Primary Key)
     account = session.query(Account).filter(Account.oauth_id == oauth_id).first()
 
     if account:
-        # Step 2: Store OAuth email only the first time
+        # Store OAuth email only the first time
         if account.oauth_email is None:
             account.oauth_email = email  # Store original Google email (first-time login)
-        
-        # Step 3: If the user changed their email in the web app, do NOT overwrite it.
-        # Only update email if it's empty (i.e., first-time login)
+
+        # If the user changed their email in the web app, do NOT overwrite it.
         if not account.email:
             account.email = email  # Set email for first-time login only
-        
-        # Step 4: Update OAuth token
-        account.oauth_token = access_token
-        token_obj = _get_token_from_account(account.account_id, 'auth', session=session)
-        return account, token_obj.token
 
-    # Step 5: If no matching OAuth ID, check if an account exists with the same email
+        # Update OAuth token
+        account.oauth_token = access_token
+        session.commit()
+
+        sub = _get_or_create_sub(account.account_id, plan_name, session=session)
+        token = _get_or_create_auth_token(account.account_id, session=session)
+        return account, sub, token
+
+    # If no matching OAuth ID, check if an account exists with the same email
     existing_account = session.query(Account).filter(Account.email == email).first()
 
     if existing_account:
@@ -173,10 +195,11 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session:
         existing_account.email_verified = True
         session.commit()
 
-        token_obj = _get_token_from_account(existing_account.account_id, 'auth', session=session)
-        return existing_account, token_obj.token
+        sub = _get_or_create_sub(existing_account.account_id, plan_name, session=session)
+        token = _get_or_create_auth_token(existing_account.account_id, session=session)
+        return existing_account, sub, token
 
-    # Step 6: No matching account, create a new one
+    # No matching account => create a new one
     new_account = Account(
         email=email,  # First-time login, set email
         hashed_password=None,  # No password for OAuth users
@@ -190,8 +213,9 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session:
     session.commit()
     session.refresh(new_account)
 
-    token = _create_new_token(new_account.account_id, session=session)
-    return new_account, token
+    sub = _get_or_create_sub(new_account.account_id, plan_name, session=session)
+    token = _get_or_create_auth_token(new_account.account_id, session=session)
+    return new_account, sub, token
 
 
 @dbsession(commit=True)

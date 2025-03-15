@@ -4,8 +4,8 @@ import { dashboardContext, nullAccount } from '@context'
 import { Choice, Switch, Dropdown, Request } from '@utils'
 import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
 import { parseAccount } from '@auth'
-// import type { WeekendDays, InputEvent, Interval } from '@types'
 import type { WeekendDays, InputEvent, AccountResponse } from '@types'
+// import type { WeekendDays, InputEvent, Interval, AccountResponse } from '@types'
 import Sidebar from '../_Sidebar'
 import LoadingScreen from '@/components/_LoadingScreen'
 
@@ -477,15 +477,15 @@ const PreferencesAndFunctionality = () => {
         ).patch({ max_emps_in_shift: newValue })
     }
 
-    /** Switches between light & dark themes */
+    // /** Switches between light & dark themes */
     // const toggleEmailNtf = async () => {
     //     await new Request(
     //         `accounts/${account.id}/settings/toggle_email_ntf`,
-    //         (data: { detail: boolean }) => setSettings(prev => ({...prev, emailNtfEnabled: data.detail ? true : false }))
+    //         (data: { detail: boolean|null }) => setSettings(prev => ({...prev, emailNtfEnabled: data.detail ? true : false }))
     //     ).get()
     // }
 
-    /** Changes the weekend days of the account */
+    // /** Changes the weekend days of the account */
     // const changeEmailNtfInterval = async (option: string) => {
     //     setSelectedEmailNtfInterval(option as Interval)
     //     await new Request(

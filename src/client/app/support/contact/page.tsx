@@ -1,9 +1,12 @@
 'use client'
 import { useState, FormEvent, ChangeEvent, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Dropdown, Request, setMetadata } from '@utils'
 import RegularPage from '@regpage'
 
 const QUERY_TYPES = [
+    'General Inquiry',
+    'Custom Plan',
     'Technical Issue',
     'Bug Report',
     'Feature Suggestion',
@@ -11,13 +14,13 @@ const QUERY_TYPES = [
     'Business Inquiry',
     'Partnership & Collaboration',
     'Billing & Payment Issue',
+    'Refund Request',
     'Account Access Issue',
     'Unable to Log In',
     'Integration Request',
     'Customization Inquiry',
     'Data & Privacy Concerns',
     'Job & Career Opportunities',
-    'General Inquiry',
     'Other'
 ] as const
 
@@ -33,6 +36,8 @@ const DEFAULT_QUERY_TYPE: QueryType = 'General Inquiry'
 const DEFAULT_SUBMISSION_DATA: SubmissionData = { name: '', email: '', queryType: DEFAULT_QUERY_TYPE, description: '' }
 
 export default function Contact() {
+    const params = useSearchParams()
+    const queryType = params.get('query_type')
     const [formData, setFormData] = useState<SubmissionData>(DEFAULT_SUBMISSION_DATA)
     const [submitted, setSubmitted] = useState(false)
     const [errMsg, setErrMsg] = useState<string>('')
@@ -67,7 +72,10 @@ export default function Contact() {
             title: 'Contact Us | Shiftiatrics',
             description: 'Contact us to seek our help regarding your issues'
         })
-    }, [])
+
+        if (queryType === 'custom_plan') setFormData({ ...formData, queryType: 'Custom Plan' })
+        if (queryType === 'partnership') setFormData({ ...formData, queryType: 'Partnership & Collaboration' })
+    }, [formData, queryType])
 
     return (
         <RegularPage id='contact-page'>
