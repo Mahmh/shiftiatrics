@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.sql import exists
 import unicodedata, re, bcrypt, inspect, secrets
-from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PRICING, PREDEFINED_PRICING_PLANS
+from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PRICING, PREDEFINED_SUB_INFOS
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
 from src.server.lib.types import TokenType, PricingPlanName
@@ -400,15 +400,16 @@ def _get_or_create_auth_token(account_id: int, *, session: _SessionType) -> Toke
 
 def _get_or_create_sub(account_id: int, plan_name: Optional[PricingPlanName] = None, *, session: _SessionType) -> Optional[Subscription]:
     """Gets the active subscription or creates a new one if a plan is provided. Ensures the user gets only ONE free trial ever."""
+    account = session.get(Account, account_id)
     has_used_trial = _has_used_trial(account_id, session=session)
     sub = _get_active_sub(account_id, session=session)
 
     # Prevent OAuth user from logging out in order to start a free trial on another plan
-    if has_used_trial and sub.plan != plan_name:
+    if has_used_trial and sub.plan.value != plan_name and account.oauth_provider is not None:
         return sub
 
-    if plan_name and (sub is None or sub.plan != plan_name):
-        sub_info = _validate_sub_info(account_id, PREDEFINED_PRICING_PLANS[plan_name], session=session)
+    if plan_name and (sub is None or sub.plan.value != plan_name):
+        sub_info = _validate_sub_info(account_id, PREDEFINED_SUB_INFOS[plan_name], session=session)
         sub = Subscription(**sub_info)
         session.add(sub)
         session.commit()

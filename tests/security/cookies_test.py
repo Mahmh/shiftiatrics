@@ -1,41 +1,41 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
-from tests.utils import ctxtest
+from src.server.lib.models import Credentials
+from src.server.lib.constants import PREDEFINED_SUB_INFOS
+from tests.utils import ctxtest, login, signup, CRED, SUB_INFO
 
 # Init
 client = TestClient(app)
-CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
-CRED2 = {'email': 'testuser2@gmail.com', 'password': 'testpass2'}
-create_account = lambda cred: client.post('/accounts/signup', json=cred)
-login = lambda: client.post('/auth/login', json=CRED)
+CRED2 = Credentials(email='testuser2@gmail.com', password='testpass2')
+SUB_INFO2 = PREDEFINED_SUB_INFOS['premium']
 
 @ctxtest()
 def setup_and_teardown():
-    create_account(CRED2)
-    create_account(CRED)
+    signup(client, CRED2, SUB_INFO2)
+    signup(client, CRED, SUB_INFO)
     yield
 
 
 # Tests
 def test_store_cookies():
-    response = login()
+    response = login(client)
     assert response.status_code == 200
     assert 'account_id' in response.cookies
     assert 'auth_token' in response.cookies
 
 
 def test_retrieve_cookies():
-    response = login()
+    response = login(client)
     assert response.status_code == 200
     client.cookies.set('account_id', response.cookies.get('account_id'))
     client.cookies.set('auth_token', response.cookies.get('auth_token'))
     response = client.get('/auth/log_in_account_with_cookies')
     assert response.status_code == 200
-    assert response.json().get('account_id') == 2
+    assert response.json()['account']['account_id'] == 2
 
 
 def test_clear_cookies():
-    response = login()
+    response = login(client)
     assert response.status_code == 200
     client.cookies.set('account_id', response.cookies.get('account_id'))
     client.cookies.set('auth_token', response.cookies.get('auth_token'))

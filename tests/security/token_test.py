@@ -1,18 +1,15 @@
 from datetime import datetime, timedelta
 import pytest
 from src.server.lib.utils import utcnow
-from src.server.lib.models import Credentials, Cookies
+from src.server.lib.models import Cookies
 from src.server.lib.exceptions import InvalidCookies, NonExistent
 from src.server.db import Session, create_account, _renew_token, _generate_new_token, _get_token_from_account, _validate_cookies
-from tests.utils import ctxtest
+from tests.utils import ctxtest, CRED, SUB_INFO
 
 # Init
-CRED = Credentials(email='testuser@gmail.com', password='testpass')
-
 @ctxtest()
 def setup_and_teardown():
-    out = create_account(CRED)
-    account, token = out
+    account, _, token = create_account(CRED, SUB_INFO)
     yield account.account_id, token
 
 

@@ -1,35 +1,41 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
-from tests.utils import ctxtest
+from src.server.lib.models import Credentials
+from src.server.lib.constants import PREDEFINED_SUB_INFOS
+from tests.utils import ctxtest, login, signup, CRED, SUB_INFO
 
 # Init
 client = TestClient(app)
-CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
-create_account = lambda cred: client.post('/accounts/signup', json=cred)
-login_account = lambda cred: client.post('/auth/login', json=cred)
 
 @ctxtest()
 def setup_and_teardown():
-    create_account(CRED)
+    signup(client)
     yield
 
 
 # Tests
-def test_login_account():
-    response = login_account(CRED)
+def test_login():
+    response = login(client)
     assert response.status_code == 200
     assert response.cookies.get('account_id') == '1'
     assert response.cookies.get('auth_token') != None
-    assert response.json()['email'] == CRED['email']
+
+    response_data = response.json()
+    assert response_data['account']['email'] == CRED.email
+    assert response_data['subscription']['plan'] == SUB_INFO.plan
 
 
 def test_create_new_account():
-    new_cred = {'email': 'newuser@gmail.com', 'password': 'newpass123'}
-    response = create_account(new_cred)
+    new_cred = Credentials(email='newuser@gmail.com', password='newpass123')
+    new_sub = PREDEFINED_SUB_INFOS['standard']
+    response = signup(client, new_cred, new_sub)
     assert response.status_code == 200
     assert response.cookies.get('account_id') == '2'
     assert response.cookies.get('auth_token') != None
-    assert response.json()['email'] == new_cred['email']
+
+    response_data = response.json()
+    assert response_data['account']['email'] == new_cred.email
+    assert response_data['subscription']['plan'] == new_sub.plan
 
 
 def test_update_email():
@@ -40,10 +46,10 @@ def test_update_email():
 
 
 def test_update_password():
-    account = login_account(CRED).json()
+    account = login(client).json()['account']
     old_password_hash = account['hashed_password']
 
-    payload = {'current_password': CRED['password'], 'new_password': 'thenewpass'}
+    payload = {'current_password': CRED.password, 'new_password': 'thenewpass'}
     response = client.patch('/accounts/password', json=payload)
     assert response.status_code == 200
     assert response.json()['hashed_password'] != old_password_hash

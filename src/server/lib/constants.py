@@ -17,12 +17,12 @@ PSQL_DB = os.getenv('POSTGRES_DB')
 PSQL_USER = os.getenv('POSTGRES_USER')
 PSQL_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 ENGINE_URL = f'postgresql+psycopg2://{PSQL_USER}:{PSQL_PASSWORD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
-PRICING = {
+PRICING: dict[PricingPlanName, float] = {
     'basic': 19.99,
     'standard': 69.99,
     'premium': 99.99
 }
-PREDEFINED_PRICING_PLANS: dict[PricingPlanName, SubscriptionInfo] = {
+PREDEFINED_SUB_INFOS: dict[PricingPlanName, SubscriptionInfo] = {
     'basic': SubscriptionInfo(plan='basic', price=PRICING['basic'], plan_details=PlanDetails(max_num_pediatricians=5, max_num_shifts_per_day=2)),
     'standard': SubscriptionInfo(plan='standard', price=PRICING['standard'], plan_details=PlanDetails(max_num_pediatricians=12, max_num_shifts_per_day=4)),
     'premium': SubscriptionInfo(plan='premium', price=PRICING['premium'], plan_details=PlanDetails(max_num_pediatricians=99, max_num_shifts_per_day=99))

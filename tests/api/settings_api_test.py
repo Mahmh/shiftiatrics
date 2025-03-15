@@ -1,16 +1,14 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.types import WeekendDaysEnum, IntervalEnum
-from tests.utils import ctxtest
+from tests.utils import ctxtest, signup
 
 # Init
 client = TestClient(app)
-CRED = {'email': 'testuser@gmail.com', 'password': 'testpass'}
-create_account = lambda cred: client.post('/accounts/signup', json=cred)
 
 @ctxtest()
 def setup_and_teardown():
-    account_id = create_account(CRED).json()['account_id']
+    account_id = signup(client).json()['account']['account_id']
     yield account_id
 
 

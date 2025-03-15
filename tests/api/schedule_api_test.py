@@ -1,21 +1,15 @@
-import pytest
 from fastapi.testclient import TestClient
 from src.server.main import app
-from tests.utils import ctxtest
+from tests.utils import ctxtest, signup, create_schedule, delete_schedule
 
 # Init
 client = TestClient(app)
-CRED = {'email': 'testuser2@gmail.com', 'password': 'testpass'}
-create_account = lambda cred: client.post('/accounts/signup', json=cred)
-
-SCHEDULE_DATA = {'schedule': [[[1, 2], [3, 4]]], 'month': 11, 'year': 2024}
-create_schedule = lambda account_id, schedule_data: client.post(f'/accounts/{account_id}/schedules', json=schedule_data)
-delete_schedule = lambda schedule_id: client.request('DELETE', f'/schedules/{schedule_id}')
+SCHEDULE = {'schedule': [[[1, 2], [3, 4]]], 'month': 11, 'year': 2024}
 
 @ctxtest()
 def setup_and_teardown():
-    account_id = create_account(CRED).json()['account_id']
-    schedule_id = create_schedule(account_id, SCHEDULE_DATA).json()['schedule_id']
+    account_id = signup(client).json()['account']['account_id']
+    schedule_id = create_schedule(client, account_id, SCHEDULE).json()['schedule_id']
     yield account_id, schedule_id
 
 
@@ -30,14 +24,14 @@ def test_read_schedules(setup_and_teardown):
 def test_create_new_schedule(setup_and_teardown):
     account_id, _ = setup_and_teardown
     new_schedule_data = {'schedule': [[[5, 6], [7]]], 'month': 7, 'year': 2025}
-    response = create_schedule(account_id, new_schedule_data)
+    response = create_schedule(client, account_id, new_schedule_data)
     assert response.status_code == 200
 
     response_data = response.json()
     assert response_data['schedule'] == new_schedule_data['schedule']
     assert response_data['month'] == new_schedule_data['month']
     assert response_data['year'] == new_schedule_data['year']
-    delete_schedule(response_data['schedule_id'])
+    delete_schedule(client, response_data['schedule_id'])
 
 
 def test_update_existing_schedule(setup_and_teardown):
@@ -50,6 +44,6 @@ def test_update_existing_schedule(setup_and_teardown):
 
 def test_delete_existing_schedule(setup_and_teardown):
     _, schedule_id = setup_and_teardown
-    response = delete_schedule(schedule_id)
+    response = delete_schedule(client, schedule_id)
     assert response.status_code == 200
     assert response.json()['detail'] == 'Schedule deleted successfully'
