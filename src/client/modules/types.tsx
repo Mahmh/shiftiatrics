@@ -41,7 +41,7 @@ export interface ContextProps {
     setShifts: SetState<Shift[]>
     loadShifts: () => void
 
-    schedules: YearToSchedules,
+    schedules: YearToSchedules
     setSchedules: SetState<YearToSchedules>
     setScheduleValidity: (validity: boolean, year: number, month: number) => void
     getScheduleValidity: (year: number, month: number) => boolean | undefined
@@ -84,6 +84,7 @@ export interface SubscriptionResponse {
     plan_details: {
         max_num_pediatricians: number
         max_num_shifts_per_day: number
+        max_num_schedule_requests: number
     }
 }
 
@@ -142,6 +143,7 @@ export interface FAQ {
 export interface PlanDetails {
     maxNumPediatricians: number
     maxNumShiftsPerDay: number
+    maxNumScheduleRequests: number
 }
 
 export interface PricingPlan {

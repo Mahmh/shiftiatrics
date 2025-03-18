@@ -50,6 +50,7 @@ class ContactUsSubmissionData(BaseModel):
 class PlanDetails(BaseModel):
     max_num_pediatricians: int
     max_num_shifts_per_day: int
+    max_num_schedule_requests: int
 
 
 class SubscriptionInfo(BaseModel):

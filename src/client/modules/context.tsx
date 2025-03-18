@@ -22,7 +22,7 @@ const nullSub: Subscription = {
     id: -Infinity,
     plan: 'basic',
     price: -Infinity,
-    planDetails: { maxNumPediatricians: -Infinity, maxNumShiftsPerDay: -Infinity },
+    planDetails: { maxNumPediatricians: -Infinity, maxNumShiftsPerDay: -Infinity, maxNumScheduleRequests: -Infinity },
     createdAt: '',
     expiresAt: ''
 }
@@ -75,7 +75,7 @@ export const dashboardContext = createContext<ContextProps>({
 export function DashboardProvider({ children }: ReadonlyChildren) {
     const [content, setContent] = useState<ContentName>(defaultContent)
     const [account, setAccount] = useState<Account>(nullAccount)
-    const [subscription, setSubscription] = useState<Subscription>(nullSub)
+    const [subscription, setSubscription] = useState<Subscription | null>(nullSub)
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())

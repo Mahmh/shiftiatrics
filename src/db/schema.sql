@@ -57,8 +57,14 @@ CREATE TABLE schedules (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     schedule_id SERIAL PRIMARY KEY,
     schedule JSONB NOT NULL,  -- Array (month) of arrays (days) of arrays (shifts) of employee IDs
-    month INT NOT NULL,
+    month INT NOT NULL,  -- [0-11]
     year INT NOT NULL
+);
+
+CREATE TABLE schedule_requests (
+    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    num_requests INT NOT NULL,
+    month INT NOT NULL  -- [1-12]
 );
 
 CREATE TABLE holidays (

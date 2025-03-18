@@ -4,12 +4,12 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.sql import exists
 import unicodedata, re, bcrypt, inspect, secrets
-from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PRICING, PREDEFINED_SUB_INFOS
+from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PREDEFINED_SUB_INFOS
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
 from src.server.lib.types import TokenType, PricingPlanName
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
-from src.server.db.tables import Session, Account, Token, Employee, Shift, Schedule, Holiday, Settings, Subscription
+from src.server.db.tables import Session, Account, Token, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings, Subscription
 
 def _handle_args(args: tuple) -> tuple:
     # Sanitize credentials if the first parameter is of type `Credentials`
@@ -415,3 +415,25 @@ def _get_or_create_sub(account_id: int, plan_name: Optional[PricingPlanName] = N
         session.commit()
         log(f'Subscription created for account ID {account_id}: {sub}', 'subscription')
     return sub
+
+
+def _check_schedule_requests(account_id: int, *, session: _SessionType) -> None:
+    """Validates if an account is permitted to send a schedule request."""
+    sub = _get_active_sub(account_id, session=session)
+    schedule_requests = session.get(ScheduleRequests, account_id)
+    current_month = utcnow().month
+
+    if current_month > schedule_requests.month:
+        schedule_requests.num_requests = 1
+        schedule_requests.month = current_month
+        session.commit()
+
+    if schedule_requests.num_requests > sub.plan_details['max_num_schedule_requests']:
+        raise ValueError(f'Max number of schedule requests for account ID {account_id} was reached.')
+
+
+def _increment_schedule_requests(account_id: int, *, session: _SessionType):
+    """Increments the number of schedule requests counter after generating/regenerating schedule(s)."""
+    schedule_requests = session.get(ScheduleRequests, account_id)
+    schedule_requests.num_requests += 1
+    session.commit()

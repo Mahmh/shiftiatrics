@@ -119,6 +119,37 @@ a {
         padding: 20px;
         padding-top: 90px;
     }
+
+    .dashboard-card {
+        @include themed-bgcolor('pale-blue', 'secondary-blue');
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 25px;
+        border-radius: 20px;
+        box-shadow: $main-box-shadow;
+
+        .dashboard-card-details {
+            @include vertical-flex;
+            padding-bottom: 10px;
+        }
+
+        h1 { font-size: 1.5rem }
+        h1, span, b { @include themed-color('primary-text') }
+
+        div {
+            @include breakpoint(950px) { flex-direction: column }
+            display: flex;
+            gap: 10px;
+
+            button {
+                @include circle(50px);
+                @include compressible;
+                background-color: get-color('background');
+                &:hover { background-color: get-color('light-gray') }
+            }
+        }
+    }
 }
 
 

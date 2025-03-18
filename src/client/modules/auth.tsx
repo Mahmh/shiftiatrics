@@ -19,7 +19,8 @@ export const parseSub = (data: SubscriptionResponse): Subscription => ({
     expiresAt: data.expires_at,
     planDetails: {
         maxNumPediatricians: data.plan_details.max_num_pediatricians,
-        maxNumShiftsPerDay: data.plan_details.max_num_shifts_per_day
+        maxNumShiftsPerDay: data.plan_details.max_num_shifts_per_day,
+        maxNumScheduleRequests: data.plan_details.max_num_schedule_requests
     }
 })
 

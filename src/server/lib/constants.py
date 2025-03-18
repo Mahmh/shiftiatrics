@@ -23,9 +23,21 @@ PRICING: dict[PricingPlanName, float] = {
     'premium': 99.99
 }
 PREDEFINED_SUB_INFOS: dict[PricingPlanName, SubscriptionInfo] = {
-    'basic': SubscriptionInfo(plan='basic', price=PRICING['basic'], plan_details=PlanDetails(max_num_pediatricians=5, max_num_shifts_per_day=2)),
-    'standard': SubscriptionInfo(plan='standard', price=PRICING['standard'], plan_details=PlanDetails(max_num_pediatricians=12, max_num_shifts_per_day=4)),
-    'premium': SubscriptionInfo(plan='premium', price=PRICING['premium'], plan_details=PlanDetails(max_num_pediatricians=99, max_num_shifts_per_day=99))
+    'basic': SubscriptionInfo(
+        plan='basic',
+        price=PRICING['basic'],
+        plan_details=PlanDetails(max_num_pediatricians=5, max_num_shifts_per_day=2, max_num_schedule_requests=10)
+    ),
+    'standard': SubscriptionInfo(
+        plan='standard',
+        price=PRICING['standard'],
+        plan_details=PlanDetails(max_num_pediatricians=12, max_num_shifts_per_day=4, max_num_schedule_requests=30)
+    ),
+    'premium': SubscriptionInfo(
+        plan='premium',
+        price=PRICING['premium'],
+        plan_details=PlanDetails(max_num_pediatricians=999, max_num_shifts_per_day=999, max_num_schedule_requests=999)
+    )
 }
 
 # Security

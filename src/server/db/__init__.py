@@ -16,5 +16,6 @@ from .utils import (
     _get_active_sub,
     _has_used_trial,
     _get_or_create_auth_token,
-    _get_or_create_sub
+    _get_or_create_sub,
+    _check_schedule_requests
 )

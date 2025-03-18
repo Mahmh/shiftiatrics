@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { dashboardContext } from '@context'
 import { Icon, Request, Choice } from '@utils'
-import { MAX_WORK_HOURS } from '@const'
+import { MAX_WORK_HOURS, PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Employee, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
@@ -149,8 +149,12 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
     }
 
     return (
-        <div className='employee-card'>
-            <h1>{name}</h1>
+        <div className='dashboard-card'>
+            <div className='dashboard-card-details' style={minWorkHours && maxWorkHours && settings.minMaxWorkHoursEnabled ? { paddingBottom: 10 } : {}}>
+                <h1>{name}</h1>
+                {minWorkHours && settings.minMaxWorkHoursEnabled && <span><b>Min work hours:</b> {minWorkHours}</span>}
+                {maxWorkHours && settings.minMaxWorkHoursEnabled && <span><b>Max work hours:</b> {maxWorkHours}</span>}
+            </div>
             <div>
                 <button onClick={openEditModal}><Icon src={editIcon} alt='Edit'/></button>
                 <button onClick={openDeleteModal}><Icon src={removeIcon} alt='Remove'/></button>
@@ -165,6 +169,12 @@ export default function Employees() {
 
     /** Displays a modal for adding an employee */
     const openAddModal = () => {
+        if (subscription === null) {
+            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
+            openModal()
+            return
+        }
+
         const AddModalContent = () => {
             const [tempName, setTempName] = useState('')
             const [tempMinWorkHours, setTempMinWorkHours] = useState<number>(0)

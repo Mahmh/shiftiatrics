@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { dashboardContext } from '@context'
 import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName } from '@utils'
-import { MIN_YEAR, MAX_YEAR } from '@const'
+import { MIN_YEAR, MAX_YEAR, PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
 import Sidebar from '../_Sidebar'
 import closeIcon from '@icons/close.png'
@@ -10,7 +10,7 @@ import nextIcon from '@icons/next.png'
 
 export default function Schedules() {
     const {
-        account, employees, validateEmployeeById, shifts, 
+        account, subscription, employees, validateEmployeeById, shifts, 
         schedules, setSchedules, setScheduleValidity, getScheduleValidity,
         setModalContent, openModal, closeModal, setContent, settings
     } = useContext(dashboardContext)
@@ -25,6 +25,25 @@ export default function Schedules() {
         [schedules, selectedYear, selectedMonth]
     )
 
+    /** Handles the max number of schedule requests error */
+    const handleMaxScheduleRequestsLimit = useCallback((error: string) => {
+        if (subscription === null) {
+            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
+            openModal()
+            return
+        }
+
+        if (error.includes('Max number of schedule requests')) {
+            setModalContent(<>
+                <h1>Schedule Request Limit Reached</h1>
+                <p>
+                    You&apos;ve reached the maximum number of schedule requests ({subscription.planDetails.maxNumScheduleRequests}) for this month. 
+                    Your limit will reset on the 1st of next month, or you can upgrade now for more!
+                </p>
+            </>)
+            openModal()
+        }
+    }, [subscription, openModal, setModalContent])
 
     /** Stores the schedule in DB */
     const storeSchedule = useCallback(async (schedule: ScheduleOfIDs) => {
@@ -47,8 +66,9 @@ export default function Schedules() {
                     return updatedSchedules
                 })
             },
+            handleMaxScheduleRequestsLimit
         ).post({ year: selectedYear, month: selectedMonth, schedule })
-    }, [account.id, employees, selectedMonth, selectedYear, setSchedules, validateEmployeeById])
+    }, [account.id, employees, selectedMonth, selectedYear, setSchedules, validateEmployeeById, handleMaxScheduleRequestsLimit])
 
     /** Overwrites the previously generated schedule in DB */
     const updateSchedule = useCallback(async (scheduleId: number, schedule: ScheduleOfIDs) => {
@@ -73,8 +93,9 @@ export default function Schedules() {
                     return updatedSchedules
                 })
             },
+            handleMaxScheduleRequestsLimit
         ).patch({ schedule })
-    }, [employees, setSchedules, validateEmployeeById])
+    }, [employees, setSchedules, validateEmployeeById, handleMaxScheduleRequestsLimit])
 
 
     /** Displays a modal for generating a schedule */
@@ -344,14 +365,19 @@ export default function Schedules() {
             </section>
             {
                 !getScheduleValidity(selectedYear, selectedMonth) 
-                    ? <p className='header-msg invalid-msg'>
+                ? 
+                    <p className='header-msg invalid-msg'>
                         <span>This schedule seems to be invalid or outdated. Please try to regenerate it.</span>
                         <button onClick={() => setScheduleValidity(true, selectedYear, selectedMonth)}><Icon src={closeIcon} alt='Close'/></button>
-                      </p>
-                    : !scheduleAvailable &&
-                        <p className='header-msg'>
-                            {isLoading ? 'Generating...' : 'No schedule generated yet for this month. Click "Generate Schedule" to automatically generate one.'}
-                        </p>
+                    </p>
+                :
+                    <p className='header-msg' style={!isLoading && scheduleAvailable ? { display: 'none' } : {}}>
+                        {
+                            isLoading
+                            ? 'Generating...' 
+                            : !scheduleAvailable && 'No schedule generated yet for this month. Click "Generate Schedule" to automatically generate one.'
+                        }
+                    </p>
             }
         </header>
         {scheduleAvailable && (

@@ -40,7 +40,7 @@ def test_validate_sub_info_custom_plan(setup_and_teardown):
         plan='custom',
         price=20.0,
         expires_at=utcnow() + timedelta(days=30),
-        plan_details=PlanDetails(max_num_pediatricians=10, max_num_shifts_per_day=5)
+        plan_details=PlanDetails(max_num_pediatricians=10, max_num_shifts_per_day=5, max_num_schedule_requests=20)
     )
 
     result = _validate_sub_info(account_id, custom_plan_info, session=session)
@@ -50,6 +50,7 @@ def test_validate_sub_info_custom_plan(setup_and_teardown):
     assert result['expires_at'] > utcnow()
     assert result['plan_details']['max_num_pediatricians'] == custom_plan_info.plan_details.max_num_pediatricians
     assert result['plan_details']['max_num_shifts_per_day'] == custom_plan_info.plan_details.max_num_shifts_per_day
+    assert result['plan_details']['max_num_schedule_requests'] == custom_plan_info.plan_details.max_num_schedule_requests
 
 
 def test_validate_sub_info_trial(setup_and_teardown):

@@ -8,7 +8,7 @@ import Link from 'next/link'
 import routeIcon from '@icons/route.png'
 import { dashboardContext } from '@context'
 import { PRICING_PLANS } from '@const'
-import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PricingPlanName } from '@types'
+import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PricingPlanName, Subscription } from '@types'
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -215,7 +215,8 @@ export const pySerializePlan = (name: PricingPlanName) => {
         price: plan.price,
         plan_details: {
             max_num_pediatricians:  plan.details?.maxNumPediatricians,
-            max_num_shifts_per_day: plan.details?.maxNumShiftsPerDay
+            max_num_shifts_per_day: plan.details?.maxNumShiftsPerDay,
+            max_num_schedule_requests: plan.details?.maxNumScheduleRequests
         }
     }
 }

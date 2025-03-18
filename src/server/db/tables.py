@@ -102,6 +102,14 @@ class Schedule(Base):
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
 
 
+class ScheduleRequests(Base):
+    __tablename__ = 'schedule_requests'
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), primary_key=True)
+    num_requests = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    __repr__ = lambda self: f'ScheduleRequests({self.account_id})'
+
+
 class Holiday(Base):
     __tablename__ = 'holidays'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)

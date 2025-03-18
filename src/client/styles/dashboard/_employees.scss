@@ -1,31 +1,7 @@
 #employees-content {
     @include vertical-flex;
 
-    .employee-card {
-        @include themed-bgcolor('pale-blue', 'secondary-blue');
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 25px;
-        border-radius: 20px;
-        box-shadow: $main-box-shadow;
-
-        h1 {
-            @include themed-color('primary-text');
-            font-size: 1.5rem;
-        }
-
-        div {
-            @include breakpoint(950px) { flex-direction: column }
-            display: flex;
-            gap: 10px;
-
-            button {
-                @include circle(50px);
-                @include compressible;
-                background-color: get-color('background');
-                &:hover { background-color: get-color('light-gray') }
-            }
-        }
+    .dashboard-card .dashboard-card-details {
+        padding-bottom: 0;
     }
 }

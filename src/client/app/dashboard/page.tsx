@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getMonthName, setMetadata } from '@utils'
 import { isLoggedIn } from '@auth'
 import { dashboardContext } from '@context'
+import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Subscription } from '@types'
 import DashboardPage from '@/components/dashboard/DashboardPage'
 
@@ -11,15 +12,6 @@ export default function Dashboard() {
     const router = useRouter()
     const { setAccount, setSubscription, openModal, setModalContent } = useContext(dashboardContext)
     const [authChecked, setAuthChecked] = useState(false)
-
-    const PlanExpiredModalContent = () => <>
-        <h1>Your Subscription Has Expired</h1>
-        <p>
-            Your access has been paused because your subscription has expired. Renew now to continue enjoying all features.
-        </p>
-        <button>Renew or Upgrade Now</button>
-    </>
-
 
     const checkIsSubExpiringSoon = useCallback((subscription: Subscription) => {
         const now = new Date()
@@ -53,7 +45,7 @@ export default function Dashboard() {
         setAuthChecked(true) // Ensure rendering only happens after auth check
 
         if (res.subscription === null) {
-            setModalContent(<PlanExpiredModalContent/>)
+            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
             openModal()
             return
         }

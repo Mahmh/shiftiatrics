@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react'
 import { dashboardContext } from '@context'
 import { Icon, Request, Choice, getMonthName } from '@utils'
+import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Holiday, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
@@ -140,8 +141,8 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
     }
 
     return (
-        <div className='holiday-card' key={id}>
-            <div className='holiday-details'>
+        <div className='dashboard-card'>
+            <div className='dashboard-card-details'>
                 <h1>{name}</h1>
                 <span><b>Starts:</b> {convertToUserFriendlyDate(startDate)}</span>
                 <span><b>Ends:</b> {convertToUserFriendlyDate(endDate)}</span>
@@ -156,9 +157,15 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
 }
 
 export default function Holidays() {
-    const { account, employees, holidays, setModalContent, openModal, closeModal, setContent, loadHolidays } = useContext(dashboardContext)
+    const { account, subscription, employees, holidays, setModalContent, openModal, closeModal, setContent, loadHolidays } = useContext(dashboardContext)
 
     const openAddModal = () => {
+        if (subscription === null) {
+            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
+            openModal()
+            return
+        }
+        
         const AddModalContent = () => {
             const [tempName, setTempName] = useState('')
             const [assignedTo, setAssignedTo] = useState<number[]>([])

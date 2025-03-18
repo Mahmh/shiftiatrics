@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react'
 import { dashboardContext } from '@context'
 import { Icon, Request, Choice, formatTimeToAMPM } from '@utils'
+import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Shift, InputEvent } from '@types'
 import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
@@ -95,8 +96,8 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
     }
 
     return (
-        <div className='shift-card'>
-            <div className='shift-details'>
+        <div className='dashboard-card'>
+            <div className='dashboard-card-details'>
                 <h1>{name}</h1>
                 <span><b>Starts:</b> {formatTimeToAMPM(startTime)}</span>
                 <span><b>Ends:</b> {formatTimeToAMPM(endTime)}</span>
@@ -117,6 +118,12 @@ export default function Shifts() {
     const { account, subscription, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
 
     const openAddModal = () => {
+        if (subscription === null) {
+            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
+            openModal()
+            return
+        }
+
         const AddModalContent = () => {
             const [tempName, setTempName] = useState('')
             const [tempStartTime, setStartTime] = useState('')
@@ -186,17 +193,20 @@ export default function Shifts() {
         }
 
         const SubLimitModalContent = () => {
-            return <>
+            return subscription ? <>
                 <h1>Shift Limit Reached</h1>
                 <p>
-                You have reached the maximum number of shifts allowed per day ({subscription.planDetails.maxNumShiftsPerDay}).
-                Please upgrade your plan to schedule more.
+                    You have reached the maximum number of shifts allowed per day ({subscription.planDetails.maxNumShiftsPerDay}).
+                    Please upgrade your plan to schedule more.
                 </p>
+            </> : <>
+                <h1>Subscription Ended</h1>
+                <p>Please either renew or upgrade your plan to continue using this service.</p>
             </>
         }
 
         setModalContent(
-            shifts.length < subscription.planDetails.maxNumShiftsPerDay 
+            subscription && (shifts.length < subscription.planDetails.maxNumShiftsPerDay)
             ? <AddModalContent/>
             : <SubLimitModalContent/>
         )

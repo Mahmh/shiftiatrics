@@ -32,7 +32,8 @@
 
     .card-container {
         @include themed-bgcolor('background');
-        @include breakpoint(2500px) { margin-left: 130px }
+        @include breakpoint(2510px) { margin-left: 130px }
+        @include breakpoint(2300px) { margin-left: 50px }
         @include breakpoint(2000px) { margin-left: 70px }
         @include breakpoint(1822px) { margin-left: 50px }
         @include breakpoint(1100px) { padding-top: 130px }
@@ -57,6 +58,7 @@
             border-radius: 10px;
             flex: 1;
             margin: 5px;
+            min-width: 300px;
 
             h3 {
                 @include themed-color('primary-text', 'light-gray');

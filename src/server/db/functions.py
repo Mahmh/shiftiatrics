@@ -10,7 +10,7 @@ from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, Interva
 from src.server.lib.constants import WEB_SERVER_URL
 from src.server.lib.emails import send_email
 
-from .tables import Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
+from .tables import Account, Token, Subscription, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
 from .utils import (
     dbsession,
     _check_email_is_not_registered,
@@ -36,7 +36,9 @@ from .utils import (
     _validate_sub_info,
     _get_active_sub,
     _get_or_create_auth_token,
-    _get_or_create_sub
+    _get_or_create_sub,
+    _check_schedule_requests,
+    _increment_schedule_requests
 )
 
 ## Account
@@ -57,7 +59,12 @@ def create_account(cred: Credentials, sub_info: SubscriptionInfo, *, session: _S
     session.add(sub)
     session.commit()
 
-    # Step 3: Generate token
+    # Step 3: Set number of schedule requests
+    schedule_requests = ScheduleRequests(account_id=account.account_id, num_requests=1, month=utcnow().month)
+    session.add(schedule_requests)
+    session.commit()
+
+    # Step 4: Generate token
     token = _create_new_token(account.account_id, session=session)
     log(f'Successful account creation for email: "{account.email}", Subscription: {sub_info}', 'account')
     return account, sub, token
@@ -212,6 +219,10 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, plan_name: 
     session.add(new_account)
     session.commit()
     session.refresh(new_account)
+
+    schedule_requests = ScheduleRequests(account_id=new_account.account_id, num_requests=1, month=utcnow().month)
+    session.add(schedule_requests)
+    session.commit()
 
     sub = _get_or_create_sub(new_account.account_id, plan_name, session=session)
     token = _get_or_create_auth_token(new_account.account_id, session=session)
@@ -420,8 +431,10 @@ def create_schedule(account_id: int, schedule: ScheduleType, month: int, year: i
     """Creates a schedule for the given account ID."""
     _check_month_and_year(month, year)
     _check_account(account_id, session=session)
+    _check_schedule_requests(account_id, session=session)
     schedule = Schedule(account_id=account_id, schedule=schedule, month=month, year=year)
     session.add(schedule)
+    _increment_schedule_requests(account_id, session=session)
     log(f'Created schedule: {schedule}', 'db')
     return schedule
 
@@ -430,12 +443,14 @@ def create_schedule(account_id: int, schedule: ScheduleType, month: int, year: i
 def update_schedule(schedule_id: int, updates: dict[str, Any], *, session: _SessionType) -> Schedule:
     """Updates a schedule's attributes based on the given schedule ID and updates."""
     schedule = _check_schedule(schedule_id, session=session)
+    _check_schedule_requests(schedule.account_id, session=session)
 
     ALLOWED_FIELDS = {'schedule'}
     for key, value in updates.items():
         if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
         setattr(schedule, key, value)
 
+    _increment_schedule_requests(schedule.account_id, session=session)
     log(f'Updated schedule: {schedule}, updates: {updates}', 'db')
     return schedule
 
@@ -444,7 +459,9 @@ def update_schedule(schedule_id: int, updates: dict[str, Any], *, session: _Sess
 def delete_schedule(schedule_id: int, *, session: _SessionType) -> None:
     """Deletes a schedule by its ID."""
     schedule = _check_schedule(schedule_id, session=session)
+    _check_schedule_requests(schedule.account_id, session=session)
     session.delete(schedule)
+    _increment_schedule_requests(schedule.account_id, session=session)
     log(f'Deleted schedule: {schedule}', 'db')
 
 
