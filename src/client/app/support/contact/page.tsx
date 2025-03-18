@@ -73,9 +73,9 @@ export default function Contact() {
             description: 'Contact us to seek our help regarding your issues'
         })
 
-        if (queryType === 'custom_plan') setFormData({ ...formData, queryType: 'Custom Plan' })
-        if (queryType === 'partnership') setFormData({ ...formData, queryType: 'Partnership & Collaboration' })
-    }, [formData, queryType])
+        if (queryType === 'custom_plan') setFormData(prev => ({ ...prev, queryType: 'Custom Plan' }))
+        if (queryType === 'partnership') setFormData(prev => ({ ...prev, queryType: 'Partnership & Collaboration' }))
+    }, [params, queryType])
 
     return (
         <RegularPage id='contact-page'>

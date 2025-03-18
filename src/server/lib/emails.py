@@ -25,12 +25,12 @@ from src.server.lib.constants import (
 conf = None
 
 
-async def send_email(subject: str, body: str, receipents: list[str], reply_to: list[str] = []) -> None:
+async def send_email(subject: str, body: str, recipients: list[str], reply_to: list[str] = []) -> None:
     """Makes the server send an email to receipent(s)."""
     try:
         message = MessageSchema(
             subject=f'Shiftiatrics: {subject}',
-            recipients=receipents,
+            recipients=recipients,
             body=body,
             subtype='html',
             reply_to=reply_to

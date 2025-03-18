@@ -248,7 +248,7 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
     await send_email(
         subject='Reset Your Password',
         body=f'<a href="{reset_link}">Click here to reset your password</a>',
-        receipents=[account.email]
+        recipients=[account.email]
     )
 
     return safe_msg
@@ -293,7 +293,7 @@ async def request_verify_email(email: str, *, session: _SessionType) -> str:
     await send_email(
         subject='Verify Your Email',
         body=f'<a href="{verify_link}">Click here to verify your email</a>',
-        receipents=[account.email]
+        recipients=[account.email]
     )
 
     return safe_msg
