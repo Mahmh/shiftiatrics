@@ -9,15 +9,15 @@ export default function VerifyEmail() {
     const router = useRouter()
     const params = useSearchParams()
     const [error, setError] = useState<string|null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
 
     const verifyEmail = async (verifyToken: string) => {
-        setIsLoading(true)
+        setLoading(true)
         await new Request(
             'auth/verify_email',
-            () => setIsLoading(false),
+            () => setLoading(false),
             (error) => {
-                setIsLoading(false)
+                setLoading(false)
                 if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
                 setError(error)
             }
@@ -35,7 +35,7 @@ export default function VerifyEmail() {
             {
                 params.get('token')
                 ?
-                    isLoading
+                    loading
                     ? <Actions.Loading/>
                     : error ? <Actions.ErrorOccurred error={error}/> : <Actions.EmailVerified/>
                 :

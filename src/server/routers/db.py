@@ -14,7 +14,8 @@ from src.server.db import (
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours,
     get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
     toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift,
-    toggle_email_ntf, update_email_ntf_interval
+    toggle_email_ntf, update_email_ntf_interval,
+    get_num_schedule_requests
 )
 
 # Init
@@ -24,6 +25,7 @@ shift_router = APIRouter()
 schedule_router = APIRouter()
 holiday_router = APIRouter()
 settings_router = APIRouter()
+sub_router = APIRouter()
 
 
 # Endpoints
@@ -251,3 +253,12 @@ async def toggle_email_ntf_(account_id: int, request: Request) -> dict:
 @endpoint()
 async def update_email_ntf_interval_(account_id: int, info: dict[Literal['email_ntf_interval'], Interval], request: Request) -> dict:
     return {'detail': update_email_ntf_interval(account_id=account_id, interval=info['email_ntf_interval'])}
+
+
+
+## Subscription
+@sub_router.get('/sub/{account_id}/schedule_requests')
+@limiter.limit(DEFAULT_RATE_LIMIT)
+@endpoint()
+async def get_schedule_requests_(account_id: int, request: Request) -> dict:
+    return {'num_requests': get_num_schedule_requests(account_id)}

@@ -428,7 +428,7 @@ def _check_schedule_requests(account_id: int, *, session: _SessionType) -> None:
         schedule_requests.month = current_month
         session.commit()
 
-    if schedule_requests.num_requests > sub.plan_details['max_num_schedule_requests']:
+    if schedule_requests.num_requests >= sub.plan_details['max_num_schedule_requests']:
         raise ValueError(f'Max number of schedule requests for account ID {account_id} was reached.')
 
 

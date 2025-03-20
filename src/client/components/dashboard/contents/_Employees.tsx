@@ -3,7 +3,6 @@ import { dashboardContext } from '@context'
 import { Icon, Request, Choice } from '@utils'
 import { MAX_WORK_HOURS, PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Employee, InputEvent } from '@types'
-import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -302,7 +301,6 @@ export default function Employees() {
     }
 
     return <>
-        <Sidebar/>
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>

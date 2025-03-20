@@ -1,0 +1,66 @@
+#subscription-content {
+    @include breakpoint(1660px) { margin-left: 280px; }
+    @include breakpoint(950px) { margin-left: auto; max-width: unset }
+    max-width: 60%;
+    padding: 30px;
+    margin: 0 auto;
+}
+
+#sub-card {
+    background: black;
+    border-radius: 10px;
+    padding: 10px 40px;
+    box-shadow: $main-box-shadow;
+
+    h1, p { color: get-color('background') }
+    h1 { font-size: 2rem }
+}
+
+#sub-details {
+    @include vertical-flex;
+    margin-top: 20px;
+    gap: 20px;
+
+    section {
+        border-radius: 10px;
+        box-shadow: $main-box-shadow;
+        overflow: hidden;
+
+        h2 {
+            @include themed-bgcolor('primary-blue');
+            color: get-color('background');
+            padding: 10px 20px;
+            margin: 0;
+        }
+
+        div {
+            @include themed-bgcolor('alpha-white', 'primary-blue-hover');
+            padding: 20px;
+            padding-left: 25px;
+
+            * { @include themed-color('primary-text') }
+            p { margin: 10px 0 }
+
+            div {
+                display: flex;
+                padding: 0;
+                gap: 10px;
+                margin-top: 30px;
+            }
+
+            button {
+                @include themed-bgcolor('primary-blue', 'secondary-blue');
+                color: get-color('background');
+                padding: 10px 20px;
+                border-radius: 10px;
+                &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue-hover') }
+            }
+        }
+
+        .limit-reached { color: get-color('primary-red') }
+        #cancel-sub-btn {
+            @include themed-bgcolor('primary-red');
+            &:hover { @include themed-bgcolor('primary-red-hover') }
+        }
+    }
+}

@@ -6,13 +6,17 @@ import Shifts from './contents/_Shifts'
 import Schedules from './contents/_Schedules'
 import Holidays from './contents/_Holidays'
 import Settings from './contents/_Settings'
-import Support from './contents/_Support'
+import Subscription from './contents/_Subscription'
+import Sidebar from './_Sidebar'
 
 export default function Content() {
     const { content, darkThemeClassName } = useContext(dashboardContext)
 
     const wrapContent = (name: ContentName, contentElement: ReactNode) => (
-        <main id={`${name}-content`} className={`content ${darkThemeClassName}`}>{contentElement}</main>
+        <main id={`${name}-content`} className={`content ${darkThemeClassName}`}>
+            <Sidebar/>
+            {contentElement}
+        </main>
     )
 
     switch (content) {
@@ -21,7 +25,7 @@ export default function Content() {
         case 'schedules': return wrapContent('schedules', <Schedules/>)
         case 'holidays': return wrapContent('holidays', <Holidays/>)
         case 'settings': return wrapContent('settings', <Settings/>)
-        case 'support': return wrapContent('support', <Support/>)
+        case 'subscription': return wrapContent('subscription', <Subscription/>)
         default: return <></>
     }
 }

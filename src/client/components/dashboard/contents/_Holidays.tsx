@@ -3,7 +3,6 @@ import { dashboardContext } from '@context'
 import { Icon, Request, Choice, getMonthName } from '@utils'
 import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Holiday, InputEvent } from '@types'
-import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -281,22 +280,19 @@ export default function Holidays() {
         openModal()
     }
 
-    return (
-        <>
-            <Sidebar/>
-            <header>
-                <section id='header-upper'>
-                    <section id='header-btns'>
-                        <button onClick={openAddModal}>Add New Holiday</button>
-                    </section>
+    return <>
+        <header>
+            <section id='header-upper'>
+                <section id='header-btns'>
+                    <button onClick={openAddModal}>Add New Holiday</button>
                 </section>
-                {holidays.length === 0 && <p className='header-msg'>Holidays are optional when generating a shift schedule. You can add ones here by clicking the &quot;Add New Holiday&quot; button.</p>}
-            </header>
-            {holidays.length > 0 && (
-                <div className='card-container'>
-                    {holidays.map(h => <HolidayCard {...h} key={h.id}/>)}
-                </div>
-            )}
-        </>
-    )
+            </section>
+            {holidays.length === 0 && <p className='header-msg'>Holidays are optional when generating a shift schedule. You can add ones here by clicking the &quot;Add New Holiday&quot; button.</p>}
+        </header>
+        {holidays.length > 0 && (
+            <div className='card-container'>
+                {holidays.map(h => <HolidayCard {...h} key={h.id}/>)}
+            </div>
+        )}
+    </>
 }

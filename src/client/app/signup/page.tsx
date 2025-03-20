@@ -15,7 +15,7 @@ export default function Signup() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string|null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [ToSAccepted, setToSAccepted] = useState(false)
 
     const getSubInfo = () => {
@@ -34,25 +34,25 @@ export default function Signup() {
         }
 
         setError(null)
-        setIsLoading(true)
+        setLoading(true)
 
         const sanitizedEmail = sanitizeInput(email)
         const sanitizedPassword = sanitizeInput(password)
         const validationError = validateCred(sanitizedEmail, sanitizedPassword)
         if (validationError) {
             setError(validationError)
-            setIsLoading(false)
+            setLoading(false)
             return
         }
 
         await new Request(
             'accounts/signup',
             () => {
-                setIsLoading(false)
+                setLoading(false)
                 router.push('/dashboard')
             },
             (error) => {
-                setIsLoading(false)
+                setLoading(false)
                 setError(error.includes('429') ? TOO_MANY_REQS_MSG : error)
             }
         ).post({
@@ -67,7 +67,7 @@ export default function Signup() {
             description: 'Create an account to view your dashboard'
         })
 
-        if (plan === null || plan === 'custom' || !PRICING_PLAN_NAMES.includes(plan)) {
+        if (plan && !PRICING_PLAN_NAMES.includes(plan)) {
             router.push('/pricing')
         }
     }, [router, plan])
@@ -84,21 +84,21 @@ export default function Signup() {
             <div id='mid-container'>
                 <section>
                     <label>Email</label>
-                    <input type='email' value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} maxLength={32}/>
+                    <input type='email' value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} maxLength={32}/>
                 </section>
                 <section>
                     <label>Password</label>
-                    <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} maxLength={32}/>
+                    <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} maxLength={32}/>
                 </section>
                 <section id='agree-to-tos-sec'>
                     <input type='checkbox' onChange={e => setToSAccepted(e.target.checked)} required/>
                     <label>I agree to Shiftiatrics&apos; <Link href='/legal/terms'>Terms of Service</Link>.</label>
                 </section>
                 <p className='error' style={error === null ? { visibility: 'hidden', margin: 0 } : {}}>{error}</p>
-                <button className='cred-submit-btn' onClick={handleSignup} disabled={isLoading}>
-                    {isLoading ? 'Signing up...' : 'Sign Up'}
+                <button className='cred-submit-btn' id='signup-btn' onClick={handleSignup} disabled={loading}>
+                    {loading ? 'Signing up...' : 'Sign Up'}
                 </button>
-                <p>Already have an account? <Link href={`/login?plan=${plan}`}>Log In</Link></p>
+                <p>Already have an account? <Link href={plan ? `/login?plan=${plan}` : '/login'}>Log In</Link></p>
                 <ContinueWithGoogle plan={plan}/>
             </div>
         </RegularPage>

@@ -60,7 +60,7 @@ def create_account(cred: Credentials, sub_info: SubscriptionInfo, *, session: _S
     session.commit()
 
     # Step 3: Set number of schedule requests
-    schedule_requests = ScheduleRequests(account_id=account.account_id, num_requests=1, month=utcnow().month)
+    schedule_requests = ScheduleRequests(account_id=account.account_id, num_requests=0, month=utcnow().month)
     session.add(schedule_requests)
     session.commit()
 
@@ -220,7 +220,7 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, plan_name: 
     session.commit()
     session.refresh(new_account)
 
-    schedule_requests = ScheduleRequests(account_id=new_account.account_id, num_requests=1, month=utcnow().month)
+    schedule_requests = ScheduleRequests(account_id=new_account.account_id, num_requests=0, month=utcnow().month)
     session.add(schedule_requests)
     session.commit()
 
@@ -602,3 +602,12 @@ def update_email_ntf_interval(account_id: int, interval: Interval, *, session: _
     if interval not in INTERVALS: raise ValueError(f'Invalid interval passed: "{interval}"')
     settings.email_ntf_interval = interval
     return settings.email_ntf_interval
+
+
+
+
+## Subscription
+@dbsession()
+def get_num_schedule_requests(account_id: int, *, session: _SessionType) -> int:
+    _check_account(account_id, session=session)
+    return session.get(ScheduleRequests, account_id).num_requests

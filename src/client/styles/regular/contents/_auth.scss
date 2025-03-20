@@ -5,6 +5,8 @@
         get-color('banner-blue-1', $lp: true)
     );
     padding: 20px;
+    #login-btn { width: 40% }
+    #signup-btn { min-width: 200px }
 }
 
 #mid-container {
@@ -13,6 +15,12 @@
         background-color: transparent;
         width: 40%;
         box-shadow: none;
+
+        #login-btn, #signup-btn { width: 100% }
+        #login-btns {
+            flex-direction: column !important;
+            gap: 4px !important;
+        }
     }
     background-color: get-color('secondary-blue', $lp: true);
     align-items: center;

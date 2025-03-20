@@ -222,6 +222,18 @@ export const pySerializePlan = (name: PricingPlanName) => {
 }
 
 
+/** E.g., 'basic' -> 'Basic Plan'  */
+export const getUIPlanName = (name: PricingPlanName) => (
+    `${name.charAt(0).toUpperCase() + name.slice(1)} Plan`
+)
+
+
+/** Converts a UTC date object into a user-readable date */
+export const getUIDate = (date: Date) => (
+    `${getMonthName(date.getUTCMonth())} ${date.getUTCDate()}, ${date.getUTCFullYear()}`
+)
+
+
 /**
  * Class for making a GET, POST, PATCH, or DELETE request to the API server
  * ### Constructor

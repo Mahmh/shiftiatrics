@@ -3,7 +3,6 @@ import { dashboardContext } from '@context'
 import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName } from '@utils'
 import { MIN_YEAR, MAX_YEAR, PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
-import Sidebar from '../_Sidebar'
 import closeIcon from '@icons/close.png'
 import prevIcon from '@icons/prev.png'
 import nextIcon from '@icons/next.png'
@@ -14,7 +13,7 @@ export default function Schedules() {
         schedules, setSchedules, setScheduleValidity, getScheduleValidity,
         setModalContent, openModal, closeModal, setContent, settings
     } = useContext(dashboardContext)
-    const [isLoading, setIsLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
     const today = new Date()
     const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth())
     const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear())
@@ -123,7 +122,7 @@ export default function Schedules() {
                 </p>
                 <button onClick={closeModal}>Close</button>
             </>
-            : isLoading &&
+            : loading &&
             <>
                 <h2>Generating in Progress</h2>
                 <p>Please wait while the server generates your schedule.</p>
@@ -131,7 +130,7 @@ export default function Schedules() {
             </>
         )
         openModal()
-    }, [employees.length, isLoading, openModal, closeModal, setContent, setModalContent, shifts.length])
+    }, [employees.length, loading, openModal, closeModal, setContent, setModalContent, shifts.length])
 
     /** Handles traversing between months and years */
     const handleMonthChange = (direction: 'prev' | 'next') => {
@@ -159,7 +158,7 @@ export default function Schedules() {
         const DetailsContent = ({ triggerFetch }: { triggerFetch: boolean }) => {
             const [shiftCounts, setShiftCounts] = useState<ShiftCounts>(new Map())
             const [workHours, setWorkHours] = useState<ShiftCounts>(new Map())
-            const [isLoading, setIsLoading] = useState(true)
+            const [loading, setLoading] = useState(true)
 
             const getShiftCounts = useCallback(async () => {
                 await new Request(
@@ -171,10 +170,10 @@ export default function Schedules() {
                             newShiftCounts.set(employee, shiftCount)
                         }
                         setShiftCounts(newShiftCounts)
-                        setIsLoading(false)
+                        setLoading(false)
                     }
                 ).get()
-            }, [setIsLoading])
+            }, [setLoading])
 
             const getTotalWorkHours = useCallback(async () => {
                 await new Request(
@@ -187,10 +186,10 @@ export default function Schedules() {
                             newWorkHours.set(employee, workHours)
                         }
                         setWorkHours(newWorkHours)
-                        setIsLoading(false)
+                        setLoading(false)
                     }
                 ).get()
-            }, [setIsLoading])
+            }, [setLoading])
 
             useEffect(() => {
                 if (scheduleAvailable && triggerFetch) {
@@ -203,7 +202,7 @@ export default function Schedules() {
             ? <>
                 <h2>Total Shifts and Work Hours per Pediatrician This Month</h2>
                 <section id='modal-content'>
-                    {!isLoading 
+                    {!loading 
                         ? shiftCounts.size > 0 
                             ? Array.from(shiftCounts.entries()).map(([emp, numShifts], i) => (
                                 <li key={i}>
@@ -274,12 +273,12 @@ export default function Schedules() {
 
     /** Sends an API request to the engine for schedule generation */
     const generateSchedule = useCallback(async () => {
-        if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || isLoading) {
+        if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || loading) {
             openGenerateScheduleModal()
             return
         }
 
-        setIsLoading(true)
+        setLoading(true)
         const numDays = getDaysInMonth(selectedMonth, selectedYear)
         let newSchedule: ScheduleOfIDs = [] // Temporary storage for the new schedule
     
@@ -290,18 +289,18 @@ export default function Schedules() {
         ).get()
     
         await storeSchedule(newSchedule)
-        setIsLoading(false)
-    }, [account.id, employees.length, isLoading, openGenerateScheduleModal, selectedMonth, selectedYear, shifts.length, storeSchedule])
+        setLoading(false)
+    }, [account.id, employees.length, loading, openGenerateScheduleModal, selectedMonth, selectedYear, shifts.length, storeSchedule])
 
     /** Generates the schedule again then overwrites the old one in DB */
     const regenerateSchedule = useCallback(async () => {
-        if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || isLoading) {
+        if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || loading) {
             openGenerateScheduleModal()
             return
         }
 
         setScheduleValidity(true, selectedYear, selectedMonth)
-        setIsLoading(true)
+        setLoading(true)
         const numDays = getDaysInMonth(selectedMonth, selectedYear)
         let newSchedule: ScheduleOfIDs = [] // Temporary storage for the new schedule
 
@@ -309,7 +308,7 @@ export default function Schedules() {
         const scheduleId = schedules.get(selectedYear)?.[selectedMonth]?.id
         if (!scheduleId) {
             alert('No schedule ID found for the selected month. Cannot regenerate.')
-            setIsLoading(false)
+            setLoading(false)
             return
         }
     
@@ -320,8 +319,8 @@ export default function Schedules() {
         ).get()
 
         await updateSchedule(scheduleId, newSchedule)
-        setIsLoading(false)
-    }, [account.id, employees.length, isLoading, schedules, selectedMonth, selectedYear, setScheduleValidity, shifts.length, updateSchedule, openGenerateScheduleModal])
+        setLoading(false)
+    }, [account.id, employees.length, loading, schedules, selectedMonth, selectedYear, setScheduleValidity, shifts.length, updateSchedule, openGenerateScheduleModal])
 
 
     useEffect(() => {
@@ -341,7 +340,6 @@ export default function Schedules() {
     }, [selectedMonth, selectedYear])
 
     return <>
-        <Sidebar/>
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>
@@ -371,9 +369,9 @@ export default function Schedules() {
                         <button onClick={() => setScheduleValidity(true, selectedYear, selectedMonth)}><Icon src={closeIcon} alt='Close'/></button>
                     </p>
                 :
-                    <p className='header-msg' style={!isLoading && scheduleAvailable ? { display: 'none' } : {}}>
+                    <p className='header-msg' style={!loading && scheduleAvailable ? { display: 'none' } : {}}>
                         {
-                            isLoading
+                            loading
                             ? 'Generating...' 
                             : !scheduleAvailable && 'No schedule generated yet for this month. Click "Generate Schedule" to automatically generate one.'
                         }

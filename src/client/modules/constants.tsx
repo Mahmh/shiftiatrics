@@ -83,6 +83,11 @@ export const PRICING_PLANS: PricingPlan[] = [
         ]
     }
 ]
+export const FREE_TIER_DETAILS = {
+    maxNumPediatricians: 10,
+    maxNumShiftsPerDay: 4,
+    maxNumScheduleRequests: 2
+}
 
 export const PLAN_EXPIRED_MODAL_CONTENT = <>
     <h1>Your Subscription Has Expired</h1>

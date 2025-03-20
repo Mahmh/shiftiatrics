@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getMonthName, setMetadata } from '@utils'
+import { getUIDate, setMetadata } from '@utils'
 import { isLoggedIn } from '@auth'
 import { dashboardContext } from '@context'
 import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
@@ -22,7 +22,7 @@ export default function Dashboard() {
             setModalContent(<>
                 <h1>Subscription Expiring Soon</h1>
                 <p>
-                    Your current plan will expire in {daysLeft} day(s) on {getMonthName(expiryDate.getUTCMonth())} {expiryDate.getUTCDate()}, {expiryDate.getUTCFullYear()}.
+                    Your current plan will expire in {daysLeft} day(s) on {getUIDate(expiryDate)}.
                     To avoid service interruptions, upgrade now and continue enjoying all features.
                 </p>
                 <button>Renew or Upgrade Now</button>

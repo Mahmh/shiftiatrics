@@ -8,18 +8,18 @@ import RegularPage from '@regpage'
 const NoResetToken = () => {
     const [email, setEmail] = useState('')
     const [error, setError] = useState<string|null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [submitted, setSubmitted] = useState(false)
 
     const requestResetPassword = async () => {
         setError(null)
-        setIsLoading(true)
+        setLoading(true)
     
         const sanitizedEmail = sanitizeInput(email)
         const validationError = validateEmail(sanitizedEmail)
         if (validationError) {
             setError(validationError)
-            setIsLoading(false)
+            setLoading(false)
             return
         }
 
@@ -27,7 +27,7 @@ const NoResetToken = () => {
             'auth/request_reset_password',
             () => setSubmitted(true),
             (error) => {
-                setIsLoading(false)
+                setLoading(false)
                 if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
                 setError(
                     error.includes('Invalid credentials') || error.includes('does not exist')
@@ -56,11 +56,11 @@ const NoResetToken = () => {
         </section>
         <section>
             <label>Email</label>
-            <input type='text' value={email} onChange={e => setEmail(e.target.value)} disabled={isLoading}/>
+            <input type='text' value={email} onChange={e => setEmail(e.target.value)} disabled={loading}/>
         </section>
         <p className='error' style={error === null ? { visibility: 'hidden' } : {}}>{error}</p>
-        <button className='cred-submit-btn' onClick={requestResetPassword} disabled={isLoading}>
-            {isLoading ? 'Submitting...' : 'Submit'}
+        <button className='cred-submit-btn' onClick={requestResetPassword} disabled={loading}>
+            {loading ? 'Submitting...' : 'Submit'}
         </button>
     </>
 }
@@ -70,28 +70,28 @@ const WithResetToken = ({ resetToken }: { resetToken: string }) => {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState<string|null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [submitted, setSubmitted] = useState(false)
 
     const resetPassword = async () => {
         setError(null)
-        setIsLoading(true)
+        setLoading(true)
     
         const validationError1 = validatePassword(sanitizeInput(password))
         const validationError2 = validatePassword(sanitizeInput(confirmPassword))
         if (validationError1) {
             setError(validationError1)
-            setIsLoading(false)
+            setLoading(false)
             return
         } else if (validationError2) {
             setError(validationError2)
-            setIsLoading(false)
+            setLoading(false)
             return
         }
 
         if (password !== confirmPassword) {
             setError('New password and confirmation do not match. Please try again.')
-            setIsLoading(false)
+            setLoading(false)
             return
         }
 
@@ -99,7 +99,7 @@ const WithResetToken = ({ resetToken }: { resetToken: string }) => {
             'auth/reset_password',
             () => setSubmitted(true),
             (error) => {
-                setIsLoading(false)
+                setLoading(false)
                 if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
                 setError(
                     error.includes('Invalid credentials') || error.includes('does not exist')
@@ -125,15 +125,15 @@ const WithResetToken = ({ resetToken }: { resetToken: string }) => {
         </section>
         <section>
             <label>New Password</label>
-            <input type='password' value={password} onChange={e => setPassword(e.target.value)} disabled={isLoading}/>
+            <input type='password' value={password} onChange={e => setPassword(e.target.value)} disabled={loading}/>
         </section>
         <section>
             <label>Confirm Password</label>
-            <input type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={isLoading}/>
+            <input type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={loading}/>
         </section>
         <p className='error' style={error === null ? { visibility: 'hidden' } : {}}>{error}</p>
-        <button className='cred-submit-btn' onClick={resetPassword} disabled={isLoading}>
-            {isLoading ? 'Confirming...' : 'Confirm'}
+        <button className='cred-submit-btn' onClick={resetPassword} disabled={loading}>
+            {loading ? 'Confirming...' : 'Confirm'}
         </button>
     </>
 }

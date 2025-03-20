@@ -6,7 +6,7 @@ import jpype
 from src.server.rate_limit import limiter, rate_limit_handler
 from src.server.lib.constants import BACKEND_SERVER_URL, WEB_SERVER_URL, SCHEDULE_ENGINE_PATH
 from src.server.routers.auth import auth_router
-from src.server.routers.db import account_router, employee_router, shift_router, schedule_router, holiday_router, settings_router
+from src.server.routers.db import account_router, employee_router, shift_router, schedule_router, holiday_router, settings_router, sub_router
 from src.server.routers.engine import engine_router
 from src.server.routers.contact import contact_router
 
@@ -43,5 +43,6 @@ for r in (
     settings_router,
     holiday_router,
     engine_router,
-    contact_router
+    contact_router,
+    sub_router
 ): app.include_router(r)

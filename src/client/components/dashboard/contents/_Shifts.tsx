@@ -3,7 +3,6 @@ import { dashboardContext } from '@context'
 import { Icon, Request, Choice, formatTimeToAMPM } from '@utils'
 import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Shift, InputEvent } from '@types'
-import Sidebar from '../_Sidebar'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
@@ -214,7 +213,6 @@ export default function Shifts() {
     }
 
     return <>
-        <Sidebar/>
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>

@@ -42,9 +42,7 @@
 
 
 #account-card .card-content {
-    @include breakpoint(1550px) {
-        flex-direction: column !important;
-    }
+    @include breakpoint(1550px) { flex-direction: column !important }
     flex-direction: row !important;
     justify-content: space-between !important;
 }
@@ -101,7 +99,7 @@
 
             &.edit-account-btn {
                 @include themed-bgcolor('primary-blue', 'secondary-blue');
-                &:hover { @include themed-bgcolor('primary-blue-hover', 'primary-blue') }
+                &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue-hover') }
             }
 
             &#verify-email-btn {

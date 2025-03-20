@@ -6,7 +6,6 @@ import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
 import { parseAccount } from '@auth'
 import type { WeekendDays, InputEvent, AccountResponse } from '@types'
 // import type { WeekendDays, InputEvent, Interval, AccountResponse } from '@types'
-import Sidebar from '../_Sidebar'
 import LoadingScreen from '@/components/_LoadingScreen'
 
 const Account = () => {
@@ -359,15 +358,15 @@ const Account = () => {
     const openVerifyEmailModal = useCallback(() => {
         const VerifyEmailModalContent = () => {
             const [error, setError] = useState<string|null>(null)
-            const [isLoading, setIsLoading] = useState(false)
+            const [loading, setLoading] = useState(false)
 
             const requestVerifyEmail = async () => {
-                setIsLoading(true)
+                setLoading(true)
                 await new Request(
                     'auth/request_verify_email',
-                    () => setIsLoading(false),
+                    () => setLoading(false),
                     (error) => {
-                        setIsLoading(false)
+                        setLoading(false)
                         if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
                         setError(error)
                     }
@@ -380,7 +379,7 @@ const Account = () => {
                 <h1>Verify Your Email</h1>
                 <p>
                     {
-                        isLoading 
+                        loading 
                         ? 'Sending email verification request...'
                         : error || 'We have sent you an email verification request to your email. Please check your inbox and follow the instructions to verify your email.'
                     }
@@ -535,11 +534,8 @@ const PreferencesAndFunctionality = () => {
 
 
 export default function Settings() {
-    return <>
-        <Sidebar/>
-        <div className='settings-cards'>
-            <Account/>
-            <PreferencesAndFunctionality/>
-        </div>
-    </>
+    return <div className='settings-cards'>
+        <Account/>
+        <PreferencesAndFunctionality/>
+    </div>
 }

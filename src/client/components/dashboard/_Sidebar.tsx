@@ -10,6 +10,7 @@ import holidayIcon from '@icons/holiday.png'
 import settingsIcon from '@icons/settings.png'
 import menuIcon from '@icons/menu.png'
 import closeIcon from '@icons/white_close.png'
+import SubscriptionIcon from '@icons/subscription.png'
 
 export const MenuButton = () => {
     const { isMenuShown, setIsMenuShown } = useContext(dashboardContext)
@@ -44,6 +45,7 @@ export default function Sidebar() {
                 <SidebarButton name='Holidays' src={holidayIcon}/>
             </section>
             <section id='sidebar-lower'>
+                <SidebarButton name='Subscription' src={SubscriptionIcon}/>
                 <SidebarButton name='Settings' src={settingsIcon}/>
             </section>
         </nav>

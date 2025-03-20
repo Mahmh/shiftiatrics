@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Icon, setMetadata } from '@utils'
+import { Icon, setMetadata, getUIPlanName } from '@utils'
 import RegularPage from '@regpage'
 import checkIcon from '@icons/check.png'
 import { PRICING_PLANS } from '@/modules/constants'
@@ -35,11 +35,14 @@ export default function Pricing() {
 
     return <RegularPage id='pricing-page' transparentHeader={true} footerMarginTop={false}>
         <h1>Pricing Plans</h1>
-        <p>Choose the plan that fits your needs, and get started auto-scheduling right away! You can refund at any time.</p>
+        <p>
+            Choose the plan that fits your needs, and get started auto-scheduling right away!
+            You can request a refund anytime, and we&apos;ll refund the unused portion of your subscription.
+        </p>
         <div className='pricing-cards'>
             {PRICING_PLANS.map(plan => (
                 <PricingCard
-                    title={`${plan.name.charAt(0).toUpperCase() + plan.name.slice(1)} Plan`}
+                    title={getUIPlanName(plan.name)}
                     price={plan.price}
                     titleBg={plan.titleBg}
                     link={plan.link}

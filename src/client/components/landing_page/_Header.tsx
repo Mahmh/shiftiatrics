@@ -22,7 +22,7 @@ const HeaderBtn = ({ name, href }: { name: string, href: string }) => {
 const HeaderBtns = ({ isMenuScrollable }: { isMenuScrollable: boolean }) => (
     <section id='header-btns' style={isMenuScrollable ? { flexDirection: 'column-reverse' } : {}}>
         <HeaderBtn name='Log In' href='/login'/>
-        <HeaderBtn name='Sign Up' href='/pricing'/>
+        <HeaderBtn name='Sign Up' href='/signup'/>
     </section>
 )
 
