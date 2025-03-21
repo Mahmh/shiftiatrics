@@ -4,12 +4,12 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.sql import exists
 import unicodedata, re, bcrypt, inspect, secrets
-from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PREDEFINED_SUB_INFOS
+from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PREDEFINED_SUB_INFOS, FREE_TIER_DETAILS
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
 from src.server.lib.types import TokenType, PricingPlanName
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
-from src.server.db.tables import Session, Account, Token, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings, Subscription
+from .tables import Session, Account, Token, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings, Subscription
 
 def _handle_args(args: tuple) -> tuple:
     # Sanitize credentials if the first parameter is of type `Credentials`
@@ -353,7 +353,7 @@ def _validate_sub_info(account_id: int, sub_info: SubscriptionInfo, *, session: 
 
         # Set price to 0.0 if the user has NOT used a free trial for this plan
         price = 0.0 if not has_used_trial else sub_info.price
-        expires_at = utcnow() + timedelta(days=7) if price == 0.0 else utcnow() + timedelta(days=30)
+        expires_at = utcnow() + timedelta(days=(7 if price == 0.0 else 30))
 
     return dict(
         account_id=account_id,
@@ -405,7 +405,7 @@ def _get_or_create_sub(account_id: int, plan_name: Optional[PricingPlanName] = N
     sub = _get_active_sub(account_id, session=session)
 
     # Prevent OAuth user from logging out in order to start a free trial on another plan
-    if has_used_trial and sub.plan.value != plan_name and account.oauth_provider is not None:
+    if plan_name and has_used_trial and sub.plan.value != plan_name and account.oauth_provider is not None:
         return sub
 
     if plan_name and (sub is None or sub.plan.value != plan_name):
@@ -413,7 +413,7 @@ def _get_or_create_sub(account_id: int, plan_name: Optional[PricingPlanName] = N
         sub = Subscription(**sub_info)
         session.add(sub)
         session.commit()
-        log(f'Subscription created for account ID {account_id}: {sub}', 'subscription')
+        log(f'Subscription created: {sub} [Expires at: {sub.expires_at}]', 'subscription')
     return sub
 
 
@@ -422,14 +422,19 @@ def _check_schedule_requests(account_id: int, *, session: _SessionType) -> None:
     sub = _get_active_sub(account_id, session=session)
     schedule_requests = session.get(ScheduleRequests, account_id)
     current_month = utcnow().month
+    ERR_MSG = f'Max number of schedule requests for account ID {account_id} was reached.'
 
     if current_month > schedule_requests.month:
         schedule_requests.num_requests = 1
         schedule_requests.month = current_month
         session.commit()
 
-    if schedule_requests.num_requests >= sub.plan_details['max_num_schedule_requests']:
-        raise ValueError(f'Max number of schedule requests for account ID {account_id} was reached.')
+    if sub is not None:
+        if schedule_requests.num_requests >= sub.plan_details['max_num_schedule_requests']:
+            raise ValueError(ERR_MSG)
+    elif schedule_requests.num_requests >= FREE_TIER_DETAILS.max_num_schedule_requests:
+            raise ValueError(ERR_MSG)
+
 
 
 def _increment_schedule_requests(account_id: int, *, session: _SessionType):

@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Icon, Request, Choice } from '@utils'
-import { MAX_WORK_HOURS, PLAN_EXPIRED_MODAL_CONTENT } from '@const'
+import { Icon, Request, Choice, getAccountLimits } from '@utils'
+import { MAX_WORK_HOURS } from '@const'
 import type { Employee, InputEvent } from '@types'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
@@ -165,15 +165,10 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
 
 export default function Employees() {
     const { account, subscription, employees, settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(dashboardContext)
+    const { maxNumPediatricians } = getAccountLimits(subscription)
 
     /** Displays a modal for adding an employee */
     const openAddModal = () => {
-        if (subscription === null) {
-            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
-            openModal()
-            return
-        }
-
         const AddModalContent = () => {
             const [tempName, setTempName] = useState('')
             const [tempMinWorkHours, setTempMinWorkHours] = useState<number>(0)
@@ -282,18 +277,16 @@ export default function Employees() {
             )
         }
     
-        const SubLimitModalContent = () => {
-            return <>
-                <h1>Pediatrician Limit Reached</h1>
-                <p>
-                You have reached the maximum number of pediatricians allowed ({subscription.planDetails.maxNumPediatricians}). 
-                Please upgrade your plan to add more.
-                </p>
-            </>
-        }
+        const SubLimitModalContent = () =>  <>
+            <h1>Pediatrician Limit Reached</h1>
+            <p>
+            You have reached the maximum number of pediatricians allowed ({maxNumPediatricians}). 
+            Please upgrade your plan to add more.
+            </p>
+        </>
 
         setModalContent(
-            employees.length < subscription.planDetails.maxNumPediatricians 
+            employees.length < maxNumPediatricians
             ? <AddModalContent/>
             : <SubLimitModalContent/>
         )

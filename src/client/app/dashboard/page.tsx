@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { getUIDate, setMetadata } from '@utils'
 import { isLoggedIn } from '@auth'
 import { dashboardContext } from '@context'
-import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Subscription } from '@types'
 import DashboardPage from '@/components/dashboard/DashboardPage'
 
@@ -34,24 +33,14 @@ export default function Dashboard() {
 
     const checkLoginStatus = useCallback(async () => {
         const res = await isLoggedIn()
-        if (res === false) {
-            router.push('/'); return
-        } else if ('redirect' in res) {
-            router.push(res.redirect); return
-        }
+        if (res === false) { router.push('/'); return }
 
         setAccount(res.account)
         setSubscription(res.subscription)
         setAuthChecked(true) // Ensure rendering only happens after auth check
 
-        if (res.subscription === null) {
-            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
-            openModal()
-            return
-        }
-
-        checkIsSubExpiringSoon(res.subscription)        
-    }, [router, checkIsSubExpiringSoon, setAccount, setSubscription, openModal, setModalContent,])
+        if (res.subscription !== null) checkIsSubExpiringSoon(res.subscription)        
+    }, [router, checkIsSubExpiringSoon, setAccount, setSubscription])
 
 
     useEffect(() => {

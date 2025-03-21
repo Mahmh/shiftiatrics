@@ -8,7 +8,9 @@ export const parseAccount = (data: AccountResponse): Account => ({
     id: data.account_id,
     email: data.email,
     emailVerified: data.email_verified,
-    isOAuthOnly: data.hashed_password === null && data.oauth_provider !== null
+    isOAuthOnly: data.hashed_password === null && data.oauth_provider !== null,
+    hasUsedTrial: data.has_used_trial,
+    subExpired: data.sub_expired
 })
 
 export const parseSub = (data: SubscriptionResponse): Subscription => ({
@@ -26,17 +28,13 @@ export const parseSub = (data: SubscriptionResponse): Subscription => ({
 
 
 /** Returns false if the user is not logged in; otherwise, returns their account & subscription */
-export const isLoggedIn = async (): Promise<AccountAndSub | { redirect: string } | false> => {
+export const isLoggedIn = async (): Promise<AccountAndSub | false> => {
     return await new Request(
         'auth/log_in_account_with_cookies',
-        (data: AccountAndSubResponse | { redirect: string }) => {
-            if ('redirect' in data) {
-                return { redirect: data.redirect }
-            } else return {
-                account: parseAccount(data.account),
-                subscription: data.subscription ? parseSub(data.subscription) : null
-            }
-        },
+        (data: AccountAndSubResponse) => ({
+            account: parseAccount(data.account),
+            subscription: data.subscription ? parseSub(data.subscription) : null
+        }),
         () => false
     ).get()
 }

@@ -15,7 +15,7 @@ from src.server.db import (
     get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
     toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift,
     toggle_email_ntf, update_email_ntf_interval,
-    get_num_schedule_requests
+    has_used_trial, check_sub_expired, get_num_schedule_requests,
 )
 
 # Init
@@ -33,10 +33,17 @@ sub_router = APIRouter()
 @account_router.post('/accounts/signup')
 @limiter.limit('10/minute')
 @endpoint(auth=False)
-async def create_new_account(cred: Credentials, sub_info: SubscriptionInfo, response: Response, request: Request) -> dict:
+async def create_new_account(cred: Credentials, response: Response, request: Request, sub_info: Optional[SubscriptionInfo] = None) -> dict:
     account, sub, token = create_account(cred, sub_info)
     store_cookies(Cookies(account_id=account.account_id, token=token), response)
-    return {'account': todict(account), 'subscription': todict(sub)}
+    return {
+        'account': todict(
+            account,
+            has_used_trial=has_used_trial(account.account_id),
+            sub_expired=check_sub_expired(account.account_id)
+        ),
+        'subscription': todict(sub)
+    }
 
 
 @account_router.patch('/accounts/email')

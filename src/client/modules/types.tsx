@@ -72,6 +72,8 @@ export interface AccountResponse {
     hashed_password: string | null
     email_verified: boolean
     oauth_provider: string
+    has_used_trial: boolean
+    sub_expired: boolean
 }
 
 export interface SubscriptionResponse {
@@ -93,6 +95,8 @@ export interface Account {
     email: string
     emailVerified: boolean
     isOAuthOnly: boolean
+    hasUsedTrial: boolean
+    subExpired: boolean
 }
 
 export interface Employee {
@@ -150,7 +154,7 @@ export interface PricingPlan {
     name: PricingPlanName
     price: number | string
     titleBg: string
-    link: string
+    link?: string
     features: string[]
     details?: PlanDetails
 }

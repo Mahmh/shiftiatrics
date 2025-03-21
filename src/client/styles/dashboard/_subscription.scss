@@ -2,8 +2,9 @@
     @include breakpoint(1660px) { margin-left: 280px; }
     @include breakpoint(950px) { margin-left: auto; max-width: unset }
     max-width: 60%;
-    padding: 30px;
     margin: 0 auto;
+
+    #header-upper { padding-bottom: 0 }
 }
 
 #sub-card {
@@ -50,6 +51,7 @@
 
             button {
                 @include themed-bgcolor('primary-blue', 'secondary-blue');
+                @include compressible(.97);
                 color: get-color('background');
                 padding: 10px 20px;
                 border-radius: 10px;
@@ -57,10 +59,39 @@
             }
         }
 
-        .limit-reached { color: get-color('primary-red') }
+        .limit-reached { @include themed-color('primary-red') }
         #cancel-sub-btn {
             @include themed-bgcolor('primary-red');
             &:hover { @include themed-bgcolor('primary-red-hover') }
+        }
+    }
+}
+
+
+#subscription-content .pricing-cards {
+    @include breakpoint(1850px) { justify-content: space-evenly !important }
+    @include breakpoint(950px) {
+        flex-direction: column;
+        width: 100%;
+        gap: 40px;
+        .pricing-card { margin: 0 auto; max-width: 90vw }
+    }
+    width: 120%;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0;
+    padding-left: 0;
+
+    .pricing-card {
+        @include themed-bgcolor('alpha-white', 'primary-blue-hover');
+        p, li { @include themed-color('primary-text') }
+        p, h2 { text-align: center }
+        span { @include themed-color('dark-gray', 'light-gray') }
+        .sub-activated-btn {
+            @include themed-bgcolor('alpha-black-0');
+            opacity: .8;
+            scale: 1;
+            cursor: default;
         }
     }
 }

@@ -22,6 +22,8 @@ def test_login():
 
     response_data = response.json()
     assert response_data['account']['email'] == CRED.email
+    assert response_data['account']['has_used_trial'] == True
+    assert response_data['account']['sub_expired'] == False
     assert response_data['subscription']['plan'] == SUB_INFO.plan
 
 
@@ -35,6 +37,8 @@ def test_create_new_account():
 
     response_data = response.json()
     assert response_data['account']['email'] == new_cred.email
+    assert response_data['account']['has_used_trial'] == True
+    assert response_data['account']['sub_expired'] == False
     assert response_data['subscription']['plan'] == new_sub.plan
 
 

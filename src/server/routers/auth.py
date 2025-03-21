@@ -5,19 +5,21 @@ from fastapi.responses import RedirectResponse
 import httpx, jwt
 
 from src.server.rate_limit import limiter
-from src.server.db import log_in_with_google, has_used_trial
 from src.server.lib.models import Credentials, Cookies
 from src.server.lib.types import PricingPlanName
 from src.server.lib.utils import todict
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, store_cookies_then_redirect
 
-from src.server.db.functions import (
+from src.server.db import (
     log_in_account,
     log_in_account_with_cookies,
+    log_in_with_google,
+    has_used_trial,
     request_reset_password,
     reset_password,
     request_verify_email,
-    verify_email
+    verify_email,
+    check_sub_expired
 )
 
 from src.server.lib.constants import (
@@ -27,8 +29,7 @@ from src.server.lib.constants import (
     GOOGLE_CLIENT_SECRET,
     GOOGLE_AUTH_URL,
     GOOGLE_REDIRECT_URI,
-    GOOGLE_TOKEN_URL,
-    REDIRECT_PRICING_PAGE
+    GOOGLE_TOKEN_URL
 )
 
 auth_router = APIRouter()
@@ -45,9 +46,14 @@ async def log_in_account_with_cookies_(request: Request) -> dict:
         return {'error': 'Token is either invalid or not found'}
     else:
         account, sub = log_in_account_with_cookies(cookies)
-        if not has_used_trial(account.account_id):
-            return {'redirect': REDIRECT_PRICING_PAGE}
-        return {'account': todict(account), 'subscription': todict(sub)}
+        return {
+            'account': todict(
+                account,
+                has_used_trial=has_used_trial(account.account_id),
+                sub_expired=check_sub_expired(account.account_id)
+            ),
+            'subscription': todict(sub)
+        }
 
 
 @auth_router.post('/auth/login')
@@ -56,7 +62,14 @@ async def log_in_account_with_cookies_(request: Request) -> dict:
 async def login_account(cred: Credentials, response: Response, request: Request) -> dict:
     account, sub, token = log_in_account(cred)
     store_cookies(Cookies(account_id=account.account_id, token=token), response)
-    return {'account': todict(account), 'subscription': todict(sub)}
+    return {
+        'account': todict(
+            account,
+            has_used_trial=has_used_trial(account.account_id),
+            sub_expired=check_sub_expired(account.account_id)
+        ),
+        'subscription': todict(sub)
+    }
 
 
 @auth_router.get('/auth/logout')

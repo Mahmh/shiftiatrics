@@ -11,7 +11,7 @@ import RegularPage from '@regpage'
 export default function Signup() {
     const router = useRouter()
     const params = useSearchParams()
-    const plan = params.get('plan') as PricingPlanName
+    const plan: PricingPlanName | null = params.get('plan') as PricingPlanName
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string|null>(null)
@@ -19,11 +19,12 @@ export default function Signup() {
     const [ToSAccepted, setToSAccepted] = useState(false)
 
     const getSubInfo = () => {
+        if (plan === null) return undefined
         switch (plan) {
             case 'basic': return pySerializePlan('basic')
             case 'standard': return pySerializePlan('standard')
             case 'premium': return pySerializePlan('premium')
-            default: throw new Error(`Unsupported plan: "${plan}"`)
+            default: throw new Error(`Unsupported predefined plan: "${plan}"`)
         }
     }
 
@@ -67,9 +68,7 @@ export default function Signup() {
             description: 'Create an account to view your dashboard'
         })
 
-        if (plan && !PRICING_PLAN_NAMES.includes(plan)) {
-            router.push('/pricing')
-        }
+        if (plan && !PRICING_PLAN_NAMES.includes(plan)) router.push('/pricing')
     }, [router, plan])
 
     useEffect(() => {

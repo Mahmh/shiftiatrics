@@ -2,7 +2,6 @@
     @include breakpoint(1550px) { margin-left: 240px }
     @include breakpoint(950px) { margin-left: 0 }
     @include vertical-flex;
-    @include themed-bgcolor('background');
     padding: 25px;
     gap: 35px;
     margin-left: 0;

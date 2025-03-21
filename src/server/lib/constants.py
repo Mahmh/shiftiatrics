@@ -17,11 +17,16 @@ PSQL_DB = os.getenv('POSTGRES_DB')
 PSQL_USER = os.getenv('POSTGRES_USER')
 PSQL_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 ENGINE_URL = f'postgresql+psycopg2://{PSQL_USER}:{PSQL_PASSWORD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
+
+# Pricing
+FREE_TIER_DETAILS = PlanDetails(max_num_pediatricians=5, max_num_shifts_per_day=2, max_num_schedule_requests=10)
+
 PRICING: dict[PricingPlanName, float] = {
     'basic': 19.99,
     'standard': 69.99,
     'premium': 99.99
 }
+
 PREDEFINED_SUB_INFOS: dict[PricingPlanName, SubscriptionInfo] = {
     'basic': SubscriptionInfo(
         plan='basic',
@@ -67,7 +72,6 @@ GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_REDIRECT_URI = f'{BACKEND_SERVER_URL}/auth/google/callback'
 GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-REDIRECT_PRICING_PAGE = '/pricing?next=dashboard'
 
 # Misc
 ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))

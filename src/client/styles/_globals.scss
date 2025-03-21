@@ -40,6 +40,7 @@ a {
 }
 
 .content { // Dashboard content
+    @include themed-bgcolor('background');
     margin-left: 240px;
     transition: background-color 250ms ease;
 
@@ -57,6 +58,7 @@ a {
         position: fixed;
         left: 240px;
         right: 0;
+        z-index: 5;
 
         #header-upper {
             @include themed-bgcolor('primary-blue-hover');
@@ -67,18 +69,28 @@ a {
             gap: 10px;
             padding: 10px 15px;
 
-            #header-btns {
+            #header-btns, #header-tabs {
                 display: flex;
                 gap: 10px;
-    
+
                 button {
-                    @include compressible(.96);
-                    @include themed-bgcolor('secondary-blue');
                     color: get-color('background');
                     padding: 10px 15px;
                     border-radius: 10px;
-                    &:hover { @include themed-bgcolor('secondary-blue-hover') }
                 }
+            }
+
+            #header-btns button {
+                @include compressible(.96);
+                @include themed-bgcolor('secondary-blue');
+                &:hover { @include themed-bgcolor('secondary-blue-hover') }
+            }
+
+            #header-tabs button {
+                border-radius: 10px 10px 0 0;
+                padding-bottom: 9px;
+                &.tab-btn { @include themed-bgcolor('alpha-black-1', 'alpha-black') }
+                &.active-tab-btn { @include themed-bgcolor('secondary-blue-hover') }
             }
         }
 
@@ -156,7 +168,7 @@ a {
 #dashboard-menu-btn {
     @include circle(70px);
     @include compressible;
-    @include themed-bgcolor('primary-blue-hover');
+    @include themed-bgcolor('primary-blue-hover', 'secondary-blue-hover');
     @include breakpoint(950px) { display: flex }
     display: none;
     position: fixed;

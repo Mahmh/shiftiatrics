@@ -31,79 +31,80 @@
         font-size: 1.25rem;
         margin-bottom: 2rem;
     }
+}
 
-    .pricing-cards {
-        @include breakpoint(2445px) { width: 80% }
-        @include breakpoint(2141px) { width: 90% }
-        @include breakpoint(1430px) { width: 70% }
-        @include breakpoint(1130px) { width: 85% }
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        width: 70%;
-        margin: 0 auto;
 
-        .pricing-card {
-            @include vertical-flex;
-            @include breakpoint(1130px) { width: 450px }
-            @include breakpoint(600px) { margin-left: 0; margin-right: 0 }
-            justify-content: space-between;
-            background-color: get-color('secondary-blue', $lp: true);
-            border-radius: 8px;
-            width: 390px;
-            height: 750px;
-            margin: 1rem;
-            box-shadow: $main-box-shadow;
-            opacity: 0;
-            transform: translateY(10%);
-            animation: fadeIn 600ms ease forwards;
+.pricing-cards {
+    @include breakpoint(2445px) { width: 80% }
+    @include breakpoint(2141px) { width: 90% }
+    @include breakpoint(1430px) { width: 70% }
+    @include breakpoint(1130px) { width: 85% }
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    width: 70%;
+    margin: 0 auto;
 
-            @for $i from 1 through 10 {
-                &:nth-child(#{$i}) { animation-delay: calc($i * 70ms) }
-            }
+    .pricing-card {
+        @include vertical-flex;
+        @include breakpoint(1130px) { width: 450px }
+        @include breakpoint(600px) { margin-left: 0; margin-right: 0 }
+        justify-content: space-between;
+        background-color: get-color('secondary-blue', $lp: true);
+        border-radius: 8px;
+        width: 390px;
+        height: 750px;
+        margin: 1rem;
+        box-shadow: $main-box-shadow;
+        opacity: 0;
+        transform: translateY(10%);
+        animation: fadeIn 600ms ease forwards;
 
-            h2 {
-                background-color: get-color('primary-blue');
-                color: get-color('background');
-                padding: 10px;
-                font-size: 1.75rem;
-                margin-bottom: 1rem;
-            }
-
-            p {
-                font-size: 1.5rem;
-                margin-bottom: 1rem;
-                font-weight: bold;
-                span { color: get-color('alpha-white', $lp: true) }
-            }
-
-            ul {
-                @include vertical-flex;
-                width: 70%;
-                padding: 0;
-                margin: 0 auto;
-                margin-top: 30px;
-                list-style-type: none;
-                text-align: left;
-
-                li {
-                    display: flex;
-                    align-items: center;
-                    font-size: 1.1rem;
-                    margin: 0.5rem 0;
-                    img { margin-right: 10px }
-                }
-            }
+        @for $i from 1 through 10 {
+            &:nth-child(#{$i}) { animation-delay: calc($i * 70ms) }
         }
 
-        button {
-            @include compressible(.97);
+        h2 {
             background-color: get-color('primary-blue');
             color: get-color('background');
             padding: 10px;
-            border-radius: 10px;
-            margin: 20px;
-            &:hover { background-color: get-color('primary-blue-hover') }
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
         }
+
+        p {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            span { color: get-color('alpha-white', $lp: true) }
+        }
+
+        ul {
+            @include vertical-flex;
+            width: 70%;
+            padding: 0;
+            margin: 0 auto;
+            margin-top: 30px;
+            list-style-type: none;
+            text-align: left;
+
+            li {
+                display: flex;
+                align-items: center;
+                font-size: 1.1rem;
+                margin: 0.5rem 0;
+                img { margin-right: 10px }
+            }
+        }
+    }
+
+    button {
+        @include compressible(.97);
+        background-color: get-color('primary-blue');
+        color: get-color('background');
+        padding: 10px;
+        border-radius: 10px;
+        margin: 20px;
+        &:hover { background-color: get-color('primary-blue-hover') }
     }
 }

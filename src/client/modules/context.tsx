@@ -8,7 +8,7 @@ import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Hol
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-const nullSettings: Settings = {
+export const nullSettings: Settings = {
     darkThemeEnabled: false,
     minMaxWorkHoursEnabled: true,
     multiEmpsInShiftEnabled: false,
@@ -26,7 +26,7 @@ const nullSub: Subscription = {
     createdAt: '',
     expiresAt: ''
 }
-export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, isOAuthOnly: false }
+export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, isOAuthOnly: false, hasUsedTrial: false, subExpired: false }
 
 export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,
@@ -265,8 +265,11 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
                 await loadHolidays()
                 await loadSettings()
                 document.body.classList.add('logged-in')
+                document.documentElement.classList.add('logged-in')
+                if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
             } else {
                 document.body.classList.remove('logged-in')
+                document.documentElement.classList.remove('logged-in')
             }
         }
         fetchAllData()

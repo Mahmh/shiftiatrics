@@ -7,7 +7,7 @@ from src.server.lib.utils import log, parse_date, parse_time, utcnow
 from src.server.lib.models import Credentials, Cookies, ScheduleType, SubscriptionInfo
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, IntervalEnum, PricingPlanName
-from src.server.lib.constants import WEB_SERVER_URL
+from src.server.lib.constants import WEB_SERVER_URL, PREDEFINED_SUB_INFOS
 from src.server.lib.emails import send_email
 
 from .tables import Account, Token, Subscription, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
@@ -43,7 +43,7 @@ from .utils import (
 
 ## Account
 @dbsession(commit=True)
-def create_account(cred: Credentials, sub_info: SubscriptionInfo, *, session: _SessionType) -> tuple[Account, Subscription, str]:
+def create_account(cred: Credentials, sub_info: Optional[SubscriptionInfo] = None, *, session: _SessionType) -> tuple[Account, Optional[Subscription], str]:
     """Creates an account with the provided credentials. Returns the account and a new or the given token."""
     _check_email_is_not_registered(_sanitize_email(cred.email), session=session)
     cred = _sanitize_credentials(cred)
@@ -54,10 +54,16 @@ def create_account(cred: Credentials, sub_info: SubscriptionInfo, *, session: _S
     session.commit()  # Commit to generate account_id
 
     # Step 2: Create subscription
-    sub_info = _validate_sub_info(account.account_id, sub_info, session=session)
-    sub = Subscription(**sub_info)
-    session.add(sub)
-    session.commit()
+    if sub_info:
+        if sub_info.plan == 'basic': sub_info = PREDEFINED_SUB_INFOS['basic']
+        if sub_info.plan == 'standard': sub_info = PREDEFINED_SUB_INFOS['standard']
+        if sub_info.plan == 'premium': sub_info = PREDEFINED_SUB_INFOS['premium']
+        sub_info = _validate_sub_info(account.account_id, sub_info, session=session)
+        sub = Subscription(**sub_info)
+        session.add(sub)
+        session.commit()
+    else:
+        sub = None
 
     # Step 3: Set number of schedule requests
     schedule_requests = ScheduleRequests(account_id=account.account_id, num_requests=0, month=utcnow().month)
@@ -611,3 +617,11 @@ def update_email_ntf_interval(account_id: int, interval: Interval, *, session: _
 def get_num_schedule_requests(account_id: int, *, session: _SessionType) -> int:
     _check_account(account_id, session=session)
     return session.get(ScheduleRequests, account_id).num_requests
+
+
+@dbsession()
+def check_sub_expired(account_id: int, *, session: _SessionType) -> int:
+    _check_account(account_id, session=session)
+    sub = _get_active_sub(account_id, session=session)
+    all_subs_count = session.query(Subscription).filter(Subscription.account_id == account_id).count()
+    return sub is None and all_subs_count > 0

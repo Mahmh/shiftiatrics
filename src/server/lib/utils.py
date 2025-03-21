@@ -61,10 +61,10 @@ def get_token_expiry_datetime() -> datetime:
     return utcnow() + timedelta(seconds=TOKEN_EXPIRY_SECONDS)
 
 
-def todict(obj: object) -> Optional[dict]:
+def todict(obj: object, **additional_info) -> Optional[dict]:
     """Converts a SQLAlchemy object to a dictionary."""
     if obj is None: return None
-    return {col.name: getattr(obj, col.name) for col in obj.__table__.columns}
+    return {col.name: getattr(obj, col.name) for col in obj.__table__.columns} | additional_info
 
 
 def todicts(objs: list[object]) -> list[Optional[dict]]:

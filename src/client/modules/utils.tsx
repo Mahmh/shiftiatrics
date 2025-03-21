@@ -7,7 +7,7 @@ import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import routeIcon from '@icons/route.png'
 import { dashboardContext } from '@context'
-import { PRICING_PLANS } from '@const'
+import { FREE_TIER_DETAILS, PRICING_PLANS } from '@const'
 import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PricingPlanName, Subscription } from '@types'
 
 /** Component for icons */
@@ -231,6 +231,10 @@ export const getUIPlanName = (name: PricingPlanName) => (
 /** Converts a UTC date object into a user-readable date */
 export const getUIDate = (date: Date) => (
     `${getMonthName(date.getUTCMonth())} ${date.getUTCDate()}, ${date.getUTCFullYear()}`
+)
+
+export const getAccountLimits = (subscription: Subscription | null) => (
+    subscription ? subscription.planDetails : FREE_TIER_DETAILS
 )
 
 

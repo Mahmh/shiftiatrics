@@ -1,7 +1,6 @@
 import { useState, useContext } from 'react'
 import { dashboardContext } from '@context'
 import { Icon, Request, Choice, getMonthName } from '@utils'
-import { PLAN_EXPIRED_MODAL_CONTENT } from '@const'
 import type { Holiday, InputEvent } from '@types'
 import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
@@ -156,15 +155,9 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
 }
 
 export default function Holidays() {
-    const { account, subscription, employees, holidays, setModalContent, openModal, closeModal, setContent, loadHolidays } = useContext(dashboardContext)
+    const { account, employees, holidays, setModalContent, openModal, closeModal, setContent, loadHolidays } = useContext(dashboardContext)
 
     const openAddModal = () => {
-        if (subscription === null) {
-            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
-            openModal()
-            return
-        }
-        
         const AddModalContent = () => {
             const [tempName, setTempName] = useState('')
             const [assignedTo, setAssignedTo] = useState<number[]>([])

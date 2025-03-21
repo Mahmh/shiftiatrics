@@ -2,17 +2,18 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Icon, setMetadata, getUIPlanName } from '@utils'
+import { PRICING_PLANS } from '@const'
+import type { PricingPlan } from '@types'
 import RegularPage from '@regpage'
 import checkIcon from '@icons/check.png'
-import { PRICING_PLANS } from '@/modules/constants'
 
-const PricingCard = ({ title, titleBg, price, link, features }: { title: string, titleBg: string, price: number | string, link: string, features: string[] }) => {
+const PricingCard = ({ name, titleBg, price, link, features }: PricingPlan) => {
     const router = useRouter()
     const isCustom = typeof price === 'string'
 
     return <div className='pricing-card'>
         <section>
-            <h2 style={{ background: titleBg }}>{title}</h2>
+            <h2 style={{ background: titleBg }}>{getUIPlanName(name)}</h2>
             <p>{!isCustom && 'US$'}{price} {!isCustom && <span>/ month</span>}</p>
             <ul>
                 {features.map((feature, i) =>
@@ -20,7 +21,7 @@ const PricingCard = ({ title, titleBg, price, link, features }: { title: string,
                 )}
             </ul>
         </section>
-        <button onClick={() => router.push(link)}>{!isCustom ? 'Try for Free' : 'Contact Us'}</button>
+        <button onClick={link ? () => router.push(link) : undefined}>{!isCustom ? 'Try for Free' : 'Contact Us'}</button>
     </div>
 }
 
@@ -42,7 +43,7 @@ export default function Pricing() {
         <div className='pricing-cards'>
             {PRICING_PLANS.map(plan => (
                 <PricingCard
-                    title={getUIPlanName(plan.name)}
+                    name={plan.name}
                     price={plan.price}
                     titleBg={plan.titleBg}
                     link={plan.link}

@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName } from '@utils'
-import { MIN_YEAR, MAX_YEAR, PLAN_EXPIRED_MODAL_CONTENT } from '@const'
+import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, getAccountLimits } from '@utils'
+import { MIN_YEAR, MAX_YEAR } from '@const'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
 import closeIcon from '@icons/close.png'
 import prevIcon from '@icons/prev.png'
@@ -13,6 +13,7 @@ export default function Schedules() {
         schedules, setSchedules, setScheduleValidity, getScheduleValidity,
         setModalContent, openModal, closeModal, setContent, settings
     } = useContext(dashboardContext)
+    const { maxNumScheduleRequests } = getAccountLimits(subscription)
     const [loading, setLoading] = useState(false)
     const today = new Date()
     const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth())
@@ -26,23 +27,17 @@ export default function Schedules() {
 
     /** Handles the max number of schedule requests error */
     const handleMaxScheduleRequestsLimit = useCallback((error: string) => {
-        if (subscription === null) {
-            setModalContent(PLAN_EXPIRED_MODAL_CONTENT)
-            openModal()
-            return
-        }
-
         if (error.includes('Max number of schedule requests')) {
             setModalContent(<>
                 <h1>Schedule Request Limit Reached</h1>
                 <p>
-                    You&apos;ve reached the maximum number of schedule requests ({subscription.planDetails.maxNumScheduleRequests}) for this month. 
+                    You&apos;ve reached the maximum number of schedule requests ({maxNumScheduleRequests}) for this month. 
                     Your limit will reset on the 1st of next month, or you can upgrade now for more!
                 </p>
             </>)
             openModal()
         }
-    }, [subscription, openModal, setModalContent])
+    }, [openModal, setModalContent, maxNumScheduleRequests])
 
     /** Stores the schedule in DB */
     const storeSchedule = useCallback(async (schedule: ScheduleOfIDs) => {
