@@ -6,12 +6,12 @@ from src.server.db import (
     toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift,
     toggle_email_ntf, update_email_ntf_interval
 )
-from tests.utils import ctxtest, CRED, SUB_INFO
+from tests.utils import ctxtest, CRED
 
 # Init
 @ctxtest()
 def setup_and_teardown():
-    account_id = create_account(CRED, SUB_INFO)[0].account_id
+    account_id = create_account(CRED)[0].account_id
     yield account_id
 
 

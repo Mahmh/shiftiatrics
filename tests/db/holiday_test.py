@@ -4,14 +4,14 @@ from src.server.db import (
     create_employee, delete_employee,
     create_holiday, delete_holiday, get_all_holidays_of_account, update_holiday
 )
-from tests.utils import ctxtest, CRED, SUB_INFO
+from tests.utils import ctxtest, CRED
 
 # Init
 HOLIDAY = {'holiday_name': 'Holiday', 'assigned_to': [1, 2], 'start_date': '2023-12-25', 'end_date': '2023-12-26'}
 
 @ctxtest()
 def setup_and_teardown():
-    account_id = create_account(CRED, SUB_INFO)[0].account_id
+    account_id = create_account(CRED)[0].account_id
     create_employee(account_id, 'testemp1')
     create_employee(account_id, 'testemp2')
     holiday_id = create_holiday(account_id, **HOLIDAY).holiday_id

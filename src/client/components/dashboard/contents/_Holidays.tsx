@@ -6,7 +6,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
-    const { employees, holidays, setModalContent, openModal, closeModal, loadHolidays } = useContext(dashboardContext)
+    const { account, employees, holidays, setModalContent, openModal, closeModal, loadHolidays } = useContext(dashboardContext)
 
     const convertToUserFriendlyDate = (date: string) => {
         const [year, month, day] = date.split('-').map(Number)
@@ -58,7 +58,7 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
             }
 
             const confirmEdit = async () => {
-                await new Request(`holidays/${id}`, () => loadHolidays()).patch({
+                await new Request(`holidays/${id}`, () => loadHolidays(account)).patch({
                     holiday_name: tempName,
                     assigned_to: assignedTo,
                     start_date: startDate,
@@ -127,7 +127,7 @@ const HolidayCard = ({ id, name, assignedTo, startDate, endDate }: Holiday) => {
 
     const openDeleteModal = () => {
         const confirmDelete = async () => {
-            await new Request(`holidays/${id}`, () => loadHolidays()).delete()
+            await new Request(`holidays/${id}`, () => loadHolidays(account)).delete()
             closeModal()
         }
 
@@ -201,7 +201,7 @@ export default function Holidays() {
             }
 
             const confirmAdd = async () => {
-                await new Request(`accounts/${account.id}/holidays`, () => loadHolidays()).post({
+                await new Request(`accounts/${account.id}/holidays`, () => loadHolidays(account)).post({
                     holiday_name: tempName,
                     assigned_to: assignedTo,
                     start_date: startDate,

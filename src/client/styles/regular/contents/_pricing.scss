@@ -76,7 +76,6 @@
             font-size: 1.5rem;
             margin-bottom: 1rem;
             font-weight: bold;
-            span { color: get-color('alpha-white', $lp: true) }
         }
 
         ul {
@@ -107,4 +106,8 @@
         margin: 20px;
         &:hover { background-color: get-color('primary-blue-hover') }
     }
+}
+
+#pricing-page span {
+    color: get-color('alpha-white', $lp: true) !important
 }

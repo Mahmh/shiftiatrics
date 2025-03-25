@@ -4,8 +4,7 @@ from fastapi.testclient import TestClient
 import random, string
 from src.server.main import app
 from src.server.lib.models import Credentials
-from src.server.lib.constants import PREDEFINED_SUB_INFOS
-from tests.utils import ctxtest, login, signup, CRED, SUB_INFO
+from tests.utils import ctxtest, login, signup, CRED
 
 # Init
 client = TestClient(app)
@@ -26,8 +25,7 @@ def _generate_random_cred_and_sub_info() -> dict[str, str]:
     email = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
     cred = Credentials(email=email, password=password)
-    sub_info = PREDEFINED_SUB_INFOS[random.choice(('basic', 'standard', 'premium'))]
-    return {'cred': cred.model_dump(), 'sub_info': sub_info.model_dump()}
+    return cred.model_dump()
 
 
 def hit_endpoint(endpoint: str, method: LiteralString = 'get', times=30, json: Optional[dict] = None, cookies: Optional[dict] = None) -> Response:

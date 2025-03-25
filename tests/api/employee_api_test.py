@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
-from tests.utils import ctxtest, signup, EMPLOYEE, create_employee, delete_employee
+from tests.utils import ctxtest, signup, create_employee, delete_employee
 
 # Init
 client = TestClient(app)

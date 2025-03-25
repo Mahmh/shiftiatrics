@@ -1,32 +1,19 @@
 'use client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Request, sanitizeInput, validateCred, setMetadata, pySerializePlan } from '@utils'
-import { TOO_MANY_REQS_MSG, PRICING_PLAN_NAMES } from '@const'
-import { isLoggedIn, ContinueWithGoogle } from '@auth'
-import type { PricingPlanName } from '@types'
+import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
+import { TOO_MANY_REQS_MSG } from '@const'
+import { ContinueWithGoogle } from '@auth'
 import Link from 'next/link'
 import RegularPage from '@regpage'
 
 export default function Signup() {
     const router = useRouter()
-    const params = useSearchParams()
-    const plan: PricingPlanName | null = params.get('plan') as PricingPlanName
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string|null>(null)
     const [loading, setLoading] = useState(false)
     const [ToSAccepted, setToSAccepted] = useState(false)
-
-    const getSubInfo = () => {
-        if (plan === null) return undefined
-        switch (plan) {
-            case 'basic': return pySerializePlan('basic')
-            case 'standard': return pySerializePlan('standard')
-            case 'premium': return pySerializePlan('premium')
-            default: throw new Error(`Unsupported predefined plan: "${plan}"`)
-        }
-    }
 
     const handleSignup = async () => {
         if (!ToSAccepted) {
@@ -56,10 +43,7 @@ export default function Signup() {
                 setLoading(false)
                 setError(error.includes('429') ? TOO_MANY_REQS_MSG : error)
             }
-        ).post({
-            cred: { email: sanitizedEmail, password: sanitizedPassword },
-            sub_info: getSubInfo()
-        })
+        ).post({ email: sanitizedEmail, password: sanitizedPassword })
     }
 
     useEffect(() => {
@@ -67,16 +51,7 @@ export default function Signup() {
             title: 'Sign Up | Shiftiatrics',
             description: 'Create an account to view your dashboard'
         })
-
-        if (plan && !PRICING_PLAN_NAMES.includes(plan)) router.push('/pricing')
-    }, [router, plan])
-
-    useEffect(() => {
-        (async () => {
-            const res = await isLoggedIn()
-            if (res && !('redirect' in res)) router.push('/dashboard')
-        })()
-    }, [router])
+    }, [])
 
     return (
         <RegularPage id='signup-page' transparentHeader={true} footerMarginTop={false}>
@@ -97,8 +72,8 @@ export default function Signup() {
                 <button className='cred-submit-btn' id='signup-btn' onClick={handleSignup} disabled={loading}>
                     {loading ? 'Signing up...' : 'Sign Up'}
                 </button>
-                <p>Already have an account? <Link href={plan ? `/login?plan=${plan}` : '/login'}>Log In</Link></p>
-                <ContinueWithGoogle plan={plan}/>
+                <p>Already have an account? <Link href={'/login'}>Log In</Link></p>
+                <ContinueWithGoogle/>
             </div>
         </RegularPage>
     )

@@ -1,4 +1,4 @@
-import { PricingPlanName, PricingPlan } from '@types'
+import { PricingPlanName, PricingPlan, PlanDetails } from '@types'
 
 export const DOMAIN_NAME = 'shiftiatrics.com'
 export const MIN_YEAR = 2023
@@ -12,52 +12,52 @@ export const PRICING_PLANS: PricingPlan[] = [
         name: 'basic',
         price: 19.99,
         titleBg: 'linear-gradient(45deg, #72acfe, #3d7cc7)',
-        link: '/signup?plan=basic',
+        link: '/signup',
         features: [
-            'Up to 5 pediatricians',
-            '2 shifts per day',
-            'Generate or update schedules up to 10 times per month.',
-            'Basic support',
+            'Up to 10 pediatricians',
+            '3 shifts per day',
+            'Generate, update, or delete schedules up to 20 times per month.',
+            // 'Basic support',
             'Export schedules to Microsoft Excel spreadsheets with simple automatic formatting'
         ],
         details: {
-            maxNumPediatricians: 5,
-            maxNumShiftsPerDay: 2,
-            maxNumScheduleRequests: 10
+            maxNumPediatricians: 10,
+            maxNumShiftsPerDay: 3,
+            maxNumScheduleRequests: 20
         }
     },
     {
         name: 'standard',
-        price: 69.99,
+        price: 49.99,
         titleBg: 'linear-gradient(45deg, #217cff, #5ca7ff)',
-        link: '/signup?plan=standard',
+        link: '/signup',
         features: [
-            'Up to 12 pediatricians',
+            'Up to 25 pediatricians',
             '4 shifts per day',
-            'Generate or update schedules up to 30 times per month',
-            'Priority support',
+            'Generate, update, or delete schedules up to 60 times per month',
+            // 'Priority support',
             'E-mail notifications',
-            'Integration with external platforms',
+            // 'Integration with external platforms',
             'Export schedules to Microsoft Excel spreadsheets with better automatic formatting'
         ],
         details: {
-            maxNumPediatricians: 12,
+            maxNumPediatricians: 25,
             maxNumShiftsPerDay: 4,
-            maxNumScheduleRequests: 30
+            maxNumScheduleRequests: 60
         }
     },
     {
         name: 'premium',
         price: 99.99,
         titleBg: 'linear-gradient(45deg, #607eff, #47dbf3)',
-        link: '/signup?plan=premium',
+        link: '/signup',
         features: [
             'Unlimited pediatricians',
             'Unlimited shifts per day',
-            'Generate or update schedules without limits each month',
-            'Priority support',
+            'Generate, update, or delete schedules without limits each month',
+            // 'Priority support',
             'E-mail notifications',
-            'Integration with external platforms',
+            // 'Integration with external platforms',
             'Export schedules to Microsoft Excel spreadsheets with advanced automatic formatting'
         ],
         details: {
@@ -77,15 +77,15 @@ export const PRICING_PLANS: PricingPlan[] = [
             'Custom schedule limit',
             'Dedicated support',
             'Custom notifications',
-            'Custom integration with external platforms',
+            // 'Custom integration with external platforms',
             'Export schedules to Microsoft Excel spreadsheets with custom automatic formatting',
             'Price evaluated based on your ROI'
         ]
     }
 ]
 
-export const FREE_TIER_DETAILS = {
-    maxNumPediatricians: 5,
+export const FREE_TIER_DETAILS: PlanDetails = {
+    maxNumPediatricians: 3,
     maxNumShiftsPerDay: 2,
-    maxNumScheduleRequests: 10
+    maxNumScheduleRequests: 8
 }

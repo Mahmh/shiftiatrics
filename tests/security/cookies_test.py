@@ -1,18 +1,16 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.models import Credentials
-from src.server.lib.constants import PREDEFINED_SUB_INFOS
-from tests.utils import ctxtest, login, signup, CRED, SUB_INFO
+from tests.utils import ctxtest, login, signup, CRED
 
 # Init
 client = TestClient(app)
 CRED2 = Credentials(email='testuser2@gmail.com', password='testpass2')
-SUB_INFO2 = PREDEFINED_SUB_INFOS['premium']
 
 @ctxtest()
 def setup_and_teardown():
-    signup(client, CRED2, SUB_INFO2)
-    signup(client, CRED, SUB_INFO)
+    signup(client, CRED2)
+    signup(client, CRED)
     yield
 
 

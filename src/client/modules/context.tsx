@@ -1,7 +1,7 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
-import { Request, getEmployeeById, hasScheduleForMonth } from '@utils'
+import { usePathname, useRouter } from 'next/navigation'
+import { Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
 import { isLoggedIn } from '@auth'
 import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval, Subscription } from '@types'
 
@@ -18,7 +18,7 @@ export const nullSettings: Settings = {
     emailNtfEnabled: false,
     emailNtfInterval: 'Monthly'
 }
-const nullSub: Subscription = {
+export const nullSub: Subscription = {
     id: -Infinity,
     plan: 'basic',
     price: -Infinity,
@@ -73,6 +73,7 @@ export const dashboardContext = createContext<ContextProps>({
 })
 
 export function DashboardProvider({ children }: ReadonlyChildren) {
+    const [hydrated, setHydrated] = useState(false)
     const [content, setContent] = useState<ContentName>(defaultContent)
     const [account, setAccount] = useState<Account>(nullAccount)
     const [subscription, setSubscription] = useState<Subscription | null>(nullSub)
@@ -86,6 +87,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const [modalContent, setModalContent] = useState<ReactNode>(null)
     const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0)
     const [isMenuShown, setIsMenuShown] = useState(screenWidth > 950)
+    const router = useRouter()
     const darkThemeClassName = useMemo(() => settings.darkThemeEnabled ? 'dark-theme' : '', [settings.darkThemeEnabled])
     const openModal = useCallback(() => setIsModalOpen(true), [])
     const closeModal = useCallback(() => setIsModalOpen(false), [])
@@ -122,7 +124,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         return { id, name, minWorkHours, maxWorkHours }
     }, [setScheduleValidity])
 
-    const loadEmployees = useCallback(async (): Promise<Employee[]> => {
+    const loadEmployees = useCallback(async (account: Account): Promise<Employee[]> => {
         if (account.id === -Infinity) return []
         return new Promise(async (resolve) => {
             type Response = {
@@ -144,7 +146,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         })
     }, [account.id])
 
-    const loadShifts = useCallback(async () => {
+    const loadShifts = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
         type Response = { shift_id: Shift['id'], shift_name: Shift['name'], start_time: Shift['startTime'], end_time: Shift['endTime'] }[];
         await new Request(`accounts/${account.id}/shifts`, (data: Response) => {
@@ -157,7 +159,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         }).get()
     }, [account.id])
 
-    const loadSchedules = useCallback(async (employees: Employee[]) => {
+    const loadSchedules = useCallback(async (account: Account, employees: Employee[]) => {
         if (account.id === -Infinity) return []
         type Response = { account_id: Account['id'], schedule_id: Schedule['id'], month: number, year: number, schedule: ScheduleOfIDs }[];
         await new Request(`accounts/${account.id}/schedules`, (data: Response) => {
@@ -195,7 +197,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         }).get()
     }, [account.id, schedulesValidity, validateEmployeeById, setScheduleValidity])
 
-    const loadHolidays = useCallback(async () => {
+    const loadHolidays = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
         type Response = {
             holiday_id: Holiday['id'],
@@ -215,7 +217,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         }).get()
     }, [account.id])
 
-    const loadSettings = useCallback(async () => {
+    const loadSettings = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
         type Response = { detail: null } | {
             dark_theme_enabled: boolean,
@@ -245,56 +247,80 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         ).get()
     }, [account.id, setSettings])
 
-    const logInWithCookies = useCallback(async () => {
-        if (pathname === '/') return
-        const res = await isLoggedIn()
-        if (res && !('redirect' in res)) {
-            setAccount(res.account)
-            setSubscription(res.subscription)
+    const checkIsSubExpiringSoon = useCallback((subscription: Subscription) => {
+        const now = new Date()
+        const expiryDate = new Date(subscription.expiresAt)
+        const timeDiff = expiryDate.getTime() - now.getTime()
+        const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+        if (daysLeft === 3) {
+            setModalContent(<>
+                <h1>Subscription Expiring Soon</h1>
+                <p>
+                    Your current plan will expire in {daysLeft} day(s) on {getUIDate(expiryDate)}.
+                    To avoid service interruptions, upgrade now and continue enjoying all features.
+                </p>
+                <button>Renew or Upgrade Now</button>
+            </>)
+            openModal()
         }
-    }, [setAccount])
+    }, [openModal, setModalContent])
 
     useEffect(() => {
+        setHydrated(true)
         const fetchAllData = async () => {
-            if (pathname === '/') return
+            if (!['/dashboard', '/login', '/signup'].includes(pathname)) return
+
             const res = await isLoggedIn()
-            if (res && !('redirect' in res)) {
-                const loadedEmployees = await loadEmployees()
-                await loadShifts()
-                await loadSchedules(loadedEmployees)
-                await loadHolidays()
-                await loadSettings()
-                document.body.classList.add('logged-in')
-                document.documentElement.classList.add('logged-in')
-                if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
-            } else {
+            if (res === false) {
                 document.body.classList.remove('logged-in')
                 document.documentElement.classList.remove('logged-in')
+                if (pathname === '/dashboard') router.push('/')
+                return
             }
+
+            if (['/login', '/signup'].includes(pathname)) {
+                router.push('/dashboard')
+                return
+            }
+
+            setAccount(res.account)
+            setSubscription(res.subscription)
+            if (res.subscription !== null) checkIsSubExpiringSoon(res.subscription)
+
+            const loadedEmployees = await loadEmployees(res.account)
+            await loadShifts(res.account)
+            await loadSchedules(res.account, loadedEmployees)
+            await loadHolidays(res.account)
+            await loadSettings(res.account)
+
+            document.body.classList.add('logged-in')
+            document.documentElement.classList.add('logged-in')
+            if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
         }
         fetchAllData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [account])
+    }, [pathname])
 
     useEffect(() => {
         const regenerateSchedules = async () => {
-            if (pathname === '/') return
-            const res = await isLoggedIn()
-            if (res && !('redirect' in res) && employees.length > 0) await loadSchedules(employees)
+            if (!['/dashboard', '/login', '/signup'].includes(pathname)) return
+            if (account.id && employees.length > 0) await loadSchedules(account, employees)
         }
         regenerateSchedules()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [account, employees, shifts, holidays])
+    }, [pathname, account, employees, shifts, holidays])
 
     useEffect(() => {
         if (pathname !== '/dashboard') return
         if (settings.darkThemeEnabled) {
+            document.body.classList.add('logged-in')
             document.documentElement.classList.add('dark-theme')
         } else {
+            document.body.classList.remove('logged-in')
             document.documentElement.classList.remove('dark-theme')
         }
-    }, [settings.darkThemeEnabled])
-    
+    }, [pathname, settings.darkThemeEnabled])
+
     useEffect(() => {
         if (typeof window === 'undefined') return
         const handleResize = () => {
@@ -305,9 +331,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         return () => { window.removeEventListener('resize', handleResize) }
     }, [])
 
-    useEffect(() => {
-        logInWithCookies()
-    }, [])
+    if (!hydrated) return null
 
     return (
         <dashboardContext.Provider value={{

@@ -6,7 +6,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
-    const { setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
+    const { account, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
 
     const openEditModal = () => {
         const EditModalContent = () => {
@@ -30,7 +30,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             }
 
             const confirmEdit = async () => {
-                await new Request(`shifts/${id}`, () => loadShifts()).patch({
+                await new Request(`shifts/${id}`, () => loadShifts(account)).patch({
                     shift_name: tempName,
                     start_time: tempStartTime,
                     end_time: tempEndTime,
@@ -82,7 +82,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
 
     const openDeleteModal = () => {
         const confirmDelete = async () => {
-            await new Request(`shifts/${id}`, () => loadShifts()).delete()
+            await new Request(`shifts/${id}`, () => loadShifts(account)).delete()
             closeModal()
         }
 
@@ -142,7 +142,7 @@ export default function Shifts() {
             const confirmAdd = async () => {
                 await new Request(
                     `accounts/${account.id}/shifts`,
-                    () => loadShifts()
+                    () => loadShifts(account)
                 ).post({ shift_name: tempName, start_time: tempStartTime, end_time: tempEndTime })
                 closeModal()
             }

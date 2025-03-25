@@ -15,16 +15,15 @@ from src.server.db import (
     _validate_cookies,
     _generate_new_token
 )
-from tests.utils import ctxtest, CRED, SUB_INFO
+from tests.utils import ctxtest, CRED
 
 # Init
 CRED2 = Credentials(email='existinguser@gmail.com', password='anotherpass123')
-SUB_INFO2 = PREDEFINED_SUB_INFOS['standard']
 
 @ctxtest()
 def setup_and_teardown():
-    account, _, token = create_account(CRED, SUB_INFO)
-    create_account(CRED2, SUB_INFO2)
+    account, token = create_account(CRED)
+    create_account(CRED2)
     yield Cookies(account_id=account.account_id, token=token)
 
 
@@ -33,12 +32,12 @@ def test_create_account():
     # The account is created during setup
     account, sub, _ = log_in_account(CRED)
     assert account.email == CRED.email
-    assert sub.plan.value == SUB_INFO.plan
+    assert sub is None
 
 
 def test_create_account_email_taken():
     with pytest.raises(EmailTaken):
-        create_account(CRED, SUB_INFO)
+        create_account(CRED)
 
 
 def test_delete_account(setup_and_teardown):
@@ -52,9 +51,7 @@ def test_change_email(setup_and_teardown):
     """Tests updating the email of an account."""
     cookies = setup_and_teardown
     new_email = 'newuser@outlook.com'
-
     modified_account = change_email(cookies, new_email)
-    
     assert modified_account.email == new_email
 
 
@@ -91,8 +88,7 @@ def test_change_password_with_oauth():
     account, sub, token = log_in_with_google(
         email='oauthuser@gmail.com',
         access_token=_generate_new_token('auth')['token'],
-        oauth_id='google-123456',
-        plan_name='premium'
+        oauth_id='google-123456'
     )
     cookies = Cookies(account_id=account.account_id, token=token)
     password = 'OldPass!456'
@@ -103,7 +99,7 @@ def test_change_password_with_oauth():
     assert account.hashed_password is not None
     account = change_password(cookies, password, new_password)
     assert _verify_password(new_password, account.hashed_password)
-    assert sub.plan.value == 'premium'
+    assert sub is None
 
 
 def test_set_password_with_oauth():
@@ -111,8 +107,7 @@ def test_set_password_with_oauth():
     account, sub, token = log_in_with_google(
         email='oauthuser@gmail.com',
         access_token=_generate_new_token('auth')['token'],
-        oauth_id='google-123456',
-        plan_name='standard'
+        oauth_id='google-123456'
     )
     cookies = Cookies(account_id=account.account_id, token=token)
     password = 'NewPass!456'
@@ -121,7 +116,7 @@ def test_set_password_with_oauth():
     account = set_password(cookies, password)
     assert account.hashed_password is not None
     assert _verify_password(password, account.hashed_password)
-    assert sub.plan.value == 'standard'
+    assert sub is None
 
 
 def test_set_password_already_has_password(setup_and_teardown):
@@ -146,10 +141,8 @@ def test_set_password_non_oauth_user(setup_and_teardown):
         set_password(cookies, 'NewPass!456')
 
 
-def test_two_users_have_different_emails_and_subs():
+def test_two_users_have_different_emails_and_no_subs():
     account1, sub1, _ = log_in_account(CRED)
     account2, sub2, _ = log_in_account(CRED2)
     assert account1.email != account2.email
-    assert sub1.plan.value == SUB_INFO.plan
-    assert sub2.plan.value == SUB_INFO2.plan
-    assert sub1.plan.value != sub2.plan.value
+    assert sub1 == sub2 == None

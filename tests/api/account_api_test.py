@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.models import Credentials
 from src.server.lib.constants import PREDEFINED_SUB_INFOS
-from tests.utils import ctxtest, login, signup, CRED, SUB_INFO
+from tests.utils import ctxtest, login, signup, CRED
 
 # Init
 client = TestClient(app)
@@ -22,24 +22,23 @@ def test_login():
 
     response_data = response.json()
     assert response_data['account']['email'] == CRED.email
-    assert response_data['account']['has_used_trial'] == True
+    assert response_data['account']['has_used_trial'] == False
     assert response_data['account']['sub_expired'] == False
-    assert response_data['subscription']['plan'] == SUB_INFO.plan
+    assert response_data['subscription'] == None
 
 
 def test_create_new_account():
     new_cred = Credentials(email='newuser@gmail.com', password='newpass123')
-    new_sub = PREDEFINED_SUB_INFOS['standard']
-    response = signup(client, new_cred, new_sub)
+    response = signup(client, new_cred)
     assert response.status_code == 200
     assert response.cookies.get('account_id') == '2'
     assert response.cookies.get('auth_token') != None
 
     response_data = response.json()
     assert response_data['account']['email'] == new_cred.email
-    assert response_data['account']['has_used_trial'] == True
+    assert response_data['account']['has_used_trial'] == False
     assert response_data['account']['sub_expired'] == False
-    assert response_data['subscription']['plan'] == new_sub.plan
+    assert response_data['subscription'] == None
 
 
 def test_update_email():

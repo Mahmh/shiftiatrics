@@ -7,7 +7,7 @@ import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import routeIcon from '@icons/route.png'
 import { dashboardContext } from '@context'
-import { FREE_TIER_DETAILS, PRICING_PLANS } from '@const'
+import { FREE_TIER_DETAILS } from '@const'
 import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PricingPlanName, Subscription } from '@types'
 
 /** Component for icons */
@@ -207,20 +207,6 @@ export const validatePassword = (password: string): string | null => {
     return null
 }
 
-/** Converts PricingPlan into an object that can be processed by the back-end server */
-export const pySerializePlan = (name: PricingPlanName) => {
-    const plan = PRICING_PLANS.filter(p => p.name === name)[0]
-    return {
-        plan: plan.name,
-        price: plan.price,
-        plan_details: {
-            max_num_pediatricians:  plan.details?.maxNumPediatricians,
-            max_num_shifts_per_day: plan.details?.maxNumShiftsPerDay,
-            max_num_schedule_requests: plan.details?.maxNumScheduleRequests
-        }
-    }
-}
-
 
 /** E.g., 'basic' -> 'Basic Plan'  */
 export const getUIPlanName = (name: PricingPlanName) => (
@@ -233,6 +219,8 @@ export const getUIDate = (date: Date) => (
     `${getMonthName(date.getUTCMonth())} ${date.getUTCDate()}, ${date.getUTCFullYear()}`
 )
 
+
+/** @returns Max number of entities associated with an account given its subscription */
 export const getAccountLimits = (subscription: Subscription | null) => (
     subscription ? subscription.planDetails : FREE_TIER_DETAILS
 )
@@ -251,7 +239,7 @@ export class Request {
     //// Properties ////
     private readonly endpointUrl: string
     private readonly responseCallback: (data: any) => any
-    private readonly errorHandler: (error: string) => any
+    private readonly errorHandler: (error: string) => void
     private readonly includeCookies: boolean
 
     public constructor(

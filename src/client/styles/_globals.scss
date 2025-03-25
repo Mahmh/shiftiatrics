@@ -89,6 +89,7 @@ a {
             #header-tabs button {
                 border-radius: 10px 10px 0 0;
                 padding-bottom: 9px;
+
                 &.tab-btn { @include themed-bgcolor('alpha-black-1', 'alpha-black') }
                 &.active-tab-btn { @include themed-bgcolor('secondary-blue-hover') }
             }

@@ -1,7 +1,6 @@
 import { useRouter } from 'next/navigation'
 import { Request } from '@utils'
-import { PRICING_PLAN_NAMES } from '@const'
-import type { AccountResponse, Account, PricingPlanName, AccountAndSubResponse, AccountAndSub, SubscriptionResponse, Subscription } from '@types'
+import type { AccountResponse, Account, AccountAndSubResponse, AccountAndSub, SubscriptionResponse, Subscription } from '@types'
 
 /** Converts API response properties to TSX properties */
 export const parseAccount = (data: AccountResponse): Account => ({
@@ -41,13 +40,12 @@ export const isLoggedIn = async (): Promise<AccountAndSub | false> => {
 
 
 /** Lets a user log in or sign up with their Google account */
-export const ContinueWithGoogle = ({ plan }: { plan?: PricingPlanName }) => {
+export const ContinueWithGoogle = () => {
     const router = useRouter()
-    const urlParams = plan && PRICING_PLAN_NAMES.includes(plan) ? `?plan_name=${plan}` : ''
 
     const redirect = async () => {
         await new Request(
-            `auth/google${urlParams}`,
+            'auth/google',
             (data: { login_url: string }) => router.push(data.login_url)
         ).get()
     }

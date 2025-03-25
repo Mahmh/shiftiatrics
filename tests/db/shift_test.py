@@ -1,13 +1,13 @@
 from src.server.lib.utils import parse_time
 from src.server.db import create_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
-from tests.utils import ctxtest, CRED, SUB_INFO
+from tests.utils import ctxtest, CRED
 
 # Init
 SHIFT = {'shift_name': 'Morning Shift', 'start_time': '08:00', 'end_time': '16:00'}
 
 @ctxtest()
 def setup_and_teardown():
-    account_id = create_account(CRED, SUB_INFO)[0].account_id
+    account_id = create_account(CRED)[0].account_id
     shift_id = create_shift(account_id, **SHIFT).shift_id
     yield account_id, shift_id
 

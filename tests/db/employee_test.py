@@ -1,10 +1,10 @@
 from src.server.db import create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
-from tests.utils import ctxtest, CRED, SUB_INFO
+from tests.utils import ctxtest, CRED
 
 # Init
 @ctxtest()
 def setup_and_teardown():
-    account_id = create_account(CRED, SUB_INFO)[0].account_id
+    account_id = create_account(CRED)[0].account_id
     yield account_id
 
 

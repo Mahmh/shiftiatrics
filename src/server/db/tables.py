@@ -12,7 +12,6 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     CheckConstraint,
-    UniqueConstraint,
     Numeric
 )
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
@@ -33,6 +32,8 @@ class Account(Base):
     email = Column(String(256), unique=True, nullable=False)
     hashed_password = Column(String(128), nullable=True)
     email_verified = Column(Boolean, nullable=False, server_default='false', default=False)
+    stripe_customer_id = Column(String, nullable=True)
+    has_used_trial = Column(Boolean, nullable=False, server_default='false', default=False)
     oauth_provider = Column(String(16), nullable=True)
     oauth_token = Column(String(2048), nullable=True)
     oauth_id = Column(String(64), unique=True, nullable=True)
@@ -51,8 +52,8 @@ class Token(Base):
         server_default='auth',
         default=TokenTypeEnum.AUTH.value
     )
-    created_at = Column(DateTime, nullable=False, default=func.now())
-    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
     __repr__ = lambda self: f'Token({self.account_id})'
 
 
@@ -65,9 +66,12 @@ class Subscription(Base):
         nullable=False
     )
     price = Column(Numeric(7, 2), nullable=False)
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
-    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    canceled_at = Column(DateTime(timezone=True), nullable=True)
     plan_details = Column(JSONB, nullable=True)
+    stripe_session_id = Column(String, nullable=False)
+    stripe_subscription_id = Column(String, unique=True, nullable=False)
     __table_args__ = (CheckConstraint('price >= 0', name='positive_price'),)
     __repr__ = lambda self: f'Subscription({self.account_id})'
 

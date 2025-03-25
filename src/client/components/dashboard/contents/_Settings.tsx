@@ -10,7 +10,7 @@ import LoadingScreen from '@/components/_LoadingScreen'
 
 const Account = () => {
     const router = useRouter()
-    const { account, setAccount, employees, shifts, schedules, holidays, openModal, closeModal, setModalContent } = useContext(dashboardContext)
+    const { account, setAccount, setSubscription, employees, shifts, schedules, holidays, openModal, closeModal, setModalContent } = useContext(dashboardContext)
     const [exitingAccount, setExitingAccount] = useState(false)
     const exitAccount = useCallback(() => {
         closeModal()
@@ -45,9 +45,13 @@ const Account = () => {
         exitAccount()
         await new Request(
             `auth/logout`,
-            () => { setAccount(nullAccount); router.push('/dashboard') }
+            () => {
+                setAccount(nullAccount)
+                setSubscription(null)
+                router.push('/dashboard')
+            }
         ).get()
-    }, [router, setAccount, exitAccount])
+    }, [router, setAccount, exitAccount, setSubscription])
 
     /** Displays an account deletion modal. If confirmed, sends an API request to delete the account */
     const openDeleteModal = useCallback(() => {

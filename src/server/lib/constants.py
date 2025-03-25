@@ -1,5 +1,5 @@
 from dotenv import load_dotenv; load_dotenv()
-import os, bcrypt
+import os, bcrypt, stripe
 from src.server.lib.models import SubscriptionInfo, PlanDetails
 from src.server.lib.types import PricingPlanName
 
@@ -19,29 +19,39 @@ PSQL_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 ENGINE_URL = f'postgresql+psycopg2://{PSQL_USER}:{PSQL_PASSWORD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
 
 # Pricing
-FREE_TIER_DETAILS = PlanDetails(max_num_pediatricians=5, max_num_shifts_per_day=2, max_num_schedule_requests=10)
-
-PRICING: dict[PricingPlanName, float] = {
-    'basic': 19.99,
-    'standard': 69.99,
-    'premium': 99.99
-}
+FREE_TIER_DETAILS = PlanDetails(
+    max_num_pediatricians=3,
+    max_num_shifts_per_day=2,
+    max_num_schedule_requests=8
+)
 
 PREDEFINED_SUB_INFOS: dict[PricingPlanName, SubscriptionInfo] = {
     'basic': SubscriptionInfo(
         plan='basic',
-        price=PRICING['basic'],
-        plan_details=PlanDetails(max_num_pediatricians=5, max_num_shifts_per_day=2, max_num_schedule_requests=10)
+        price=19.99,
+        plan_details=PlanDetails(
+            max_num_pediatricians=10,
+            max_num_shifts_per_day=3,
+            max_num_schedule_requests=20
+        )
     ),
     'standard': SubscriptionInfo(
         plan='standard',
-        price=PRICING['standard'],
-        plan_details=PlanDetails(max_num_pediatricians=12, max_num_shifts_per_day=4, max_num_schedule_requests=30)
+        price=49.99,
+        plan_details=PlanDetails(
+            max_num_pediatricians=25,
+            max_num_shifts_per_day=4,
+            max_num_schedule_requests=60
+        )
     ),
     'premium': SubscriptionInfo(
         plan='premium',
-        price=PRICING['premium'],
-        plan_details=PlanDetails(max_num_pediatricians=999, max_num_shifts_per_day=999, max_num_schedule_requests=999)
+        price=99.99,
+        plan_details=PlanDetails(
+            max_num_pediatricians=999,
+            max_num_shifts_per_day=999,
+            max_num_schedule_requests=999
+        )
     )
 }
 
@@ -73,7 +83,26 @@ GOOGLE_REDIRECT_URI = f'{BACKEND_SERVER_URL}/auth/google/callback'
 GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
+# Stripe
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+PLAN_TO_STRIPE_PRICE_ID: dict[PricingPlanName, str] = {
+    'basic': 'price_1R57GALcPBGZy9UcVui6CMG9',
+    'standard': 'price_1R57GiLcPBGZy9Ucguxtg4Z6',
+    'premium': 'price_1R57H4LcPBGZy9UcPWVco8Ll',
+    # 'custom': ''
+}
+
 # Misc
 ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
 LOG_DIR = _locate('../logs/')
 SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')
+
+
+# Check keys are defined
+if GOOGLE_CLIENT_ID is None or GOOGLE_CLIENT_SECRET is None:
+    raise ValueError('Google OAuth env variables are not defined')
+
+if STRIPE_SECRET_KEY is None:
+    raise ValueError('Stripe API keys are not defined')
+else:
+    stripe.api_key = STRIPE_SECRET_KEY

@@ -48,9 +48,8 @@
         margin-bottom: 5px;
     }
 
-    h1, h2, p, li, b, label {
-        @include themed-color('primary-text');
-    }
+    h1, h2, p, li, b, label, td { @include themed-color('primary-text') }
+    td { text-align: left }
 
     .modal-input-sec {
         margin-bottom: 20px;
@@ -93,5 +92,16 @@
 
     .error {
         color: get-color('primary-red') !important;
+    }
+
+    .modal-btns {
+        @include breakpoint(950px) { flex-direction: column }
+        display: flex;
+        gap: 10px;
+        button, a { width: 100% }
+    }
+
+    div {
+        @include themed-color('primary-text')
     }
 }

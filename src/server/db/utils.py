@@ -3,7 +3,7 @@ from functools import wraps
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.sql import exists
-import unicodedata, re, bcrypt, inspect, secrets
+import unicodedata, re, bcrypt, inspect, secrets, stripe
 from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PREDEFINED_SUB_INFOS, FREE_TIER_DETAILS
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
@@ -80,7 +80,25 @@ def _check_account(account_id: int, *, session: _SessionType) -> Account:
     """Returns an account if it exists using its ID."""
     account = session.query(Account).filter_by(account_id=account_id).first()
     if not account: raise NonExistent('account', account_id)
+    _check_account_limits(account_id, session=session)
     return account
+
+
+def _check_account_limits(account_id: int, *, session: _SessionType) -> None:
+    """Validates that the account is complying with its subscription plan."""
+    sub = _get_active_sub(account_id, session=session)
+    employee_count = session.query(Employee).filter(Employee.account_id == account_id).count()
+    shifts_per_day_count = session.query(Shift).filter(Shift.account_id == account_id).count()
+    _check_schedule_requests(account_id, session=session)
+
+    max_num_pediatricians = FREE_TIER_DETAILS.max_num_pediatricians if sub is None else sub.plan_details['max_num_pediatricians']
+    max_num_shifts_per_day = FREE_TIER_DETAILS.max_num_shifts_per_day if sub is None else sub.plan_details['max_num_shifts_per_day']
+
+    if employee_count > max_num_pediatricians:
+        raise ValueError('You have exceeded the maximum number of pediatricians allowed by your plan.')
+
+    if shifts_per_day_count > max_num_shifts_per_day:
+        raise ValueError('You have exceeded the maximum number of shift types per day allowed by your plan.')
 
 
 def _check_employee(employee_id: int, *, session: _SessionType) -> Employee:
@@ -285,7 +303,7 @@ def _validate_cookies(cookies: Cookies, *, session: _SessionType) -> Account:
 
     if token_obj is None:
         raise InvalidCookies(cookies)
-    elif datetime.now() > token_obj.expires_at:
+    elif utcnow() > token_obj.expires_at:
         raise InvalidCookies(cookies)
 
     account = _check_account(token_obj.account_id, session=session)
@@ -322,8 +340,12 @@ def _get_email_from_token(token: str, token_type: TokenType, *, session: _Sessio
     return account.email
 
 
-def _validate_sub_info(account_id: int, sub_info: SubscriptionInfo, *, session: _SessionType) -> dict:
+def _validate_sub_info(account_id: int, sub_info: SubscriptionInfo, stripe_session_id: str, stripe_subscription_id: str, *, session: _SessionType) -> dict:
     """Computes & returns subscription info for a given account and plan."""
+    account = _check_account(account_id, session=session)
+
+    if session.query(Subscription).filter_by(stripe_session_id=stripe_session_id).first():
+        raise ValueError('Stripe session ID was already processed.')
     
     # If the plan is custom, ensure the user doesn't already have one
     if sub_info.plan == 'custom':
@@ -343,78 +365,54 @@ def _validate_sub_info(account_id: int, sub_info: SubscriptionInfo, *, session: 
         price = sub_info.price
         expires_at = sub_info.expires_at
     else:
-        # Check if the user has already used a free trial for this plan
-        has_used_trial = session.query(
-            exists().where(
-                (Subscription.account_id == account_id) &
-                (Subscription.price == 0.0)
-            )
-        ).scalar()
-
-        # Set price to 0.0 if the user has NOT used a free trial for this plan
-        price = 0.0 if not has_used_trial else sub_info.price
-        expires_at = utcnow() + timedelta(days=(7 if price == 0.0 else 30))
+        # Set price to 0.0 if the user has NOT used a free trial
+        if account.has_used_trial:
+            price = sub_info.price
+            expires_at = utcnow() + timedelta(days=30)
+        else:
+            price = 0.0
+            expires_at = utcnow() + timedelta(days=7)
+            account.has_used_trial = True
 
     return dict(
         account_id=account_id,
         plan=sub_info.plan,
         price=price,
         expires_at=expires_at,
-        plan_details=dict(sub_info.plan_details)
+        plan_details=dict(sub_info.plan_details),
+        stripe_session_id=stripe_session_id,
+        stripe_subscription_id=stripe_subscription_id
     )
 
 
 def _get_active_sub(account_id: int, *, session: _SessionType) -> Optional[Subscription]:
     """Returns the latest active subscription for the given account, or None if no active subscription exists."""
-    return session.query(Subscription).filter(
+    sub = session.query(Subscription).filter(
         Subscription.account_id == account_id,
-        Subscription.expires_at > utcnow()  # Only active subscriptions
+        Subscription.canceled_at.is_(None)
     ).order_by(Subscription.expires_at.desc()).first()
 
+    if not sub:
+        return None
 
-def _has_used_trial(account_id: int, *, session: _SessionType) -> bool:
-    """Returns True if the user has ever used a free trial on any plan (price=0.0), otherwise False."""
-    return session.query(
-        session.query(Subscription).filter(
-            Subscription.account_id == account_id,
-            Subscription.price == 0.0
-        ).exists()
-    ).scalar()
+    if utcnow() > sub.expires_at:
+        stripe_sub = stripe.Subscription.retrieve(sub.stripe_subscription_id)
+        if stripe_sub.status not in ('active', 'trialing'):
+            return None  # Subscription truly expired or canceled
+        sub.expires_at = datetime.fromtimestamp(stripe_sub.current_period_end, tz=timezone.utc)
+        session.commit()
 
-
-@dbsession()
-def has_used_trial(account_id: int, *, session: _SessionType) -> bool:
-    """Public version of `_has_used_trial`."""
-    return _has_used_trial(account_id, session=session)
+    return sub if utcnow() < sub.expires_at else None
 
 
 def _get_or_create_auth_token(account_id: int, *, session: _SessionType) -> Token:
     """Either creates or retrieves an existing auth token from a given account and returns it."""
     token_obj = _get_token_from_account(account_id, 'auth', session=session)
-    if token_obj is None or utcnow() > token_obj.expires_at.replace(tzinfo=timezone.utc):
+    if token_obj is None or utcnow() > token_obj.expires_at:
         token = _create_new_token(account_id, session=session)
     else:
         token = token_obj.token
     return token
-
-
-def _get_or_create_sub(account_id: int, plan_name: Optional[PricingPlanName] = None, *, session: _SessionType) -> Optional[Subscription]:
-    """Gets the active subscription or creates a new one if a plan is provided. Ensures the user gets only ONE free trial ever."""
-    account = session.get(Account, account_id)
-    has_used_trial = _has_used_trial(account_id, session=session)
-    sub = _get_active_sub(account_id, session=session)
-
-    # Prevent OAuth user from logging out in order to start a free trial on another plan
-    if plan_name and has_used_trial and sub.plan.value != plan_name and account.oauth_provider is not None:
-        return sub
-
-    if plan_name and (sub is None or sub.plan.value != plan_name):
-        sub_info = _validate_sub_info(account_id, PREDEFINED_SUB_INFOS[plan_name], session=session)
-        sub = Subscription(**sub_info)
-        session.add(sub)
-        session.commit()
-        log(f'Subscription created: {sub} [Expires at: {sub.expires_at}]', 'subscription')
-    return sub
 
 
 def _check_schedule_requests(account_id: int, *, session: _SessionType) -> None:
@@ -434,7 +432,6 @@ def _check_schedule_requests(account_id: int, *, session: _SessionType) -> None:
             raise ValueError(ERR_MSG)
     elif schedule_requests.num_requests >= FREE_TIER_DETAILS.max_num_schedule_requests:
             raise ValueError(ERR_MSG)
-
 
 
 def _increment_schedule_requests(account_id: int, *, session: _SessionType):

@@ -4,12 +4,12 @@ from src.server.lib.utils import utcnow
 from src.server.lib.models import Cookies
 from src.server.lib.exceptions import InvalidCookies, NonExistent
 from src.server.db import Session, create_account, _renew_token, _generate_new_token, _get_token_from_account, _validate_cookies
-from tests.utils import ctxtest, CRED, SUB_INFO
+from tests.utils import ctxtest, CRED
 
 # Init
 @ctxtest()
 def setup_and_teardown():
-    account, _, token = create_account(CRED, SUB_INFO)
+    account, token = create_account(CRED)
     yield account.account_id, token
 
 
@@ -54,7 +54,7 @@ def test_invalidate_expired_cookies(setup_and_teardown):
         token_obj = _get_token_from_account(account_id, 'auth', session=session)
         cookies = Cookies(account_id=account_id, token=token_obj.token)
         # Simulate token expiry
-        token_obj.expires_at = datetime.now() - timedelta(days=1)
+        token_obj.expires_at = utcnow() - timedelta(days=1)
         session.commit()
         with pytest.raises(InvalidCookies):
             _validate_cookies(cookies, session=session)
@@ -65,7 +65,7 @@ def test_renew_expired_token(setup_and_teardown):
     with Session() as session:
         token_obj = _get_token_from_account(account_id, 'auth', session=session)
         # Simulate token expiry
-        token_obj.expires_at = datetime.now() - timedelta(days=1)
+        token_obj.expires_at = utcnow() - timedelta(days=1)
         session.commit()
         # Renew the expired token
         new_token = _renew_token(account_id, session=session)

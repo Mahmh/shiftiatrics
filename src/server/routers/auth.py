@@ -1,4 +1,3 @@
-from typing import Optional
 from urllib.parse import urlencode
 from fastapi import APIRouter, HTTPException, Request, Response, Query, Body
 from fastapi.responses import RedirectResponse
@@ -6,20 +5,16 @@ import httpx, jwt
 
 from src.server.rate_limit import limiter
 from src.server.lib.models import Credentials, Cookies
-from src.server.lib.types import PricingPlanName
-from src.server.lib.utils import todict
-from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, store_cookies_then_redirect
+from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, store_cookies_then_redirect, return_account_and_sub
 
 from src.server.db import (
     log_in_account,
     log_in_account_with_cookies,
     log_in_with_google,
-    has_used_trial,
     request_reset_password,
     reset_password,
     request_verify_email,
-    verify_email,
-    check_sub_expired
+    verify_email
 )
 
 from src.server.lib.constants import (
@@ -36,7 +31,7 @@ auth_router = APIRouter()
 
 
 @auth_router.get('/auth/log_in_account_with_cookies')
-@limiter.limit('60/minute')
+@limiter.limit('30/minute')
 @endpoint(auth=False)
 async def log_in_account_with_cookies_(request: Request) -> dict:
     cookies = get_cookies(request)
@@ -46,14 +41,7 @@ async def log_in_account_with_cookies_(request: Request) -> dict:
         return {'error': 'Token is either invalid or not found'}
     else:
         account, sub = log_in_account_with_cookies(cookies)
-        return {
-            'account': todict(
-                account,
-                has_used_trial=has_used_trial(account.account_id),
-                sub_expired=check_sub_expired(account.account_id)
-            ),
-            'subscription': todict(sub)
-        }
+        return return_account_and_sub(account, sub)
 
 
 @auth_router.post('/auth/login')
@@ -62,14 +50,7 @@ async def log_in_account_with_cookies_(request: Request) -> dict:
 async def login_account(cred: Credentials, response: Response, request: Request) -> dict:
     account, sub, token = log_in_account(cred)
     store_cookies(Cookies(account_id=account.account_id, token=token), response)
-    return {
-        'account': todict(
-            account,
-            has_used_trial=has_used_trial(account.account_id),
-            sub_expired=check_sub_expired(account.account_id)
-        ),
-        'subscription': todict(sub)
-    }
+    return return_account_and_sub(account, sub)
 
 
 @auth_router.get('/auth/logout')
@@ -113,7 +94,7 @@ async def verify_email_(request: Request, verify_token: str = Body(..., embed=Tr
 @auth_router.get('/auth/google')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint(auth=False)
-async def continue_with_google(request: Request, plan_name: Optional[PricingPlanName] = Query(None)) -> dict:
+async def continue_with_google(request: Request) -> dict:
     '''Redirects users to Google's OAuth login page'''
     params = {
         'client_id': GOOGLE_CLIENT_ID,
@@ -122,16 +103,13 @@ async def continue_with_google(request: Request, plan_name: Optional[PricingPlan
         'redirect_uri': GOOGLE_REDIRECT_URI,
         'access_type': 'online'
     }
-
-    if plan_name:
-        params['state'] = plan_name
     return {'login_url': f'{GOOGLE_AUTH_URL}?{urlencode(params)}'}
 
 
 @auth_router.get('/auth/google/callback')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint(auth=False)
-async def google_callback(request: Request, code: str = Query(None), error: str = Query(None), state: Optional[PricingPlanName] = Query(None)) -> RedirectResponse:
+async def google_callback(request: Request, code: str = Query(None), error: str = Query(None)) -> RedirectResponse:
     '''Handles Google's OAuth callback, gets user info, and starts a session.'''
     if error or code is None:
         return RedirectResponse(WEB_SERVER_URL)
@@ -164,6 +142,6 @@ async def google_callback(request: Request, code: str = Query(None), error: str 
     if not oauth_id:
         raise HTTPException(status_code=400, detail='Invalid ID token')
 
-    account, _, token = log_in_with_google(email, access_token, oauth_id, state)
+    account, _, token = log_in_with_google(email, access_token, oauth_id)
     cookies = Cookies(account_id=account.account_id, token=token)
     return store_cookies_then_redirect(cookies)

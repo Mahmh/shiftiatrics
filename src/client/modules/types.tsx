@@ -2,6 +2,8 @@ import type { SetStateAction, Dispatch, ReactNode, ChangeEvent } from 'react'
 
 // Types
 type SetState<T> = Dispatch<SetStateAction<T>>
+type InvoiceStatus = 'draft' | 'open' | 'paid' | 'uncollectible' | 'void'
+
 export type ReadonlyChildren = Readonly<{children: React.ReactNode}>
 export type EndpointResponse = object | { error: string }
 export type InputEvent = ChangeEvent<HTMLInputElement>
@@ -34,12 +36,12 @@ export interface ContextProps {
 
     employees: Employee[]
     setEmployees: SetState<Employee[]>
-    loadEmployees: () => void
+    loadEmployees: (account: Account) => void
     validateEmployeeById: (id: number, employees: Employee[], year: number, month: number) => Employee
 
     shifts: Shift[]
     setShifts: SetState<Shift[]>
-    loadShifts: () => void
+    loadShifts: (account: Account) => void
 
     schedules: YearToSchedules
     setSchedules: SetState<YearToSchedules>
@@ -48,7 +50,7 @@ export interface ContextProps {
 
     holidays: Holiday[]
     setHolidays: SetState<Holiday[]>
-    loadHolidays: () => void
+    loadHolidays: (account: Account) => void
 
     settings: Settings
     setSettings: SetState<Settings>
@@ -169,4 +171,32 @@ export interface Subscription extends SubscriptionInfo {
     id: number
     createdAt: string
     expiresAt: string
+}
+
+export interface StripeInvoiceResponse {
+    invoice_id: string
+    amount_due: number           // In dollars (float)
+    amount_paid: number          // In dollars (float)
+    currency: string             // Always uppercase, e.g. "USD"
+    status: InvoiceStatus
+    invoice_pdf: string          // Direct link to downloadable PDF
+    hosted_invoice_url: string   // Stripe-hosted invoice page
+    created_at: string           // ISO timestamp
+    due_date: string | null      // ISO timestamp or null
+    description: string | null   // Optional description
+    subscription_id: string      // Stripe subscription ID
+}
+
+export interface StripeInvoice {
+    invoiceId: string
+    amountDue: number
+    amountPaid: number
+    currency: string
+    status: InvoiceStatus
+    invoicePdf: string
+    hostedInvoiceUrl: string
+    createdAt: string
+    dueDate: string | null
+    description: string | null
+    subscriptionId: string
 }

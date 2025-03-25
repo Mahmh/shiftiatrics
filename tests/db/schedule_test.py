@@ -1,4 +1,5 @@
 import pytest
+from src.server.lib.constants import FREE_TIER_DETAILS
 from src.server.db import (
     Session,
     create_account,
@@ -9,14 +10,14 @@ from src.server.db import (
     get_num_schedule_requests,
     _check_schedule_requests,
 )
-from tests.utils import ctxtest, CRED, SUB_INFO
+from tests.utils import ctxtest, CRED
 
 # Init
 SCHEDULE = {'schedule': [[1, 2], [3, 4]], 'month': 11, 'year': 2024}
 
 @ctxtest()
 def setup_and_teardown():
-    account_id = create_account(CRED, SUB_INFO)[0].account_id
+    account_id = create_account(CRED)[0].account_id
     schedule_id = create_schedule(account_id, **SCHEDULE).schedule_id
     yield account_id, schedule_id
 
@@ -61,10 +62,10 @@ def test_delete_schedule(setup_and_teardown):
     assert len(schedules) == 0
 
 
-def test_invalid_schedule_requests(setup_and_teardown):
+def test_invalid_schedule_requests_in_free_tier(setup_and_teardown):
     account_id, _ = setup_and_teardown
     with pytest.raises(ValueError):
-        for i in range(1, SUB_INFO.plan_details.max_num_schedule_requests):
+        for i in range(1, FREE_TIER_DETAILS.max_num_schedule_requests):
             schedule_id = create_schedule(account_id, **SCHEDULE).schedule_id
             update_schedule(schedule_id, {'schedule': SCHEDULE['schedule'] if i%2 == 0 else [[5, 6], [7, 8]]})
             delete_schedule(schedule_id)

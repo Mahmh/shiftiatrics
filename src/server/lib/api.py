@@ -2,7 +2,7 @@ from typing import Any, Optional, LiteralString
 from functools import wraps
 from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
-from src.server.db import Account, Employee, Shift, Schedule, Holiday, Settings, log_in_account_with_cookies
+from src.server.db import Account, Subscription, Employee, Shift, Schedule, Holiday, Settings, log_in_account_with_cookies, check_sub_expired
 from src.server.lib.constants import WEB_SERVER_URL, COOKIE_DOMAIN, TOKEN_EXPIRY_SECONDS
 from src.server.lib.models import Cookies
 from src.server.lib.utils import log, errlog, todict, todicts
@@ -23,7 +23,7 @@ def _authenticate(kwargs: dict[str, Any]) -> Optional[dict[str, str]]:
 
 def _handle_return_type(result: Any) -> dict | list[dict] | Any:
     """Converts a given type to a data type that is suitable to be an API response."""
-    if type(result) in (Account, Employee, Shift, Schedule, Holiday, Settings):
+    if type(result) in (Account, Subscription, Employee, Shift, Schedule, Holiday, Settings):
         return todict(result)
     elif type(result) is list:
         try: return todicts(result)
@@ -92,3 +92,11 @@ def store_cookies_then_redirect(cookies: Cookies, endpoint_url: LiteralString = 
     response = RedirectResponse(WEB_SERVER_URL + endpoint_url)
     store_cookies(cookies, response)
     return response
+
+
+def return_account_and_sub(account: Account, sub: Optional[Subscription] = None) -> dict:
+    """Returns an API response dictionary with the given account and nullable subscription converted to dictionaries, with additional info given to `account`."""
+    return {
+        'account': todict(account, sub_expired=check_sub_expired(account.account_id)),
+        'subscription': todict(sub)
+    }

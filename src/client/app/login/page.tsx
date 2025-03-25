@@ -1,16 +1,14 @@
 'use client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
-import { isLoggedIn, ContinueWithGoogle } from '@auth'
+import { ContinueWithGoogle } from '@auth'
 import Link from 'next/link'
 import RegularPage from '@regpage'
 
 export default function Login() {
     const router = useRouter()
-    const params = useSearchParams()
-    const plan = params.get('plan')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string|null>(null)
@@ -53,13 +51,6 @@ export default function Login() {
             description: 'Log in to view your dashboard'
         })
     }, [])
-
-    useEffect(() => {
-        (async () => {
-            const res = await isLoggedIn()
-            if (res && !('redirect' in res)) router.push('/dashboard')
-        })()
-    }, [router])
     
     return (
         <RegularPage id='login-page' transparentHeader={true} footerMarginTop={false}>
@@ -81,7 +72,7 @@ export default function Login() {
                         Forgot Password
                     </button>
                 </section>
-                <p>Don&apos;t have an account? <Link href={plan ? `/signup?plan=${plan}` : '/signup'}>Sign Up</Link></p>
+                <p>Don&apos;t have an account? <Link href={'/signup'}>Sign Up</Link></p>
                 <ContinueWithGoogle/>
             </div>
         </RegularPage>

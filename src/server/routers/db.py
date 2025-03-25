@@ -2,10 +2,9 @@ from typing import Literal, Optional
 from fastapi import APIRouter, Request, Response, Body
 from src.server.rate_limit import limiter
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
-from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo, SubscriptionInfo
-from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies
+from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
+from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, return_account_and_sub
 from src.server.lib.types import WeekendDays, Interval
-from src.server.lib.utils import todict
 from src.server.db import (
     create_account, change_email, change_password, set_password, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
@@ -14,8 +13,7 @@ from src.server.db import (
     get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours,
     get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
     toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift,
-    toggle_email_ntf, update_email_ntf_interval,
-    has_used_trial, check_sub_expired, get_num_schedule_requests,
+    toggle_email_ntf, update_email_ntf_interval
 )
 
 # Init
@@ -25,7 +23,6 @@ shift_router = APIRouter()
 schedule_router = APIRouter()
 holiday_router = APIRouter()
 settings_router = APIRouter()
-sub_router = APIRouter()
 
 
 # Endpoints
@@ -33,17 +30,10 @@ sub_router = APIRouter()
 @account_router.post('/accounts/signup')
 @limiter.limit('10/minute')
 @endpoint(auth=False)
-async def create_new_account(cred: Credentials, response: Response, request: Request, sub_info: Optional[SubscriptionInfo] = None) -> dict:
-    account, sub, token = create_account(cred, sub_info)
+async def create_new_account(cred: Credentials, response: Response, request: Request) -> dict:
+    account, token = create_account(cred)
     store_cookies(Cookies(account_id=account.account_id, token=token), response)
-    return {
-        'account': todict(
-            account,
-            has_used_trial=has_used_trial(account.account_id),
-            sub_expired=check_sub_expired(account.account_id)
-        ),
-        'subscription': todict(sub)
-    }
+    return return_account_and_sub(account)
 
 
 @account_router.patch('/accounts/email')
@@ -260,12 +250,3 @@ async def toggle_email_ntf_(account_id: int, request: Request) -> dict:
 @endpoint()
 async def update_email_ntf_interval_(account_id: int, info: dict[Literal['email_ntf_interval'], Interval], request: Request) -> dict:
     return {'detail': update_email_ntf_interval(account_id=account_id, interval=info['email_ntf_interval'])}
-
-
-
-## Subscription
-@sub_router.get('/sub/{account_id}/schedule_requests')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def get_schedule_requests_(account_id: int, request: Request) -> dict:
-    return {'num_requests': get_num_schedule_requests(account_id)}

@@ -7,7 +7,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
-    const { settings, setModalContent, openModal, closeModal, loadEmployees, loadHolidays } = useContext(dashboardContext)
+    const { account, settings, setModalContent, openModal, closeModal, loadEmployees, loadHolidays } = useContext(dashboardContext)
 
     /** Displays a modal for editing employee details */
     const openEditModal = () => {
@@ -72,7 +72,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
             }
     
             const confirmEdit = async () => {
-                await new Request(`employees/${id}`, () => loadEmployees()).patch({
+                await new Request(`employees/${id}`, () => loadEmployees(account)).patch({
                     employee_name: tempName,
                     min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
                     max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
@@ -135,7 +135,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
     /** Displays a modal for confirmation of employee deletion  */
     const openDeleteModal = () => {
         const confirmDelete = async () => {
-            await new Request(`employees/${id}`, () => { loadEmployees(); loadHolidays() }).delete()
+            await new Request(`employees/${id}`, () => { loadEmployees(account); loadHolidays(account) }).delete()
             closeModal()
         }
 
@@ -221,7 +221,7 @@ export default function Employees() {
             }
     
             const confirmAdd = async () => {
-                await new Request(`accounts/${account.id}/employees`, () => loadEmployees()).post({
+                await new Request(`accounts/${account.id}/employees`, () => loadEmployees(account)).post({
                     employee_name: tempName,
                     min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
                     max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,

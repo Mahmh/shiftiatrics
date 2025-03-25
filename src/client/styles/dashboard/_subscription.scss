@@ -60,10 +60,6 @@
         }
 
         .limit-reached { @include themed-color('primary-red') }
-        #cancel-sub-btn {
-            @include themed-bgcolor('primary-red');
-            &:hover { @include themed-bgcolor('primary-red-hover') }
-        }
     }
 }
 
@@ -93,5 +89,15 @@
             scale: 1;
             cursor: default;
         }
+    }
+}
+
+.sub-actions-card {
+    @include breakpoint(1000px) { flex-direction: column }
+    margin-top: 0 !important;
+
+    #cancel-sub-btn {
+        @include themed-bgcolor('primary-red');
+        &:hover { @include themed-bgcolor('primary-red-hover') }
     }
 }

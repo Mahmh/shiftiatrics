@@ -12,6 +12,8 @@ CREATE TABLE accounts (
     email VARCHAR(256) UNIQUE NOT NULL,
     hashed_password VARCHAR(128), -- Null for OAuth users
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    stripe_customer_id TEXT NULL,
+    has_used_trial BOOLEAN NOT NULL DEFAULT FALSE,
     oauth_provider VARCHAR(16),
     oauth_token VARCHAR(2048),
     oauth_id VARCHAR(64) UNIQUE,
@@ -23,8 +25,8 @@ CREATE TABLE tokens (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     token VARCHAR(64) UNIQUE NOT NULL,
     token_type token_type_enum NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE subscriptions (
@@ -32,9 +34,12 @@ CREATE TABLE subscriptions (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     plan pricing_plan_enum NOT NULL,
     price NUMERIC(7,2) NOT NULL CHECK (price >= 0), -- If price=0 => free trial
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL,
-    plan_details JSONB NULL
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    canceled_at TIMESTAMPTZ NULL,
+    plan_details JSONB NULL,
+    stripe_session_id TEXT NOT NULL,
+    stripe_subscription_id TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE employees (
