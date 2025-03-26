@@ -12,11 +12,12 @@ import LoadingScreen from '../_LoadingScreen'
 export default function DashboardPage() {
     const router = useRouter()
     const params = useSearchParams()
-    const sessionId = params.get('session_id')
+    const checkoutSessionId = params.get('chkout_session_id')
+    const plan = params.get('plan')
     const { account, setAccount, setSubscription, setModalContent, openModal } = useContext(dashboardContext)
 
     useEffect(() => {
-        const createSub = async () => {
+        const createPredefinedSub = async () => {
             await new Request(
                 `sub/${account.id}/create`,
                 (data: AccountAndSubResponse) => {
@@ -34,11 +35,35 @@ export default function DashboardPage() {
                         openModal()
                     }
                 }
-            ).post({ session_id: sessionId })
+            ).post({ session_id: checkoutSessionId })
         }
 
-        if (sessionId) createSub()
-    }, [sessionId, router, account.id, setAccount, setSubscription, openModal, setModalContent])
+        const createCustomSub = async () => {
+            await new Request(
+                `sub/${account.id}/create_custom`,
+                (data: AccountAndSubResponse) => {
+                    router.push('/dashboard')
+                    setAccount(parseAccount(data.account))
+                    setSubscription(data.subscription ? parseSub(data.subscription) : null)
+                    setModalContent(<p style={{ padding: 20 }}>Your subscription has been successfully activated.</p>)
+                    openModal()
+                },
+                (error) => {
+                    if (error.includes('session ID was already processed')) {
+                        router.push('/dashboard')
+                    } else {
+                        setModalContent(<p style={{ padding: 20 }}>Error occurred: {error}</p>)
+                        openModal()
+                    }
+                }
+            ).post({ session_id: checkoutSessionId })
+        }
+
+        if (checkoutSessionId) {
+            if (plan == 'custom') createCustomSub()
+            else createPredefinedSub()
+        }
+    }, [checkoutSessionId, plan, router, account.id, setAccount, setSubscription, openModal, setModalContent])
 
     return <>
         <LoadingScreen/>

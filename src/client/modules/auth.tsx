@@ -9,7 +9,8 @@ export const parseAccount = (data: AccountResponse): Account => ({
     emailVerified: data.email_verified,
     isOAuthOnly: data.hashed_password === null && data.oauth_provider !== null,
     hasUsedTrial: data.has_used_trial,
-    subExpired: data.sub_expired
+    subExpired: data.sub_expired,
+    pendingCheckoutUrl: data.pending_checkout_url
 })
 
 export const parseSub = (data: SubscriptionResponse): Subscription => ({

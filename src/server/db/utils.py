@@ -4,12 +4,12 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.sql import exists
 import unicodedata, re, bcrypt, inspect, secrets, stripe
-from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, PREDEFINED_SUB_INFOS, FREE_TIER_DETAILS
+from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, FREE_TIER_DETAILS
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
-from src.server.lib.types import TokenType, PricingPlanName
+from src.server.lib.types import TokenType
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
-from .tables import Session, Account, Token, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings, Subscription
+from .tables import Session, Account, Token, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings, Subscription, CustomPlanInfo
 
 def _handle_args(args: tuple) -> tuple:
     # Sanitize credentials if the first parameter is of type `Credentials`
@@ -340,45 +340,51 @@ def _get_email_from_token(token: str, token_type: TokenType, *, session: _Sessio
     return account.email
 
 
+def _has_custom_plan(account_id: int, *, session: _SessionType) -> bool:
+    """Returns True if the user already has a custom subscription."""
+    return session.query(
+        exists().where(
+            (Subscription.account_id == account_id) &
+            (Subscription.plan == 'custom')
+        )
+    ).scalar()
+
+
 def _validate_sub_info(account_id: int, sub_info: SubscriptionInfo, stripe_session_id: str, stripe_subscription_id: str, *, session: _SessionType) -> dict:
     """Computes & returns subscription info for a given account and plan."""
     account = _check_account(account_id, session=session)
+
+    if sub_info.expires_at is None:
+        raise ValueError('Please set an expiry date in the SubscriptionInfo.')
 
     if session.query(Subscription).filter_by(stripe_session_id=stripe_session_id).first():
         raise ValueError('Stripe session ID was already processed.')
     
     # If the plan is custom, ensure the user doesn't already have one
     if sub_info.plan == 'custom':
-        has_custom_plan = session.query(
-            exists().where(
-                (Subscription.account_id == account_id) &
-                (Subscription.plan == 'custom')
-            )
-        ).scalar()
-
-        if has_custom_plan:
+        if _has_custom_plan(account_id, session=session):
             raise ValueError('User already has a custom plan.')
+        
+        if not _get_custom_plan_info(account_id, session=session):
+            raise ValueError(f'No custom plan info was already created for account {account_id}.')
 
-        if sub_info.price <= 0:
-            raise ValueError('Custom plan price must be greater than zero.')
+        if sub_info.price < 0:
+            raise ValueError('Custom plan price must be >= 0.')
 
         price = sub_info.price
-        expires_at = sub_info.expires_at
     else:
         # Set price to 0.0 if the user has NOT used a free trial
         if account.has_used_trial:
             price = sub_info.price
-            expires_at = utcnow() + timedelta(days=30)
         else:
             price = 0.0
-            expires_at = utcnow() + timedelta(days=7)
             account.has_used_trial = True
 
     return dict(
         account_id=account_id,
         plan=sub_info.plan,
         price=price,
-        expires_at=expires_at,
+        expires_at=sub_info.expires_at,
         plan_details=dict(sub_info.plan_details),
         stripe_session_id=stripe_session_id,
         stripe_subscription_id=stripe_subscription_id
@@ -434,8 +440,13 @@ def _check_schedule_requests(account_id: int, *, session: _SessionType) -> None:
             raise ValueError(ERR_MSG)
 
 
-def _increment_schedule_requests(account_id: int, *, session: _SessionType):
+def _increment_schedule_requests(account_id: int, *, session: _SessionType) -> None:
     """Increments the number of schedule requests counter after generating/regenerating schedule(s)."""
     schedule_requests = session.get(ScheduleRequests, account_id)
     schedule_requests.num_requests += 1
     session.commit()
+
+
+def _get_custom_plan_info(account_id: int, *, session: _SessionType) -> CustomPlanInfo:
+    """Returns the custom plan info made for an account."""
+    return session.query(CustomPlanInfo).filter_by(account_id=account_id).first()

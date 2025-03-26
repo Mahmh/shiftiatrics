@@ -25,7 +25,7 @@ def _generate_random_cred_and_sub_info() -> dict[str, str]:
     email = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
     cred = Credentials(email=email, password=password)
-    return cred.model_dump()
+    return dict(cred)
 
 
 def hit_endpoint(endpoint: str, method: LiteralString = 'get', times=30, json: Optional[dict] = None, cookies: Optional[dict] = None) -> Response:
@@ -54,7 +54,7 @@ def test_rate_limit_signup():
 
 
 def test_rate_limit_login():
-    response = hit_endpoint('/auth/login', method='post', times=5, json=CRED.model_dump())
+    response = hit_endpoint('/auth/login', method='post', times=5, json=dict(CRED))
     assert response.status_code == 429
 
 

@@ -12,7 +12,7 @@ CREATE TABLE accounts (
     email VARCHAR(256) UNIQUE NOT NULL,
     hashed_password VARCHAR(128), -- Null for OAuth users
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    stripe_customer_id TEXT NULL,
+    stripe_customer_id VARCHAR(128) NULL,
     has_used_trial BOOLEAN NOT NULL DEFAULT FALSE,
     oauth_provider VARCHAR(16),
     oauth_token VARCHAR(2048),
@@ -37,9 +37,21 @@ CREATE TABLE subscriptions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL,
     canceled_at TIMESTAMPTZ NULL,
-    plan_details JSONB NULL,
-    stripe_session_id TEXT NOT NULL,
-    stripe_subscription_id TEXT UNIQUE NOT NULL
+    plan_details JSONB NOT NULL,
+    stripe_session_id VARCHAR(128) NOT NULL,
+    stripe_subscription_id VARCHAR(128) UNIQUE NOT NULL
+);
+
+CREATE TABLE custom_plan_infos (
+    info_id SERIAL PRIMARY KEY,
+    account_id INT UNIQUE NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    price NUMERIC(7,2) NOT NULL CHECK (price >= 0),
+    plan_details JSONB NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    stripe_price_id VARCHAR(128) UNIQUE NOT NULL,
+    stripe_product_id VARCHAR(128) NOT NULL,
+    stripe_pending_checkout_url TEXT NULL,
+    UNIQUE (stripe_price_id, stripe_product_id)
 );
 
 CREATE TABLE employees (

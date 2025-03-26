@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    Text,
     Boolean,
     ForeignKey,
     Date,
@@ -11,8 +12,9 @@ from sqlalchemy import (
     Time,
     Enum,
     ForeignKey,
+    Numeric,
     CheckConstraint,
-    Numeric
+    UniqueConstraint
 )
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -32,12 +34,12 @@ class Account(Base):
     email = Column(String(256), unique=True, nullable=False)
     hashed_password = Column(String(128), nullable=True)
     email_verified = Column(Boolean, nullable=False, server_default='false', default=False)
-    stripe_customer_id = Column(String, nullable=True)
+    stripe_customer_id = Column(String(128), nullable=True)
     has_used_trial = Column(Boolean, nullable=False, server_default='false', default=False)
     oauth_provider = Column(String(16), nullable=True)
     oauth_token = Column(String(2048), nullable=True)
     oauth_id = Column(String(64), unique=True, nullable=True)
-    oauth_email = Column(String, unique=True, nullable=True)
+    oauth_email = Column(String(256), unique=True, nullable=True)
     __repr__ = lambda self: f'Account({self.account_id})'
 
 
@@ -52,7 +54,7 @@ class Token(Base):
         server_default='auth',
         default=TokenTypeEnum.AUTH.value
     )
-    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
     __repr__ = lambda self: f'Token({self.account_id})'
 
@@ -66,21 +68,38 @@ class Subscription(Base):
         nullable=False
     )
     price = Column(Numeric(7, 2), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
     canceled_at = Column(DateTime(timezone=True), nullable=True)
-    plan_details = Column(JSONB, nullable=True)
-    stripe_session_id = Column(String, nullable=False)
-    stripe_subscription_id = Column(String, unique=True, nullable=False)
+    plan_details = Column(JSONB, nullable=False)
+    stripe_session_id = Column(String(128), nullable=False)
+    stripe_subscription_id = Column(String(128), unique=True, nullable=False)
     __table_args__ = (CheckConstraint('price >= 0', name='positive_price'),)
     __repr__ = lambda self: f'Subscription({self.account_id})'
+
+
+class CustomPlanInfo(Base):
+    __tablename__ = 'custom_plan_infos'
+    info_id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), unique=True, nullable=False)
+    price = Column(Numeric(7, 2), nullable=False)
+    plan_details = Column(JSONB, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    stripe_price_id = Column(String(128), unique=True, nullable=False)
+    stripe_product_id = Column(String(128), nullable=False)
+    stripe_pending_checkout_url = Column(Text, nullable=True)
+    __table_args__ = (
+        CheckConstraint('price >= 0', name='positive_price'),
+        UniqueConstraint('stripe_price_id', 'stripe_product_id', name='uq_price_product')
+    )
+    __repr__ = lambda self: f'CustomPlanInfo({self.account_id})'
 
 
 class Employee(Base):
     __tablename__ = 'employees'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     employee_id = Column(Integer, primary_key=True, autoincrement=True)
-    employee_name = Column(String(100), nullable=False)
+    employee_name = Column(String(40), nullable=False)
     min_work_hours = Column(Integer, nullable=True)
     max_work_hours = Column(Integer, nullable=True)
     __repr__ = lambda self: f'Employee({self.employee_id})'
@@ -90,7 +109,7 @@ class Shift(Base):
     __tablename__ = 'shifts'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     shift_id = Column(Integer, primary_key=True, autoincrement=True)
-    shift_name = Column(String(100), nullable=False)
+    shift_name = Column(String(40), nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     __repr__ = lambda self: f'Employee({self.shift_id})'
@@ -118,7 +137,7 @@ class Holiday(Base):
     __tablename__ = 'holidays'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     holiday_id = Column(Integer, primary_key=True, autoincrement=True)
-    holiday_name = Column(String(100), nullable=False)
+    holiday_name = Column(String(40), nullable=False)
     assigned_to = Column(ARRAY(Integer, dimensions=1), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)

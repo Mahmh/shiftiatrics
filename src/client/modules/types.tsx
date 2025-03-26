@@ -76,6 +76,7 @@ export interface AccountResponse {
     oauth_provider: string
     has_used_trial: boolean
     sub_expired: boolean
+    pending_checkout_url: string | null
 }
 
 export interface SubscriptionResponse {
@@ -99,6 +100,7 @@ export interface Account {
     isOAuthOnly: boolean
     hasUsedTrial: boolean
     subExpired: boolean
+    pendingCheckoutUrl: string | null
 }
 
 export interface Employee {

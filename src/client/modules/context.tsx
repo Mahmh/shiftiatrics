@@ -1,7 +1,7 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
+import { Choice, Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
 import { isLoggedIn } from '@auth'
 import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval, Subscription } from '@types'
 
@@ -26,7 +26,16 @@ export const nullSub: Subscription = {
     createdAt: '',
     expiresAt: ''
 }
-export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, isOAuthOnly: false, hasUsedTrial: false, subExpired: false }
+export const nullAccount: Account = {
+    id: -Infinity,
+    email: '',
+    emailVerified:
+    false,
+    isOAuthOnly: false,
+    hasUsedTrial: false,
+    subExpired: false,
+    pendingCheckoutUrl: null
+}
 
 export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,
@@ -296,6 +305,14 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             document.body.classList.add('logged-in')
             document.documentElement.classList.add('logged-in')
             if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
+
+            if (res.account.pendingCheckoutUrl !== null) {
+                setModalContent(<>
+                    <p style={{ padding: 20 }}>You have been designated a custom plan!</p>
+                    <button onClick={() => res.account.pendingCheckoutUrl ? router.push(res.account.pendingCheckoutUrl) : null}>Subscribe</button>
+                </>)
+                openModal()
+            }
         }
         fetchAllData()
         // eslint-disable-next-line react-hooks/exhaustive-deps

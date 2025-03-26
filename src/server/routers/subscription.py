@@ -3,7 +3,7 @@ from src.server.rate_limit import limiter
 from src.server.lib.api import endpoint, return_account_and_sub
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
 from src.server.lib.types import PricingPlanName
-from src.server.db import get_num_schedule_requests, create_checkout_session, get_invoice, create_sub, cancel_sub, change_sub
+from src.server.db import get_num_schedule_requests, create_checkout_session, get_invoice, create_sub, cancel_sub, change_sub, create_custom_sub
 
 sub_router = APIRouter()
 
@@ -49,3 +49,11 @@ async def view_invoice(account_id: int, request: Request) -> dict:
 @endpoint()
 async def change_subscription(account_id: int, request: Request, new_plan: PricingPlanName = Body(..., embed=True)) -> dict:
     return change_sub(account_id, new_plan)
+
+
+@sub_router.post('/sub/{account_id}/create_custom')
+@limiter.limit('10/minute')
+@endpoint()
+async def create_custom_subscription(account_id: int, request: Request, session_id: str = Body(..., embed=True)) -> dict:
+    account, sub = create_custom_sub(account_id, session_id)
+    return return_account_and_sub(account, sub)

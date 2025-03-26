@@ -5,13 +5,13 @@ from sqlalchemy.orm import Session as _SessionType
 import stripe
 
 from src.server.lib.utils import log, parse_date, parse_time, utcnow
-from src.server.lib.models import Credentials, Cookies, ScheduleType, SubscriptionInfo
+from src.server.lib.models import Credentials, Cookies, ScheduleType, SubscriptionInfo, PlanDetails
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, IntervalEnum, PricingPlanName
-from src.server.lib.constants import WEB_SERVER_URL, PLAN_TO_STRIPE_PRICE_ID, PREDEFINED_SUB_INFOS
+from src.server.lib.constants import WEB_SERVER_URL, PREDEFINED_PLAN_TO_STRIPE_PRICE_ID, PREDEFINED_SUB_INFOS
 from src.server.lib.emails import send_email
 
-from .tables import Account, Token, Subscription, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
+from .tables import Account, Token, Subscription, CustomPlanInfo, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
 from .utils import (
     dbsession,
     _check_email_is_not_registered,
@@ -38,7 +38,8 @@ from .utils import (
     _get_active_sub,
     _get_or_create_auth_token,
     _check_schedule_requests,
-    _increment_schedule_requests
+    _increment_schedule_requests,
+    _get_custom_plan_info
 )
 
 ## Account
@@ -623,14 +624,14 @@ def check_sub_expired(account_id: int, *, session: _SessionType) -> bool:
 def create_checkout_session(account_id: int, plan_name: PricingPlanName, *, session: _SessionType) -> str:
     """Creates a checkout session and returns the checkout URL for subscribing."""
     account = _check_account(account_id, session=session)
-    price_id = PLAN_TO_STRIPE_PRICE_ID.get(plan_name.lower())
-    if not price_id: raise ValueError('Invalid plan name.')
+    price_id = PREDEFINED_PLAN_TO_STRIPE_PRICE_ID.get(plan_name.lower())
+    if not price_id: raise ValueError(f'Invalid plan name: "{plan_name}"')
 
     sub_data = {} if account.has_used_trial else dict(subscription_data={'trial_period_days': 7})
     session = stripe.checkout.Session.create(
         mode='subscription',
         line_items=[{'price': price_id, 'quantity': 1}],
-        success_url=f'{WEB_SERVER_URL}/dashboard?session_id={{CHECKOUT_SESSION_ID}}',
+        success_url=f'{WEB_SERVER_URL}/dashboard?chkout_session_id={{CHECKOUT_SESSION_ID}}',
         cancel_url=f'{WEB_SERVER_URL}/dashboard',
         **sub_data
     )
@@ -669,7 +670,7 @@ def create_sub(account_id: int, stripe_session_id: str, *, session: _SessionType
     sub_info = SubscriptionInfo(
         plan=plan_name,
         price=unit_amount / 100,
-        expires_at=datetime.fromtimestamp(stripe_sub['current_period_end'], tz=timezone.utc),
+        expires_at=datetime.fromtimestamp(stripe_sub.current_period_end, tz=timezone.utc),
         plan_details=PREDEFINED_SUB_INFOS[plan_name].plan_details
     )
 
@@ -736,7 +737,7 @@ def cancel_sub(account_id: int, *, session: _SessionType) -> None:
         sub.canceled_at = utcnow()
     except Exception as e:
         log(f'Failed to cancel Stripe subscription for account {account_id}: {e}', 'subscription', 'ERROR')
-        raise RuntimeError('Failed to cancel subscription.')
+        raise RuntimeError('Failed to cancel subscription.') from e
 
     # Delete customer
     if account.stripe_customer_id:
@@ -746,7 +747,7 @@ def cancel_sub(account_id: int, *, session: _SessionType) -> None:
             log(f'Deleted Stripe customer for account {account_id}', 'subscription')
         except Exception as e:
             log(f'Failed to delete Stripe customer for account {account_id}: {e}', 'subscription', 'ERROR')
-            raise RuntimeError('Failed to delete Stripe customer.')
+            raise RuntimeError('Failed to delete Stripe customer.') from e
 
     log(f'Canceled subscription for account {account_id}', 'subscription')
 
@@ -757,7 +758,7 @@ def change_sub(account_id: int, new_plan: PricingPlanName, *, session: _SessionT
     account = _check_account(account_id, session=session)
 
     # 1. Validate the new plan
-    new_price_id = PLAN_TO_STRIPE_PRICE_ID.get(new_plan.lower())
+    new_price_id = PREDEFINED_PLAN_TO_STRIPE_PRICE_ID.get(new_plan.lower())
     if not new_price_id: raise ValueError('Invalid plan name.')
 
     # 2. Get current subscription from DB
@@ -799,10 +800,104 @@ def change_sub(account_id: int, new_plan: PricingPlanName, *, session: _SessionT
 
     # 6. Update DB sub
     stripe_sub = stripe.Subscription.retrieve(sub.stripe_subscription_id)
-    sub.expires_at = datetime.fromtimestamp(stripe_sub['current_period_end'], tz=timezone.utc)
+    sub.expires_at = datetime.fromtimestamp(stripe_sub.current_period_end, tz=timezone.utc)
     sub.plan = new_plan
     sub.price = PREDEFINED_SUB_INFOS[new_plan].price
-    sub.plan_details = PREDEFINED_SUB_INFOS[new_plan].plan_details.model_dump()
+    sub.plan_details = dict(PREDEFINED_SUB_INFOS[new_plan].plan_details)
 
     log(f'Changed subscription for account {account_id} from plan "{old_plan}" to "{new_plan}"', 'subscription')
     return sub
+
+
+@dbsession(commit=True)
+def save_custom_plan_metadata(
+    account_id: int,
+    stripe_product_id: str,
+    stripe_price_id: str,
+    stripe_checkout_url: str,
+    plan_details: PlanDetails,
+    price: float,
+    expires_at: datetime,
+    *,
+    session: _SessionType
+) -> None:
+    """Saves custom plan info for an account before checking out and receiving a valid custom plan."""
+    _check_account(account_id, session=session)
+
+    # Overwrite existing CustomPlanInfo if it exists
+    existing = _get_custom_plan_info(account_id, session=session)
+    if existing:
+        existing.stripe_product_id = stripe_product_id
+        existing.stripe_price_id = stripe_price_id
+        existing.stripe_pending_checkout_url = stripe_checkout_url
+        existing.plan_details = dict(plan_details)
+        existing.price = price
+        existing.expires_at = expires_at
+    else:
+        info = CustomPlanInfo(
+            account_id=account_id,
+            stripe_price_id=stripe_price_id,
+            stripe_product_id=stripe_product_id,
+            stripe_pending_checkout_url=stripe_checkout_url,
+            plan_details=dict(plan_details),
+            price=price,
+            expires_at=expires_at
+        )
+        session.add(info)
+
+
+@dbsession()
+def get_pending_checkout_url(account_id: int, *, session: _SessionType) -> Optional[str]:
+    """
+    Returns the pending checkout URL for a custom plan that requires the account to
+    input its billing info in order for the server to get the customer ID and subscription ID.
+    """
+    _check_account(account_id, session=session)
+    custom_plan_info = _get_custom_plan_info(account_id, session=session)
+    return custom_plan_info.stripe_pending_checkout_url if custom_plan_info is not None else None
+
+
+@dbsession(commit=True)
+def create_custom_sub(account_id: int, stripe_session_id: str, *, session: _SessionType) -> tuple[Account, Subscription]:
+    """Makes an account subscribe to its custom plan."""
+    account = _check_account(account_id, session=session)
+
+    # Fetch the stored custom plan info
+    stored_info = _get_custom_plan_info(account_id, session=session)
+    if not stored_info:
+        raise LookupError(f'No stored custom plan info found for account {account_id}')
+
+    # Cancel current subscription if one exists
+    if _get_active_sub(account_id, session=session):
+        cancel_sub(account_id)
+
+    # Retrieve the Stripe Checkout Session
+    stripe_session = stripe.checkout.Session.retrieve(stripe_session_id)
+    if stripe_session.mode != 'subscription':
+        raise ValueError('Session is not a subscription.')
+
+    stripe_customer_id = stripe_session.customer
+    stripe_subscription_id = stripe_session.subscription
+
+    # Retrieve the subscription to get price/product metadata
+    stripe_sub = stripe.Subscription.retrieve(stripe_subscription_id)
+
+    # Validate price/product match
+    price_obj = stripe_sub['items']['data'][0]['price']
+    if price_obj['id'] != stored_info.stripe_price_id or price_obj['product'] != stored_info.stripe_product_id:
+        raise ValueError('Stripe subscription price/product mismatch with stored custom plan info.')
+
+    # Create SubscriptionInfo
+    sub_info = SubscriptionInfo(plan='custom', price=stored_info.price, expires_at=stored_info.expires_at, plan_details=stored_info.plan_details)
+    sub_info = _validate_sub_info(account_id, sub_info, stripe_session_id, stripe_subscription_id, session=session)
+
+    # Save subscription
+    sub = Subscription(**sub_info)
+    session.add(sub)
+    account.stripe_customer_id = stripe_customer_id
+
+    # Clear pending session ID
+    stored_info.stripe_pending_checkout_url = None
+
+    log(f'Created custom subscription for account {account_id}', 'subscription')
+    return account, sub
