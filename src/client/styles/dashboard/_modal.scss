@@ -1,12 +1,19 @@
 .backdrop #modal {
     @include themed-bgcolor('background', 'primary-blue');
+    box-sizing: border-box; // ensures padding is included in width
+
     @include breakpoint(815px) {
         width: 100%;
+        max-width: 100%;
         margin: 0;
-        height: 70%;
-        position: relative;
-        top: 30%;
+        height: 65%;
+        position: absolute;
+        top: auto;
         bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 16px 16px 0 0;
+        overflow: hidden;
 
         #close-modal-btn { display: none !important }
 
@@ -16,15 +23,17 @@
         }
 
         &.closed {
-            transform: translateY(30%) !important;
+            transform: translateY(100%) !important;
             opacity: 0 !important;
         }
     }
+
+    // Default (desktop) modal styling
     border-radius: 16px;
     padding: 20px 40px;
     max-width: 700px;
     width: 90%;
-    margin: 100px;
+    margin: 100px auto;
     position: relative;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     text-align: center;
@@ -46,6 +55,8 @@
         @include vertical-flex;
         gap: 20px;
         margin-bottom: 5px;
+        max-height: 100%;
+        overflow-y: auto;
     }
 
     h1, h2, p, li, b, label, td { @include themed-color('primary-text') }
@@ -103,5 +114,35 @@
 
     div {
         @include themed-color('primary-text')
+    }
+}
+
+
+
+@media screen and (max-width: 815px) {
+    #modal {
+        overflow-y: auto;
+        width: 100vw;
+        max-width: 100vw;
+        padding: 20px;
+        margin: 0;
+        border-radius: 16px 16px 0 0;
+    }
+
+    #modal-content {
+        overflow: unset;
+        padding-bottom: 30px;
+    }
+}
+
+@media screen and (min-width: 816px) {
+    #modal {
+        overflow: hidden;
+        max-height: 55vh;
+    }
+
+    #modal-content {
+        max-height: 55vh;
+        overflow-y: auto;
     }
 }

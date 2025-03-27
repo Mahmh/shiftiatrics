@@ -205,7 +205,7 @@ const MyPlan = ({ setShownSection }: { setShownSection: (value: SubscriptionSect
                     <UsagePart name='Registered pediatricians' num={employees.length} max={maxNumPediatricians}/>
                     <UsagePart name='Registered shifts per day' num={shifts.length} max={maxNumShiftsPerDay}/>
                     <UsagePart name='Schedule creation, modification, or deletion' num={numSubRequests} max={maxNumScheduleRequests}/>
-                    <p style={{ fontStyle: 'italic' }}>Limit resets on {getUIDate(subscription ? new Date(subscription.expiresAt) : nextMonth)}</p>
+                    <p style={{ fontStyle: 'italic' }}>Schedule limit resets on {getUIDate(subscription ? new Date(subscription.expiresAt) : nextMonth)}</p>
                 </div>
             </section>
 

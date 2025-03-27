@@ -195,8 +195,8 @@ export default function Schedules() {
 
             return scheduleAvailable
             ? <>
-                <h2>Total Shifts and Work Hours per Pediatrician This Month</h2>
-                <section id='modal-content'>
+                <h2 style={{ textAlign: 'center' }}>Total Shifts and Work Hours per Pediatrician This Month</h2>
+                <section id='modal-content' style={{ textAlign: 'left', margin: '0 auto', marginBottom: 5 }}>
                     {!loading 
                         ? shiftCounts.size > 0 
                             ? Array.from(shiftCounts.entries()).map(([emp, numShifts], i) => (
