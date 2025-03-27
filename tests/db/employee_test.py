@@ -1,3 +1,4 @@
+import pytest
 from src.server.db import create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
 from tests.utils import ctxtest, CRED
 
@@ -46,3 +47,10 @@ def test_delete_employee(setup_and_teardown):
     delete_employee(employee.employee_id)
     employees = get_all_employees_of_account(account_id)
     assert len(employees) == 0
+
+
+def test_exceed_max_num_pediatricians_in_free_tier(setup_and_teardown):
+    account_id = setup_and_teardown
+    with pytest.raises(ValueError, match='max'):
+        for name in 'abcdefg':
+            create_employee(account_id, name)

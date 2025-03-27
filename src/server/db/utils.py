@@ -76,11 +76,11 @@ def _check_email_is_not_registered(sanitized_email: str, *, session: _SessionTyp
         raise EmailTaken(sanitized_email)
 
 
-def _check_account(account_id: int, *, session: _SessionType) -> Account:
+def _check_account(account_id: int, enforce_limits: bool = False, *, session: _SessionType) -> Account:
     """Returns an account if it exists using its ID."""
     account = session.query(Account).filter_by(account_id=account_id).first()
     if not account: raise NonExistent('account', account_id)
-    _check_account_limits(account_id, session=session)
+    if enforce_limits: _check_account_limits(account_id, session=session)
     return account
 
 

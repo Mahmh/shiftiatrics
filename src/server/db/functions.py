@@ -334,7 +334,7 @@ def create_employee(
         session: _SessionType
     ) -> Employee:
     """Creates an employee for the given account ID."""
-    _check_account(account_id, session=session)
+    _check_account(account_id, enforce_limits=True, session=session)
     min_work_hours, max_work_hours = _check_work_hours(min_work_hours, max_work_hours)
     employee = Employee(account_id=account_id, employee_name=employee_name, min_work_hours=min_work_hours, max_work_hours=max_work_hours)
     session.add(employee)
@@ -382,7 +382,7 @@ def get_all_shifts_of_account(account_id: int, *, session: _SessionType) -> list
 @dbsession(commit=True)
 def create_shift(account_id: int, shift_name: str, start_time: str|time, end_time: str|time, *, session: _SessionType) -> Shift:
     """Creates a shift for the given account ID."""
-    _check_account(account_id, session=session)
+    _check_account(account_id, enforce_limits=True, session=session)
     if type(start_time) is str: start_time = parse_time(start_time)
     if type(end_time) is str: end_time = parse_time(end_time)
     shift = Shift(account_id=account_id, shift_name=shift_name, start_time=start_time, end_time=end_time)
@@ -426,8 +426,8 @@ def get_all_schedules_of_account(account_id: int, *, session: _SessionType, **fi
 @dbsession(commit=True)
 def create_schedule(account_id: int, schedule: ScheduleType, month: int, year: int, *, session: _SessionType) -> Schedule:
     """Creates a schedule for the given account ID."""
+    _check_account(account_id, enforce_limits=True, session=session)
     _check_month_and_year(month, year)
-    _check_account(account_id, session=session)
     _check_schedule_requests(account_id, session=session)
     schedule = Schedule(account_id=account_id, schedule=schedule, month=month, year=year)
     session.add(schedule)

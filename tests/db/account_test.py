@@ -1,7 +1,6 @@
 import pytest
 from src.server.lib.models import Credentials, Cookies
 from src.server.lib.exceptions import EmailTaken, NonExistent
-from src.server.lib.constants import PREDEFINED_SUB_INFOS
 from src.server.db import (
     Session,
     log_in_with_google,
