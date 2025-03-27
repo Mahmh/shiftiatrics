@@ -1,0 +1,21 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Disable Next.js telemetry
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install only dependencies
+COPY src/client/package.json src/client/package-lock.json ./
+RUN npm ci
+
+# Optional: Add wait-on for smoother dev tooling
+RUN npm install -g wait-on
+
+# Copy the rest of the app (will be overridden by volume during dev)
+COPY src/client/ ./
+
+EXPOSE 3000
+
+# Start dev server with hot reload
+CMD ["npm", "run", "dev"]

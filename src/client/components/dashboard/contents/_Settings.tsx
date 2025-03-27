@@ -76,7 +76,10 @@ const Account = () => {
 
             return <>
                 <h1>Delete Your Account?</h1>
-                <p>This action cannot be undone. Are you sure you want to delete it?</p>
+                <p>
+                    Are you sure you want to permanently delete your account?
+                    <b> This action is irreversible</b> and will automatically cancel your active subscription.
+                </p>
                 {error && <p className='error'>{error}</p>}
                 <Choice onYes={deleteAccount} onNo={closeModal}/>
             </>

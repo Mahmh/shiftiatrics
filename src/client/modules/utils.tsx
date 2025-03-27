@@ -248,7 +248,7 @@ export class Request {
         errorHandler: (error: string) => void = (error) => console.error(error),
         includeCookies: boolean = true
     ) {
-        this.endpointUrl = `http://localhost:8000/${endpoint}`
+        this.endpointUrl = `/api/${endpoint}`
         this.responseCallback = responseCallback
         this.errorHandler = errorHandler
         this.includeCookies = includeCookies
