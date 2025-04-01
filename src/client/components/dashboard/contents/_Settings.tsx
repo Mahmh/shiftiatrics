@@ -1,13 +1,72 @@
 import { useCallback, useContext, useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { dashboardContext, nullAccount } from '@context'
-import { Choice, Switch, Dropdown, Request } from '@utils'
+import { Choice, Switch, Dropdown, Request, NumInput } from '@utils'
 import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
-import { parseAccount } from '@auth'
-import type { WeekendDays, InputEvent, AccountResponse } from '@types'
-// import type { WeekendDays, InputEvent, Interval, AccountResponse } from '@types'
+import { parseAccount, parseSettings } from '@auth'
+import type { WeekendDays, InputEvent, AccountResponse, SettingsResponse, Settings, Shift } from '@types'
 import LoadingScreen from '@/components/_LoadingScreen'
 
+export default function Settings() {
+    return <div className='settings-cards'>
+        <Account/>
+        <Preferences/>
+        <ScheduleGeneration/>
+    </div>
+}
+
+const updateSetting = async (setting: string, newValue: number | string | boolean | (string | null)[], accountId: number): Promise<Settings> => {
+    return await new Request(
+        `accounts/${accountId}/settings`,
+        (data: SettingsResponse) => parseSettings(data)
+    ).patch({ setting: setting, new_value: newValue })
+}
+
+export const RotationPatternEditor = ({ shifts, days=7, onChange }: { shifts: Shift[], days?: number, onChange?: (pattern: (string | null)[]) => void }) => {
+    const { account, settings, setSettings } = useContext(dashboardContext)
+    const [rotationPattern, setRotationPattern] = useState<(string | null)[]>(settings.rotationPattern)
+    
+    useEffect(() => {
+        // Adjust pattern when day count changes
+        setRotationPattern(prev => {
+            if (days > prev.length) return [...prev, ...Array(days - prev.length).fill(null)]
+            if (days < prev.length) return prev.slice(0, days)
+            return prev
+        })
+    }, [days])
+
+    useEffect(() => {
+        const updatePattern = async () => setSettings(await updateSetting('rotation_pattern', rotationPattern, account.id))
+        updatePattern()
+    }, [rotationPattern, setSettings, account.id])
+
+    const handleChange = (index: number, value: string) => {
+        const updated = [...rotationPattern]
+        updated[index] = value === 'OFF' ? null : value
+        setRotationPattern(updated)
+        onChange?.(updated)
+    }
+
+    return (
+        <div id='rotation-pattern-editor'>
+            <label>Rotation pattern</label>
+            <div>
+                {rotationPattern.map((value, i) => (
+                    <Dropdown
+                        key={i}
+                        label={`Day ${i+1}`}
+                        options={['OFF', ...shifts.map(s => s.name)]}
+                        selectedOption={value ?? 'OFF'}
+                        setSelectedOption={val => handleChange(i, val)}
+                    />
+                ))}
+            </div>
+        </div>
+    )
+}
+
+
+// Cards
 const Account = () => {
     const router = useRouter()
     const { account, setAccount, setSubscription, employees, shifts, schedules, holidays, openModal, closeModal, setModalContent } = useContext(dashboardContext)
@@ -427,107 +486,44 @@ const Account = () => {
 }
 
 
-const PreferencesAndFunctionality = () => {
+const Preferences = () => {
     const { account, settings, setSettings } = useContext(dashboardContext)
     const [selectedWeekendDays, setSelectedWeekendDays] = useState<WeekendDays>(settings.weekendDays)
     // const [selectedEmailNtfInterval, setSelectedEmailNtfInterval] = useState<Interval>(settings.emailNtfInterval)
 
-    /** Switches between light & dark themes */
-    const toggleDarkTheme = async () => {
-        await new Request(
-            `accounts/${account.id}/settings/toggle_dark_theme`,
-            (data: { detail: boolean|null }) => setSettings(prev => ({...prev, darkThemeEnabled: data.detail ? true : false }))
-        ).get()
-    }
-
-    /** Turns on/off advanced mode */
-    const toggleMinMaxWorkHours = async () => {
-        await new Request(
-            `accounts/${account.id}/settings/toggle_min_max_work_hours`,
-            (data: { detail: boolean|null }) => setSettings(prev => ({...prev, minMaxWorkHoursEnabled: data.detail ? true : false }))
-        ).get()
-    }
-
-    /** Allows/Disallows multiple employees to be in a single shift */
-    const toggleMultiEmpsInShift = async () => {
-        await new Request(
-            `accounts/${account.id}/settings/toggle_multi_emps_in_shift`,
-            (data: { detail: boolean|null }) => setSettings(prev => ({...prev, multiEmpsInShiftEnabled: data.detail ? true : false }))
-        ).get()
-    }
-
-    /** Allows/Disallows one employee to take multiple shifts in the same day */
-    const toggleMultiShiftsOneEmpEnabled = async () => {
-        await new Request(
-            `accounts/${account.id}/settings/toggle_multi_shifts_one_emp`,
-            (data: { detail: boolean|null }) => setSettings(prev => ({...prev, multiShiftsOneEmpEnabled: data.detail ? true : false }))
-        ).get()
-    }
-
     /** Changes the weekend days of the account */
     const changeWeekendDays = async (option: string) => {
+        setSettings(await updateSetting('weekend_days', option, account.id))
         setSelectedWeekendDays(option as WeekendDays)
-        await new Request(
-            `accounts/${account.id}/settings/update_weekend_days`,
-            (data: { detail: WeekendDays }) => setSettings(prev => ({...prev, weekendDays: data.detail }))
-        ).patch({ weekend_days: option })
     }
 
-    /** Updates the maximum number of employees in a single shift */
-    const updateMaxEmpsInShift = async (e: InputEvent) => {
-        if (!settings.multiEmpsInShiftEnabled) return
-        const newValue = parseInt(e.target.value, 10)
-        await new Request(
-            `accounts/${account.id}/settings/max_emps_in_shift`,
-            (data: { detail: number }) => setSettings(prev => ({...prev, maxEmpsInShift: data.detail }))   
-        ).patch({ max_emps_in_shift: newValue })
-    }
-
-    // /** Switches between light & dark themes */
-    // const toggleEmailNtf = async () => {
-    //     await new Request(
-    //         `accounts/${account.id}/settings/toggle_email_ntf`,
-    //         (data: { detail: boolean|null }) => setSettings(prev => ({...prev, emailNtfEnabled: data.detail ? true : false }))
-    //     ).get()
-    // }
-
-    // /** Changes the weekend days of the account */
+    // /** Changes email notification sending interval */
     // const changeEmailNtfInterval = async (option: string) => {
+    //     setSettings(await updateSetting('email_ntf_interval', option, account.id))
     //     setSelectedEmailNtfInterval(option as Interval)
-    //     await new Request(
-    //         `accounts/${account.id}/settings/update_email_ntf_interval`,
-    //         (data: { detail: Interval }) => setSettings(prev => ({...prev, emailNtfInterval: data.detail }))
-    //     ).patch({ email_ntf_interval: option })
     // }
 
     return (
-        <section id='pref-card' className='settings-card'>
-            <h3 className='settings-title'>Preferences & Functionality</h3>
+        <section className='settings-card'>
+            <h3 className='settings-title'>Preferences</h3>
             <div className='card-content'>
-                <Switch label='Dark theme' handleClick={toggleDarkTheme} enabled={settings.darkThemeEnabled}/>
+                <Switch
+                    label='Dark theme'
+                    handleClick={async () => setSettings(await updateSetting('dark_theme_enabled', !settings.darkThemeEnabled, account.id))}
+                    enabled={settings.darkThemeEnabled}
+                />
                 <Dropdown
                     label='Weekend days'
                     options={['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']}
                     selectedOption={selectedWeekendDays}
                     setSelectedOption={changeWeekendDays}
                 />
-                <div className='horizontal-separator'></div>
-                <Switch label='Use minimum & maximum work hours for pediatricians' handleClick={toggleMinMaxWorkHours} enabled={settings.minMaxWorkHoursEnabled}/>
-                <Switch label='Allow pediatricians to take multiple shifts in a day' handleClick={toggleMultiShiftsOneEmpEnabled} enabled={settings.multiShiftsOneEmpEnabled}/>
-                <Switch label='Allow multiple pediatricians to be in the same shift' handleClick={toggleMultiEmpsInShift} enabled={settings.multiEmpsInShiftEnabled}/>
-                <div>
-                    <label>Maximum number of pediatricians in one shift</label>
-                    <input
-                        type='number'
-                        min={1} max={10}
-                        onChange={updateMaxEmpsInShift}
-                        value={settings.multiEmpsInShiftEnabled ? settings.maxEmpsInShift : 1}
-                        disabled={!settings.multiEmpsInShiftEnabled}
-                        className={!settings.multiEmpsInShiftEnabled ? 'disabled-setting-input' : ''}
-                    />
-                </div>
-                {/* <div className='horizontal-separator'></div>
-                <Switch label='Receive e-mail notifications' handleClick={toggleEmailNtf} enabled={settings.emailNtfEnabled}/>
+                {/*<div className='horizontal-separator'></div>
+                <Switch
+                    label='Receive e-mail notifications'
+                    handleClick={async () => setSettings(await updateSetting('email_ntf_enabled', !settings.emailNtfEnabled, account.id))}
+                    enabled={settings.emailNtfEnabled}
+                />
                 <Dropdown
                     label='When to send e-mail notifications'
                     options={['Daily', 'Weekly', 'Monthly']}
@@ -540,9 +536,64 @@ const PreferencesAndFunctionality = () => {
 }
 
 
-export default function Settings() {
-    return <div className='settings-cards'>
-        <Account/>
-        <PreferencesAndFunctionality/>
-    </div>
+const ScheduleGeneration = () => {
+    const { account, shifts, settings, setSettings } = useContext(dashboardContext)
+    const [patternDayCount, setPatternDayCount] = useState(settings.rotationPattern?.length ?? 5)
+
+    const handlePatternDayCountChange = async (newValue: number) => {
+        setPatternDayCount(newValue)
+
+        const oldPattern = settings.rotationPattern ?? []
+        const updatedPattern = oldPattern.length < newValue
+            ? [...oldPattern, ...Array(newValue - oldPattern.length).fill(null)]
+            : oldPattern.slice(0, newValue)
+
+        const updatedSettings = await updateSetting('rotation_pattern', updatedPattern, account.id)
+        setSettings(updatedSettings)
+    }
+
+    return (
+        <section className='settings-card'>
+            <h3 className='settings-title'>Schedule Generation</h3>
+            <div className='card-content'>
+                <Switch
+                    label='Avoid assigning an employee to a night shift two days in a row'
+                    handleClick={async () => setSettings(await updateSetting('avoid_back_to_back_nights', !settings.avoidBackToBackNights, account.id))}
+                    enabled={settings.avoidBackToBackNights}
+                />
+                <Switch
+                    label='Allow pediatricians to take multiple shifts in a day'
+                    handleClick={async () => setSettings(await updateSetting('multi_shifts_one_emp', !settings.multiShiftsOneEmp, account.id))}
+                    enabled={settings.multiShiftsOneEmp}
+                />
+                <NumInput
+                    label='Maximum number of pediatricians in one shift'
+                    initialValue={settings.maxEmpsInShift}
+                    max={10}
+                    onChange={async newValue => setSettings(await updateSetting('max_emps_in_shift', newValue, account.id))}
+                />
+                <NumInput
+                    label='Maximum number of shifts an employee can take per week'
+                    initialValue={settings.maxShiftsPerWeek}
+                    max={12}
+                    onChange={async newValue => setSettings(await updateSetting('max_shifts_per_week', newValue, account.id))}
+                />
+                <div className='horizontal-separator'></div>
+                <Switch
+                    label='Use a consistent shift rotation pattern'
+                    handleClick={async () => setSettings(await updateSetting('use_rotation_pattern', !settings.useRotationPattern, account.id))}
+                    enabled={settings.useRotationPattern}
+                />
+                {settings.useRotationPattern && 
+                    <NumInput
+                        label='Number of days that the rotation pattern consists of'
+                        initialValue={patternDayCount}
+                        max={10}
+                        onChange={handlePatternDayCountChange}
+                    />
+                }
+                {settings.useRotationPattern && <RotationPatternEditor shifts={shifts} days={patternDayCount}/>}
+            </div>
+        </section>
+    )
 }

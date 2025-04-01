@@ -4,16 +4,14 @@ from src.server.rate_limit import limiter
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
 from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, return_account_and_sub
-from src.server.lib.types import WeekendDays, Interval
+from src.server.lib.types import SettingValue
 from src.server.db import (
     create_account, change_email, change_password, set_password, delete_account,
     get_all_employees_of_account, create_employee, update_employee, delete_employee,
     get_all_shifts_of_account, create_shift, update_shift, delete_shift,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
-    get_settings_of_account, toggle_dark_theme, toggle_min_max_work_hours,
-    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
-    toggle_multi_emps_in_shift, toggle_multi_shifts_one_emp, update_weekend_days, update_max_emps_in_shift,
-    toggle_email_ntf, update_email_ntf_interval
+    get_settings_of_account, update_setting,
+    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday
 )
 
 # Init
@@ -192,61 +190,11 @@ async def delete_existing_holiday(holiday_id: int, request: Request) -> dict:
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def read_settings(account_id: int, request: Request) -> dict:
-    res = get_settings_of_account(account_id=account_id)
-    return res if res is not None else {'detail': res}
+    return get_settings_of_account(account_id=account_id)
 
 
-@settings_router.get('/accounts/{account_id}/settings/toggle_dark_theme')
+@settings_router.patch('/accounts/{account_id}/settings')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-async def toggle_dark_theme_(account_id: int, request: Request) -> dict:
-    return {'detail': toggle_dark_theme(account_id=account_id)}
-
-
-@settings_router.get('/accounts/{account_id}/settings/toggle_min_max_work_hours')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def toggle_min_max_work_hours_(account_id: int, request: Request) -> dict:
-    return {'detail': toggle_min_max_work_hours(account_id=account_id)}
-
-
-@settings_router.get('/accounts/{account_id}/settings/toggle_multi_emps_in_shift')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def toggle_multi_emps_in_shift_(account_id: int, request: Request) -> dict:
-    return {'detail': toggle_multi_emps_in_shift(account_id=account_id)}
-
-
-@settings_router.get('/accounts/{account_id}/settings/toggle_multi_shifts_one_emp')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def toggle_multi_shifts_one_emp_(account_id: int, request: Request) -> dict:
-    return {'detail': toggle_multi_shifts_one_emp(account_id=account_id)}
-
-
-@settings_router.patch('/accounts/{account_id}/settings/update_weekend_days')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def update_weekend_days_(account_id: int, info: dict[Literal['weekend_days'], WeekendDays], request: Request) -> dict:
-    return {'detail': update_weekend_days(account_id=account_id, weekend_days=info['weekend_days'])}
-
-
-@settings_router.patch('/accounts/{account_id}/settings/max_emps_in_shift')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def update_max_emps_in_shift_(account_id: int, info: dict[Literal['max_emps_in_shift'], int], request: Request) -> dict:
-    return {'detail': update_max_emps_in_shift(account_id=account_id, max_emps_in_shift=info['max_emps_in_shift'])}
-
-
-@settings_router.get('/accounts/{account_id}/settings/toggle_email_ntf')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def toggle_email_ntf_(account_id: int, request: Request) -> dict:
-    return {'detail': toggle_email_ntf(account_id=account_id)}
-
-
-@settings_router.patch('/accounts/{account_id}/settings/update_email_ntf_interval')
-@limiter.limit(DEFAULT_RATE_LIMIT)
-@endpoint()
-async def update_email_ntf_interval_(account_id: int, info: dict[Literal['email_ntf_interval'], Interval], request: Request) -> dict:
-    return {'detail': update_email_ntf_interval(account_id=account_id, interval=info['email_ntf_interval'])}
+async def update_one_setting(account_id: int, request: Request, setting: str = Body(..., embed=True), new_value: SettingValue = Body(..., embed=True)) -> dict:
+    return update_setting(account_id, setting, new_value)

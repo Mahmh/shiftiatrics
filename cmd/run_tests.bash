@@ -4,7 +4,7 @@ set -e
 COMPOSE="sudo docker compose -f compose.test.yml"
 
 # Run the test container and capture its exit code
-$COMPOSE up --build --abort-on-container-exit --exit-code-from test
+$COMPOSE up --remove-orphans --abort-on-container-exit --exit-code-from test
 EXIT_CODE=$?
 
 # Cleanup

@@ -7,3 +7,4 @@ class Engine:
         self.Employee = utils.Employee
         self.Shift = utils.Shift
         self.Holiday = utils.Holiday
+        self.Config = utils.Config

@@ -94,13 +94,17 @@ CREATE TABLE holidays (
 );
 
 CREATE TABLE settings (
-    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    account_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
+    -- Preferences --
     dark_theme_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    min_max_work_hours_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    multi_emps_in_shift_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    multi_shifts_one_emp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     weekend_days weekend_days_enum NOT NULL DEFAULT 'Saturday & Sunday',
-    max_emps_in_shift INT NOT NULL DEFAULT 1,
     email_ntf_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    email_ntf_interval interval_enum NOT NULL DEFAULT 'Monthly'
+    email_ntf_interval interval_enum NOT NULL DEFAULT 'Monthly',
+    -- Schedule Generation --
+    multi_shifts_one_emp BOOLEAN NOT NULL DEFAULT FALSE,
+    max_emps_in_shift INT NOT NULL DEFAULT 1,
+    use_rotation_pattern BOOLEAN NOT NULL DEFAULT FALSE,
+    rotation_pattern VARCHAR(256)[] NOT NULL DEFAULT ARRAY[NULL::VARCHAR, NULL::VARCHAR, NULL::VARCHAR],
+    avoid_back_to_back_nights BOOLEAN NOT NULL DEFAULT TRUE,
+    max_shifts_per_week INT NOT NULL DEFAULT 7
 );

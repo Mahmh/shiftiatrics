@@ -30,18 +30,16 @@ async def generate_schedule(account_id: int, num_days: int, year: int, month: in
     if not shifts: raise ValueError('No shifts registered by the account.')
 
     settings = get_settings_of_account(account_id)
-    if settings is None:
-        min_max_work_hours_enabled = False
-        multi_emps_in_shift_enabled = False
-        multi_shifts_one_emp_enabled = False
-        max_emps_in_shift = 1
-    else:
-        min_max_work_hours_enabled = settings.min_max_work_hours_enabled
-        multi_emps_in_shift_enabled = settings.multi_emps_in_shift_enabled
-        multi_shifts_one_emp_enabled = settings.multi_shifts_one_emp_enabled
-        max_emps_in_shift = settings.max_emps_in_shift if settings.multi_emps_in_shift_enabled else 1
-
     engine = Engine()
+    config = engine.Config(
+        settings.multi_shifts_one_emp,
+        settings.max_emps_in_shift,
+        settings.use_rotation_pattern,
+        java.util.ArrayList(settings.rotation_pattern) if settings.rotation_pattern else None,
+        settings.avoid_back_to_back_nights,
+        settings.max_shifts_per_week
+    )
+
 
     # Create a list of Employee objects & convert it to Java ArrayList
     employee_list = [
@@ -56,7 +54,7 @@ async def generate_schedule(account_id: int, num_days: int, year: int, month: in
 
     # Create a list of Shift objects, converting time to string format & convert it to Java ArrayList
     shift_list = [
-        engine.Shift(shift.start_time.strftime("%H:%M"), shift.end_time.strftime("%H:%M"))
+        engine.Shift(shift.shift_name, shift.start_time.strftime("%H:%M"), shift.end_time.strftime("%H:%M"))
         for shift in shifts
     ]
     java_shift_list = java.util.ArrayList()
@@ -78,21 +76,17 @@ async def generate_schedule(account_id: int, num_days: int, year: int, month: in
 
 
     # Generate the schedule using the Java Engine & convert the Java 3D array into a Python-native structure
-    raw_schedule = engine.ShiftScheduler.generateSchedule(
-        java_employee_list, java_shift_list, java_holiday_list,
-        num_days, year, month,
-        min_max_work_hours_enabled, multi_emps_in_shift_enabled, multi_shifts_one_emp_enabled,
-        max_emps_in_shift
-    )
+    raw_schedule = engine.ShiftScheduler.generateSchedule(java_employee_list, java_shift_list, java_holiday_list, num_days, year, month, config)
 
     schedule = []
     for day_schedule in raw_schedule:
         daily_shifts = []
         for shift_schedule in day_schedule:
-            employee_ids = []
-            for employee in shift_schedule:
-                employee_ids.append(employee.getId())
-            daily_shifts.append(employee_ids)
+            if shift_schedule is None:
+                daily_shifts.append([])  # No employees assigned
+            else:
+                employee_ids = [employee.id() for employee in shift_schedule]
+                daily_shifts.append(employee_ids)
         schedule.append(daily_shifts)
     return schedule
 
@@ -137,7 +131,7 @@ async def get_work_hours_of_employees(account_id: int, year: int, month: int, re
     engine = Engine()
 
     # Convert shifts data to Java Shift objects
-    shifts = [engine.Shift(JString(str(shift.start_time)), JString(str(shift.end_time))) for shift in shifts]
+    shifts = [engine.Shift(JString(str(shift.shift_name)), JString(str(shift.start_time)), JString(str(shift.end_time))) for shift in shifts]
 
     # Convert the Python list to a java.util.ArrayList
     shifts_java = java.util.ArrayList()

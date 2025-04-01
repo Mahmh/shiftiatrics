@@ -146,18 +146,14 @@ class Holiday(Base):
 
 class Settings(Base):
     __tablename__ = 'settings'
-    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), primary_key=True)
     dark_theme_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
-    min_max_work_hours_enabled = Column(Boolean, nullable=False, server_default='true', default=True)
-    multi_emps_in_shift_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
-    multi_shifts_one_emp_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
     weekend_days = Column(
         Enum(WeekendDaysEnum, name='weekend_days_enum', values_callable=_values_callable),
         nullable=False,
         server_default='Saturday & Sunday',
         default=WeekendDaysEnum.SAT_SUN.value
     )
-    max_emps_in_shift = Column(Integer, nullable=False, server_default='1', default=1)
     email_ntf_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
     email_ntf_interval = Column(
         Enum(IntervalEnum, name='interval_enum', values_callable=_values_callable),
@@ -165,4 +161,16 @@ class Settings(Base):
         server_default='Monthly',
         default=IntervalEnum.MONTHLY.value
     )
+
+    multi_shifts_one_emp = Column(Boolean, default=False, nullable=False)
+    max_emps_in_shift = Column(Integer, default=1, nullable=False)
+    use_rotation_pattern = Column(Boolean, default=False, nullable=False)
+    rotation_pattern = Column(
+        ARRAY(String(256)),
+        nullable=False,
+        default=lambda: [None, None, None],
+        server_default="ARRAY[NULL::VARCHAR, NULL::VARCHAR, NULL::VARCHAR]"
+    )
+    avoid_back_to_back_nights = Column(Boolean, default=True, nullable=False)
+    max_shifts_per_week = Column(Integer, default=7, nullable=False)
     __repr__ = lambda self: f'Settings({self.account_id})'

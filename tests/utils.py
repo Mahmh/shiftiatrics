@@ -46,11 +46,13 @@ def _reset_whole_db() -> None:
         session.query(Account).delete()
         session.commit()
         session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
+        session.execute(text('ALTER SEQUENCE tokens_token_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE employees_employee_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE shifts_shift_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE holidays_holiday_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE schedules_schedule_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE subscriptions_subscription_id_seq RESTART WITH 1;'))
+        session.execute(text('ALTER SEQUENCE custom_plan_infos_info_id_seq RESTART WITH 1;'))
         session.commit()
 
 

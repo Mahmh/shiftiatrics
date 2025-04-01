@@ -5,6 +5,7 @@ shiftiatrics.egg-info/
 .pytest_cache/
 .env
 tasks.md
+calc.py
 
 htmlcov/
 .coverage

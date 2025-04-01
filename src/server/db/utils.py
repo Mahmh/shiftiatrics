@@ -1,15 +1,16 @@
 from typing import Optional, Callable, Any
 from functools import wraps
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.sql import exists
+from sqlalchemy import Integer, Boolean, String, Enum, ARRAY
 import unicodedata, re, bcrypt, inspect, secrets, stripe
 from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, FREE_TIER_DETAILS
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
-from src.server.lib.types import TokenType
+from src.server.lib.types import TokenType, SettingValue
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
-from .tables import Session, Account, Token, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings, Subscription, CustomPlanInfo
+from .tables import Session, Account, Token, Subscription, CustomPlanInfo, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
 
 def _handle_args(args: tuple) -> tuple:
     # Sanitize credentials if the first parameter is of type `Credentials`
@@ -450,3 +451,65 @@ def _increment_schedule_requests(account_id: int, *, session: _SessionType) -> N
 def _get_custom_plan_info(account_id: int, *, session: _SessionType) -> CustomPlanInfo:
     """Returns the custom plan info made for an account."""
     return session.query(CustomPlanInfo).filter_by(account_id=account_id).first()
+
+
+def _validate_and_cast(setting: str, value: SettingValue, column_type: Integer | Boolean | Enum | ARRAY | String) -> SettingValue:
+    """
+    Validates and casts the input value based on the SQLAlchemy column type.
+
+    Args:
+        setting (str): The name of the setting being updated.
+        value (SettingValue): The raw input value to validate and cast.
+        column_type: SQLAlchemy column type (e.g., Boolean, Enum, Integer, etc.).
+
+    Returns:
+        SettingValue: The casted value ready to store in the DB.
+
+    Raises:
+        ValueError or TypeError: If the value is invalid or doesn't match the column type.
+    """
+    # Handle nullable Integer fields like max_shifts_per_week
+    if isinstance(column_type, Integer):
+        try:
+            value = int(value)
+        except (ValueError, TypeError):
+            raise ValueError('Must be an integer')
+        match setting:
+            case 'max_emps_in_shift': assert 1 <= value <= 10, f'Invalid value of max_emps_in_shift: {value}'
+            case 'max_shifts_per_week': assert 1 <= value <= 12, f'Invalid value of max_shifts_per_week: {value}'
+        return value
+
+    # Handle Boolean
+    if isinstance(column_type, Boolean):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            val = value.lower()
+            if val in ('true', '1', 'yes'):
+                return True
+            elif val in ('false', '0', 'no'):
+                return False
+        raise ValueError("Must be a boolean or boolean-like string (true/false/1/0/yes/no)")
+
+    # Handle Enum (SQLAlchemy Enum)
+    if isinstance(column_type, Enum):
+        allowed = column_type.enums
+        if isinstance(value, str) and value in allowed:
+            return value
+        raise ValueError(f"Must be one of: {allowed}")
+
+    # Handle ARRAY of strings (e.g., rotation_pattern)
+    if isinstance(column_type, ARRAY):
+        if not isinstance(value, (list, tuple)):
+            raise ValueError("Must be a list or tuple")
+        if not all(isinstance(item, str) or item is None for item in value):
+            raise ValueError("All array elements must be strings or null (None)")
+        return list(value)
+
+    # Handle plain strings
+    if isinstance(column_type, String):
+        if not isinstance(value, str):
+            raise ValueError("Must be a string")
+        return value
+
+    raise TypeError(f"Unsupported column type: {type(column_type)}")

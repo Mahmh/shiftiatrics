@@ -36,13 +36,38 @@ export const Switch = ({ label, handleClick, enabled }: { label: string, handleC
 )
 
 
+/** Component for incrementing/decrementing a value using only arrow buttons */
+export const NumInput = ({ label, initialValue, min=1, max, onChange }: { label: string, initialValue: number, min?: number, max: number, onChange: (value: number) => Promise<void> }) => {
+    const [count, setCount] = useState(initialValue)
+
+    const decrement = async () => {
+        setCount(c => c-1)
+        await onChange(count-1)
+    }
+    
+    const increment = async () => {
+        setCount(c => c+1)
+        await onChange(count+1)
+    }
+
+    return (
+        <div className='num-input-div'>
+            <label>{label}</label>
+            <div>
+                <button onClick={decrement} disabled={count <= min} className={count <= min ? 'disabled-num-input-btn' : ''}>-</button>
+                <span>{count}</span>
+                <button onClick={increment} disabled={count >= max} className={count >= max ? 'disabled-num-input-btn' : ''}>+</button>
+            </div>
+        </div>
+    )
+}
+
+
 /** Component for selecting an option from a dropdown list */
-export const Dropdown = ({ label, options, selectedOption, setSelectedOption }: {
-    label?: string
-    options: readonly string[]
-    selectedOption: string
-    setSelectedOption: (option: string) => void
-}) => {
+export const Dropdown = (
+    { label, options, selectedOption, setSelectedOption }:
+    { label?: string, options: readonly string[], selectedOption: string, setSelectedOption: (option: string) => void }
+) => {
     const { settings } = useContext(dashboardContext)
     const [open, setOpen] = useState(false)
 

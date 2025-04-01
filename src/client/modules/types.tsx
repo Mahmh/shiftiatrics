@@ -93,6 +93,21 @@ export interface SubscriptionResponse {
     }
 }
 
+export interface SettingsResponse {
+    dark_theme_enabled: boolean
+    weekend_days: WeekendDays
+    email_ntf_enabled: boolean
+    email_ntf_interval: Interval
+
+    multi_shifts_one_emp: boolean
+    max_emps_in_shift: number
+    use_rotation_pattern: boolean
+    rotation_pattern: (string | null)[]
+    avoid_back_to_back_nights: boolean
+    max_shifts_per_week: number
+}
+  
+
 export interface Account {
     id: number
     email: string
@@ -132,13 +147,16 @@ export interface Holiday {
 
 export interface Settings {
     darkThemeEnabled: boolean
-    minMaxWorkHoursEnabled: boolean
-    multiEmpsInShiftEnabled: boolean
-    multiShiftsOneEmpEnabled: boolean
     weekendDays: WeekendDays
-    maxEmpsInShift: number
     emailNtfEnabled: boolean
     emailNtfInterval: Interval
+
+    multiShiftsOneEmp: boolean
+    maxEmpsInShift: number
+    useRotationPattern: boolean
+    rotationPattern: (string | null)[]
+    avoidBackToBackNights: boolean
+    maxShiftsPerWeek: number
 }
 
 export interface FAQ {

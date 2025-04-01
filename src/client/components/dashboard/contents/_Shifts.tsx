@@ -113,7 +113,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
 }
 
 export default function Shifts() {
-    const { account, subscription, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
+    const { account, subscription, shifts, setModalContent, openModal, closeModal, loadShifts, setContent } = useContext(dashboardContext)
     const { maxNumShiftsPerDay } = getAccountLimits(subscription)
 
     const openAddModal = () => {
@@ -191,6 +191,7 @@ export default function Shifts() {
                 You have reached the maximum number of shifts allowed per day ({maxNumShiftsPerDay}).
                 Please upgrade your plan to schedule more.
             </p>
+            <button onClick={() => { setContent('subscription'); closeModal() }}>Upgrade Now</button>
         </>
 
         setModalContent(

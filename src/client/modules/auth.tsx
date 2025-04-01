@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation'
 import { Request } from '@utils'
-import type { AccountResponse, Account, AccountAndSubResponse, AccountAndSub, SubscriptionResponse, Subscription } from '@types'
+import type { AccountResponse, Account, AccountAndSubResponse, AccountAndSub, SubscriptionResponse, Subscription, SettingsResponse, Settings } from '@types'
 
 /** Converts API response properties to TSX properties */
 export const parseAccount = (data: AccountResponse): Account => ({
@@ -24,6 +24,20 @@ export const parseSub = (data: SubscriptionResponse): Subscription => ({
         maxNumShiftsPerDay: data.plan_details.max_num_shifts_per_day,
         maxNumScheduleRequests: data.plan_details.max_num_schedule_requests
     }
+})
+
+export const parseSettings = (data: SettingsResponse): Settings => ({
+    darkThemeEnabled: data.dark_theme_enabled,
+    weekendDays: data.weekend_days,
+    emailNtfEnabled: data.email_ntf_enabled,
+    emailNtfInterval: data.email_ntf_interval,
+
+    multiShiftsOneEmp: data.multi_shifts_one_emp,
+    maxEmpsInShift: data.max_emps_in_shift,
+    useRotationPattern: data.use_rotation_pattern,
+    rotationPattern: data.rotation_pattern,
+    avoidBackToBackNights: data.avoid_back_to_back_nights,
+    maxShiftsPerWeek: data.max_shifts_per_week
 })
 
 

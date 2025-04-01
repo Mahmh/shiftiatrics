@@ -1,22 +1,25 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Choice, Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
-import { isLoggedIn } from '@auth'
-import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval, Subscription } from '@types'
+import { Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
+import { parseSettings, isLoggedIn } from '@auth'
+import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval, Subscription, SettingsResponse } from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
 export const nullSettings: Settings = {
     darkThemeEnabled: false,
-    minMaxWorkHoursEnabled: true,
-    multiEmpsInShiftEnabled: false,
-    multiShiftsOneEmpEnabled: false,
     weekendDays: 'Friday & Saturday',
-    maxEmpsInShift: 1,
     emailNtfEnabled: false,
-    emailNtfInterval: 'Monthly'
+    emailNtfInterval: 'Monthly',
+    
+    multiShiftsOneEmp: false,
+    avoidBackToBackNights: true,
+    maxEmpsInShift: 1,
+    useRotationPattern: false,
+    rotationPattern: [],
+    maxShiftsPerWeek: 10
 }
 export const nullSub: Subscription = {
     id: -Infinity,
@@ -228,31 +231,9 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
 
     const loadSettings = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
-        type Response = { detail: null } | {
-            dark_theme_enabled: boolean,
-            min_max_work_hours_enabled: boolean
-            multi_emps_in_shift_enabled: boolean
-            multi_shifts_one_emp_enabled: boolean
-            weekend_days: WeekendDays
-            max_emps_in_shift: number
-            email_ntf_enabled: boolean
-            email_ntf_interval: Interval
-        };
         await new Request(
             `accounts/${account.id}/settings`,
-            (data: Response) => {
-                if ('detail' in data) return
-                setSettings({
-                    darkThemeEnabled: data.dark_theme_enabled,
-                    minMaxWorkHoursEnabled: data.min_max_work_hours_enabled,
-                    multiEmpsInShiftEnabled: data.multi_emps_in_shift_enabled,
-                    multiShiftsOneEmpEnabled: data.multi_shifts_one_emp_enabled,
-                    weekendDays: data.weekend_days,
-                    maxEmpsInShift: data.max_emps_in_shift,
-                    emailNtfEnabled: data.email_ntf_enabled,
-                    emailNtfInterval: data.email_ntf_interval
-                })
-            }
+            (data: SettingsResponse) => setSettings(parseSettings(data))
         ).get()
     }, [account.id, setSettings])
 

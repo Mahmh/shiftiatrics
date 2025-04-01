@@ -1,13 +1,14 @@
 from typing import Any, Optional
 from datetime import date, time, datetime, timezone
-from sqlalchemy.dialects.postgresql import array
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session as _SessionType
+from sqlalchemy.dialects.postgresql import array
 import stripe
 
 from src.server.lib.utils import log, parse_date, parse_time, utcnow
 from src.server.lib.models import Credentials, Cookies, ScheduleType, SubscriptionInfo, PlanDetails
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
-from src.server.lib.types import WeekendDays, Interval, WeekendDaysEnum, IntervalEnum, PricingPlanName
+from src.server.lib.types import PricingPlanName, SettingValue
 from src.server.lib.constants import WEB_SERVER_URL, PREDEFINED_PLAN_TO_STRIPE_PRICE_ID, PREDEFINED_SUB_INFOS
 from src.server.lib.emails import send_email
 
@@ -23,6 +24,7 @@ from .utils import (
     _check_holiday,
     _check_month_and_year,
     _init_settings,
+    _validate_and_cast,
     _sanitize_email,
     _sanitize_password,
     _sanitize_credentials,
@@ -59,8 +61,9 @@ def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account
     session.add(schedule_requests)
     session.commit()
 
-    # Step 3: Generate token
+    # Step 3: Generate token & set up default settings
     token = _create_new_token(account.account_id, session=session)
+    _init_settings(account.account_id, session=session)
     log(f'Successful account creation for email: "{account.email}"', 'account')
     return account, token
 
@@ -223,6 +226,7 @@ def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session:
 
     sub = _get_active_sub(new_account.account_id, session=session)
     token = _get_or_create_auth_token(new_account.account_id, session=session)
+    _init_settings(new_account.account_id, session=session)
     return new_account, sub, token
 
 
@@ -510,96 +514,47 @@ def delete_holiday(holiday_id: int, *, session: _SessionType) -> None:
 
 ## Settings
 @dbsession()
-def get_settings_of_account(account_id: int, *, session: _SessionType) -> Settings | None:
+def get_settings_of_account(account_id: int, *, session: _SessionType) -> Settings:
     """Returns all settings of an account."""
     return session.query(Settings).filter_by(account_id=account_id).first()
 
 
 @dbsession(commit=True)
-def toggle_dark_theme(account_id: int, *, session: _SessionType) -> bool:
-    """Switches between light & dark themes of an account."""
+def update_setting(account_id: int, setting: str, new_value: SettingValue, *, session: _SessionType) -> Settings:
+    """
+    Updates a single setting for a given account.
+
+    Args:
+        account_id (int): The account ID to update.
+        setting (str): The setting attribute to be updated.
+        new_value (SettingValue): The new value to set.
+        session (_SessionType): Injected DB session.
+
+    Returns:
+        SettingValue: The updated setting's value.
+
+    Raises:
+        ValueError: If the setting is invalid or the value is incorrect.
+    """
     _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    settings.dark_theme_enabled = not settings.dark_theme_enabled
-    return settings.dark_theme_enabled
+    settings = session.query(Settings).filter_by(account_id=account_id).one()
 
+    if not hasattr(Settings, setting):
+        raise ValueError(f'Unsupported setting: "{setting}"')
 
-@dbsession(commit=True)
-def toggle_min_max_work_hours(account_id: int, *, session: _SessionType) -> bool:
-    """Switches between light & dark themes of an account."""
-    _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    settings.min_max_work_hours_enabled = not settings.min_max_work_hours_enabled
-    return settings.min_max_work_hours_enabled
+    column = inspect(Settings).columns[setting]
 
+    if new_value is None and not column.nullable:
+        raise ValueError(f"{setting} cannot be None")
 
-@dbsession(commit=True)
-def toggle_multi_emps_in_shift(account_id: int, *, session: _SessionType) -> bool:
-    """Toggles whether multiple employees can be assigned to a single shift."""
-    _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    settings.multi_emps_in_shift_enabled = not settings.multi_emps_in_shift_enabled
-    return settings.multi_emps_in_shift_enabled
+    try:
+        validated_value = _validate_and_cast(setting, new_value, column.type)
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Invalid value for {setting}: {e}")
 
-
-@dbsession(commit=True)
-def toggle_multi_shifts_one_emp(account_id: int, *, session: _SessionType) -> bool:
-    """Toggles whether an employee can be assigned to multiple shifts in a single day."""
-    _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    settings.multi_shifts_one_emp_enabled = not settings.multi_shifts_one_emp_enabled
-    return settings.multi_shifts_one_emp_enabled
-
-
-@dbsession(commit=True)
-def update_weekend_days(account_id: int, weekend_days: WeekendDays, *, session: _SessionType) -> str:
-    """Updates the weekend days of an account."""
-    _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    LIST_OF_WEEKEND_DAYS = (WeekendDaysEnum.SAT_SUN.value, WeekendDaysEnum.FRI_SAT.value, WeekendDaysEnum.SUN_MON.value)
-    if weekend_days not in LIST_OF_WEEKEND_DAYS: raise ValueError(f'Invalid weekend days passed: "{weekend_days}"')
-    settings.weekend_days = weekend_days
-    return settings.weekend_days
-
-
-@dbsession(commit=True)
-def update_max_emps_in_shift(account_id: int, max_emps_in_shift: int, *, session: _SessionType) -> int:
-    """Updates the maximum number of employees in a single shift for an account."""
-    _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    if not settings.multi_emps_in_shift_enabled: raise ValueError('multi_emps_in_shift_enabled must be True first before updating max_emps_in_shift')
-    if not (1 <= max_emps_in_shift <= 10): raise ValueError('max_emps_in_shift must be in the range [1, 10]')
-    settings.max_emps_in_shift = max_emps_in_shift
-    return settings.max_emps_in_shift
-
-
-@dbsession(commit=True)
-def toggle_email_ntf(account_id: int, *, session: _SessionType) -> bool:
-    """Toggles whether an employee can be assigned to multiple shifts in a single day."""
-    _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    settings.email_ntf_enabled = not settings.email_ntf_enabled
-    return settings.email_ntf_enabled
-
-
-@dbsession(commit=True)
-def update_email_ntf_interval(account_id: int, interval: Interval, *, session: _SessionType) -> bool:
-    """Toggles whether an employee can be assigned to multiple shifts in a single day."""
-    _check_account(account_id, session=session)
-    settings = session.query(Settings).filter_by(account_id=account_id).first()
-    if settings is None: settings = _init_settings(account_id, session=session)
-    INTERVALS = (IntervalEnum.DAILY.value, IntervalEnum.WEEKLY.value, IntervalEnum.MONTHLY.value)
-    if interval not in INTERVALS: raise ValueError(f'Invalid interval passed: "{interval}"')
-    settings.email_ntf_interval = interval
-    return settings.email_ntf_interval
-
+    setattr(settings, setting, validated_value)
+    session.add(settings)
+    return settings
 
 
 

@@ -1,6 +1,7 @@
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, Optional
 from enum import Enum
 
+SettingValue: TypeAlias = Optional[str | int | bool | list | tuple | Literal['null']]
 ScheduleType: TypeAlias = list[list[list[int]]]
 WeekendDays: TypeAlias = Literal['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']
 Interval: TypeAlias = Literal['Daily', 'Weekly', 'Monthly']

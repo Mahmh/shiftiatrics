@@ -7,7 +7,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
-    const { account, settings, setModalContent, openModal, closeModal, loadEmployees, loadHolidays } = useContext(dashboardContext)
+    const { account, setModalContent, openModal, closeModal, loadEmployees, loadHolidays } = useContext(dashboardContext)
 
     /** Displays a modal for editing employee details */
     const openEditModal = () => {
@@ -17,13 +17,13 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
             const [tempMaxWorkHours, setTempMaxWorkHours] = useState<number>(maxWorkHours ?? 0)
             const [isConfirmDisabled, setConfirmDisabled] = useState(
                 tempName.trim().length < 3 ||
-                (settings.minMaxWorkHoursEnabled && (
+                (
                     (minWorkHours !== undefined && tempMinWorkHours <= 0) ||
                     (maxWorkHours !== undefined && tempMaxWorkHours <= 0) ||
                     (tempMinWorkHours > tempMaxWorkHours) ||
                     (tempMinWorkHours > MAX_WORK_HOURS) ||
                     (tempMaxWorkHours > MAX_WORK_HOURS)
-                ))
+                )
             )
     
             const handleNameChange = (e: InputEvent) => {
@@ -31,13 +31,13 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                 setTempName(newName)
                 setConfirmDisabled(
                     newName.trim().length < 3 ||
-                    (settings.minMaxWorkHoursEnabled && (
+                    (
                         (minWorkHours !== undefined && tempMinWorkHours <= 0) ||
                         (maxWorkHours !== undefined && tempMaxWorkHours <= 0) ||
                         (tempMinWorkHours > tempMaxWorkHours) ||
                         (tempMinWorkHours > MAX_WORK_HOURS) ||
                         (tempMaxWorkHours > MAX_WORK_HOURS)
-                    ))
+                    )
                 )
             }
     
@@ -46,13 +46,13 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                 setTempMinWorkHours(minHours)
                 setConfirmDisabled(
                     tempName.trim().length < 3 ||
-                    (settings.minMaxWorkHoursEnabled && (
+                    (
                         (minHours <= 0) ||
                         (tempMaxWorkHours <= 0) ||
                         (minHours > tempMaxWorkHours) ||
                         (minHours > MAX_WORK_HOURS) ||
                         (tempMaxWorkHours > MAX_WORK_HOURS)
-                    ))
+                    )
                 )
             }
     
@@ -61,21 +61,21 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                 setTempMaxWorkHours(maxHours)
                 setConfirmDisabled(
                     tempName.trim().length < 3 ||
-                    (settings.minMaxWorkHoursEnabled && (
+                    (
                         (tempMinWorkHours <= 0) ||
                         (maxHours <= 0) ||
                         (tempMinWorkHours > maxHours) ||
                         (tempMinWorkHours > MAX_WORK_HOURS) ||
                         (maxHours > MAX_WORK_HOURS)
-                    ))
+                    )
                 )
             }
     
             const confirmEdit = async () => {
                 await new Request(`employees/${id}`, () => loadEmployees(account)).patch({
                     employee_name: tempName,
-                    min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
-                    max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
+                    min_work_hours: tempMinWorkHours,
+                    max_work_hours: tempMaxWorkHours,
                 })
                 closeModal()
             }
@@ -93,30 +93,26 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
                             maxLength={40}
                         />
                     </div>
-                    {settings.minMaxWorkHoursEnabled && (
-                        <>
-                            <div className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Minimum work hours per month: </label>
-                                <input
-                                    type='number'
-                                    value={tempMinWorkHours}
-                                    onChange={handleMinWorkHoursChange}
-                                    min={0}
-                                    max={MAX_WORK_HOURS}
-                                />
-                            </div>
-                            <div className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Maximum work hours per month: </label>
-                                <input
-                                    type='number'
-                                    value={tempMaxWorkHours}
-                                    onChange={handleMaxWorkHoursChange}
-                                    min={0}
-                                    max={MAX_WORK_HOURS}
-                                />
-                            </div>
-                        </>
-                    )}
+                    <div className='modal-input-sec'>
+                        <label style={{ marginRight: 10 }}>Minimum work hours per month: </label>
+                        <input
+                            type='number'
+                            value={tempMinWorkHours}
+                            onChange={handleMinWorkHoursChange}
+                            min={0}
+                            max={MAX_WORK_HOURS}
+                        />
+                    </div>
+                    <div className='modal-input-sec'>
+                        <label style={{ marginRight: 10 }}>Maximum work hours per month: </label>
+                        <input
+                            type='number'
+                            value={tempMaxWorkHours}
+                            onChange={handleMaxWorkHoursChange}
+                            min={0}
+                            max={MAX_WORK_HOURS}
+                        />
+                    </div>
                     <button
                         onClick={confirmEdit}
                         disabled={isConfirmDisabled}
@@ -149,10 +145,10 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
 
     return (
         <div className='dashboard-card'>
-            <div className='dashboard-card-details' style={minWorkHours && maxWorkHours && settings.minMaxWorkHoursEnabled ? { paddingBottom: 10 } : {}}>
+            <div className='dashboard-card-details' style={{ paddingBottom: 10 }}>
                 <h1>{name}</h1>
-                {minWorkHours && settings.minMaxWorkHoursEnabled && <span><b>Min work hours:</b> {minWorkHours}</span>}
-                {maxWorkHours && settings.minMaxWorkHoursEnabled && <span><b>Max work hours:</b> {maxWorkHours}</span>}
+                <span><b>Min work hours:</b> {minWorkHours}</span>
+                <span><b>Max work hours:</b> {maxWorkHours}</span>
             </div>
             <div>
                 <button onClick={openEditModal}><Icon src={editIcon} alt='Edit'/></button>
@@ -164,7 +160,7 @@ const EmployeeCard = ({ id, name, minWorkHours, maxWorkHours }: Employee) => {
 
 
 export default function Employees() {
-    const { account, subscription, employees, settings, setModalContent, openModal, closeModal, loadEmployees } = useContext(dashboardContext)
+    const { account, subscription, employees, setModalContent, openModal, closeModal, loadEmployees, setContent } = useContext(dashboardContext)
     const { maxNumPediatricians } = getAccountLimits(subscription)
 
     /** Displays a modal for adding an employee */
@@ -180,13 +176,13 @@ export default function Employees() {
                 setTempName(newName)
                 setConfirmDisabled(
                     newName.trim().length < 3 ||
-                    (settings.minMaxWorkHoursEnabled && (
+                    (
                         tempMinWorkHours <= 0 ||
                         tempMaxWorkHours <= 0 ||
                         tempMinWorkHours > tempMaxWorkHours ||
                         tempMinWorkHours > MAX_WORK_HOURS ||
                         tempMaxWorkHours > MAX_WORK_HOURS
-                    ))
+                    )
                 )
             }
     
@@ -195,13 +191,13 @@ export default function Employees() {
                 setTempMinWorkHours(minHours)
                 setConfirmDisabled(
                     tempName.trim().length < 3 ||
-                    (settings.minMaxWorkHoursEnabled && (
+                    (
                         minHours <= 0 ||
                         tempMaxWorkHours <= 0 ||
                         minHours > tempMaxWorkHours ||
                         minHours > MAX_WORK_HOURS ||
                         tempMaxWorkHours > MAX_WORK_HOURS
-                    ))
+                    )
                 )
             }
     
@@ -210,21 +206,21 @@ export default function Employees() {
                 setTempMaxWorkHours(maxHours)
                 setConfirmDisabled(
                     tempName.trim().length < 3 ||
-                    (settings.minMaxWorkHoursEnabled && (
+                    (
                         tempMinWorkHours <= 0 ||
                         maxHours <= 0 ||
                         tempMinWorkHours > maxHours ||
                         tempMinWorkHours > MAX_WORK_HOURS ||
                         maxHours > MAX_WORK_HOURS
-                    ))
+                    )
                 )
             }
     
             const confirmAdd = async () => {
                 await new Request(`accounts/${account.id}/employees`, () => loadEmployees(account)).post({
                     employee_name: tempName,
-                    min_work_hours: settings.minMaxWorkHoursEnabled ? tempMinWorkHours : undefined,
-                    max_work_hours: settings.minMaxWorkHoursEnabled ? tempMaxWorkHours : undefined,
+                    min_work_hours: tempMinWorkHours,
+                    max_work_hours: tempMaxWorkHours,
                 })
                 closeModal()
             }
@@ -242,30 +238,26 @@ export default function Employees() {
                             maxLength={40}
                         />
                     </section>
-                    {settings.minMaxWorkHoursEnabled && (
-                        <>
-                            <section className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Minimum work hours per month: </label>
-                                <input
-                                    type='number'
-                                    value={tempMinWorkHours}
-                                    onChange={handleMinWorkHoursChange}
-                                    min={0}
-                                    max={MAX_WORK_HOURS}
-                                />
-                            </section>
-                            <section className='modal-input-sec'>
-                                <label style={{ marginRight: 10 }}>Maximum work hours per month: </label>
-                                <input
-                                    type='number'
-                                    value={tempMaxWorkHours}
-                                    onChange={handleMaxWorkHoursChange}
-                                    min={0}
-                                    max={MAX_WORK_HOURS}
-                                />
-                            </section>
-                        </>
-                    )}
+                        <section className='modal-input-sec'>
+                            <label style={{ marginRight: 10 }}>Minimum work hours per month: </label>
+                            <input
+                                type='number'
+                                value={tempMinWorkHours}
+                                onChange={handleMinWorkHoursChange}
+                                min={0}
+                                max={MAX_WORK_HOURS}
+                            />
+                        </section>
+                        <section className='modal-input-sec'>
+                            <label style={{ marginRight: 10 }}>Maximum work hours per month: </label>
+                            <input
+                                type='number'
+                                value={tempMaxWorkHours}
+                                onChange={handleMaxWorkHoursChange}
+                                min={0}
+                                max={MAX_WORK_HOURS}
+                            />
+                        </section>
                     <button
                         onClick={confirmAdd}
                         disabled={isConfirmDisabled}
@@ -283,6 +275,7 @@ export default function Employees() {
             You have reached the maximum number of pediatricians allowed ({maxNumPediatricians}). 
             Please upgrade your plan to add more.
             </p>
+            <button onClick={() => { setContent('subscription'); closeModal() }}>Upgrade Now</button>
         </>
 
         setModalContent(

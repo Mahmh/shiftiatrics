@@ -1,8 +1,7 @@
 from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 from freezegun import freeze_time
 import pytest
-
 from src.server.lib.models import Credentials, PlanDetails
 from src.server.lib.utils import utcnow
 from src.server.lib.constants import PREDEFINED_SUB_INFOS
