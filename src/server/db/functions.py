@@ -9,7 +9,7 @@ from src.server.lib.utils import log, parse_date, parse_time, utcnow
 from src.server.lib.models import Credentials, Cookies, ScheduleType, SubscriptionInfo, PlanDetails
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import PricingPlanName, SettingValue
-from src.server.lib.constants import WEB_SERVER_URL, PREDEFINED_PLAN_TO_STRIPE_PRICE_ID, PREDEFINED_SUB_INFOS
+from src.server.lib.constants import WEB_SERVER_URL, PREDEFINED_PLAN_TO_STRIPE_PRICE_ID, PREDEFINED_SUB_INFOS, FREE_TIER_DETAILS
 from src.server.lib.emails import send_email
 
 from .tables import Account, Token, Subscription, CustomPlanInfo, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
@@ -339,7 +339,17 @@ def create_employee(
     ) -> Employee:
     """Creates an employee for the given account ID."""
     _check_account(account_id, enforce_limits=True, session=session)
+
+    # Validate
     min_work_hours, max_work_hours = _check_work_hours(min_work_hours, max_work_hours)
+    sub = _get_active_sub(account_id, session=session)
+    employee_count = session.query(Employee).filter(Employee.account_id == account_id).count()
+    max_num_pediatricians = FREE_TIER_DETAILS.max_num_pediatricians if sub is None else sub.plan_details['max_num_pediatricians']
+
+    if employee_count >= max_num_pediatricians:
+        raise ValueError('You have exceeded the maximum number of pediatricians allowed by your plan.')
+
+    # Create
     employee = Employee(account_id=account_id, employee_name=employee_name, min_work_hours=min_work_hours, max_work_hours=max_work_hours)
     session.add(employee)
     log(f'Created employee: {employee}', 'db')
@@ -387,8 +397,20 @@ def get_all_shifts_of_account(account_id: int, *, session: _SessionType) -> list
 def create_shift(account_id: int, shift_name: str, start_time: str|time, end_time: str|time, *, session: _SessionType) -> Shift:
     """Creates a shift for the given account ID."""
     _check_account(account_id, enforce_limits=True, session=session)
+
+    # Validate
+    sub = _get_active_sub(account_id, session=session)
+    shifts_per_day_count = session.query(Shift).filter(Shift.account_id == account_id).count()
+    max_num_shifts_per_day = FREE_TIER_DETAILS.max_num_shifts_per_day if sub is None else sub.plan_details['max_num_shifts_per_day']
+
+    if shifts_per_day_count >= max_num_shifts_per_day:
+        raise ValueError('You have exceeded the maximum number of shift types per day allowed by your plan.')
+    if session.query(Shift).filter(Shift.account_id == account_id, Shift.shift_name == shift_name).first():
+        raise ValueError(f'Shift with name {shift_name} was already created in your account.')
     if type(start_time) is str: start_time = parse_time(start_time)
     if type(end_time) is str: end_time = parse_time(end_time)
+
+    # Create
     shift = Shift(account_id=account_id, shift_name=shift_name, start_time=start_time, end_time=end_time)
     session.add(shift)
     log(f'Created shift: {shift}', 'db')

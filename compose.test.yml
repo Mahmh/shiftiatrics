@@ -8,11 +8,11 @@ services:
     networks:
       - backend
 
-  api:
+  server:
     build:
       context: .
       dockerfile: src/server/Dockerfile
-    container_name: fastapi_c
+    container_name: server_c
     env_file: [.env]
     depends_on:
       - db
@@ -27,7 +27,7 @@ services:
     env_file: [.env]
     depends_on:
       - db
-      - api
+      - server
     networks:
       - backend
     command: ["./run_tests.bash"]

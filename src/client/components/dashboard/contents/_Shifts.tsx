@@ -6,7 +6,7 @@ import editIcon from '@icons/edit.png'
 import removeIcon from '@icons/remove.png'
 
 const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
-    const { account, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
+    const { account, shifts, setModalContent, openModal, closeModal, loadShifts } = useContext(dashboardContext)
 
     const openEditModal = () => {
         const EditModalContent = () => {
@@ -18,7 +18,7 @@ const ShiftCard = ({ id, name, startTime, endTime }: Shift) => {
             const handleNameChange = (e: InputEvent) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length < 1 || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length < 1 || !tempStartTime || !tempEndTime || shifts.map(s => s.name).includes(newName))
             }
 
             const handleStartTimeChange = (e: InputEvent) => {
@@ -126,17 +126,17 @@ export default function Shifts() {
             const handleNameChange = (e: InputEvent) => {
                 const newName = e.target.value
                 setTempName(newName)
-                setConfirmDisabled(newName.trim().length === 0 || !tempStartTime || !tempEndTime)
+                setConfirmDisabled(newName.trim().length === 0 || !tempStartTime || !tempEndTime || shifts.map(s => s.name).includes(newName))
             }
 
             const handleStartTimeChange = (e: InputEvent) => {
                 setStartTime(e.target.value)
-                setConfirmDisabled(tempName.trim().length === 0 || !e.target.value || !tempEndTime)
+                setConfirmDisabled(tempName.trim().length === 0 || !e.target.value || !tempEndTime || shifts.map(s => s.name).includes(e.target.value))
             }
 
             const handleEndTimeChange = (e: InputEvent) => {
                 setEndTime(e.target.value)
-                setConfirmDisabled(tempName.trim().length === 0 || !tempStartTime || !e.target.value)
+                setConfirmDisabled(tempName.trim().length === 0 || !tempStartTime || !e.target.value || shifts.map(s => s.name).includes(e.target.value))
             }
 
             const confirmAdd = async () => {

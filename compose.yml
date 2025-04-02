@@ -8,25 +8,25 @@ services:
     networks:
       - backend
 
-  api:
+  server:
     build:
       context: .
       dockerfile: src/server/Dockerfile
-    container_name: fastapi_c
+    container_name: server_c
     env_file: [.env]
     depends_on:
       - db
     networks:
       - backend
 
-  web:
+  client:
     build:
       context: .
       dockerfile: src/client/Dockerfile
-    container_name: nextjs_c
+    container_name: client_c
     env_file: [.env]
     depends_on:
-      - api
+      - server
     networks:
       - backend
 
@@ -38,8 +38,8 @@ services:
     volumes:
       - ./src/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - web
-      - api
+      - client
+      - server
     networks:
       - backend
 

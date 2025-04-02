@@ -1,19 +1,19 @@
 services:
-  api:
+  server:
     build:
       context: .
       dockerfile: src/server/Dockerfile.dev
-    container_name: fastapi_dev
+    container_name: server_dev
     volumes:
       - ./src:/app/src
     ports:
       - "8000:8000"
 
-  web:
+  client:
     build:
       context: .
       dockerfile: src/client/Dockerfile.dev
-    container_name: nextjs_dev
+    container_name: client_dev
     volumes:
       - ./src/client:/app
       - /app/node_modules  # Prevent host-node_modules conflicts
