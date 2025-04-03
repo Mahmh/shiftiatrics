@@ -9,7 +9,6 @@ from src.server.routers.auth import auth_router
 from src.server.routers.db import account_router, employee_router, shift_router, schedule_router, holiday_router, settings_router
 from src.server.routers.engine import engine_router
 from src.server.routers.contact import contact_router
-from src.server.routers.subscription import sub_router
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
@@ -44,6 +43,5 @@ for r in (
     settings_router,
     holiday_router,
     engine_router,
-    contact_router,
-    sub_router
+    contact_router
 ): app.include_router(r)

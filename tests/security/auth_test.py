@@ -3,7 +3,7 @@ import pytest
 from src.server.main import app
 from src.server.lib.models import Credentials
 from src.server.lib.exceptions import InvalidCredentials, NonExistent
-from src.server.db import Session, log_in_account, _get_token_from_account, _get_or_create_auth_token
+from src.server.db import Session, log_in_account, _get_token_from_account
 from tests.utils import ctxtest, signup, CRED
 
 # Init
@@ -82,11 +82,3 @@ def test_verify_email(setup_and_teardown):
 
     account = log_in_account(CRED)[0]
     assert account.email_verified == True
-
-
-def test_get_or_create_auth_token_new(setup_and_teardown):
-    '''Test generating a new auth token when none exists.'''
-    account_id, session = setup_and_teardown
-    new_token = _get_or_create_auth_token(account_id, session=session)
-    assert new_token is not None
-    assert isinstance(new_token, str)  # Ensures a token string is returned

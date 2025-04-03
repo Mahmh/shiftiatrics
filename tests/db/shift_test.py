@@ -1,4 +1,3 @@
-import pytest
 from src.server.lib.utils import parse_time
 from src.server.db import create_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
 from tests.utils import ctxtest, CRED
@@ -48,10 +47,3 @@ def test_delete_shift(setup_and_teardown):
     delete_shift(shift_id)
     shifts = get_all_shifts_of_account(account_id)
     assert len(shifts) == 0
-
-
-def test_exceed_max_num_shifts_in_free_tier(setup_and_teardown):
-    account_id, _ = setup_and_teardown
-    create_shift(account_id, **SHIFT2)
-    with pytest.raises(ValueError, match='maximum number of shift types'):
-        create_shift(account_id, **SHIFT3)

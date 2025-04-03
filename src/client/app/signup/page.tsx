@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
-import { ContinueWithGoogle } from '@auth'
 import Link from 'next/link'
 import RegularPage from '@regpage'
 
@@ -73,7 +72,6 @@ export default function Signup() {
                     {loading ? 'Signing up...' : 'Sign Up'}
                 </button>
                 <p>Already have an account? <Link href={'/login'}>Log In</Link></p>
-                <ContinueWithGoogle/>
             </div>
         </RegularPage>
     )

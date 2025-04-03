@@ -2,22 +2,16 @@
 
 -- Types
 CREATE TYPE weekend_days_enum AS ENUM ('Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday');
-CREATE TYPE interval_enum AS ENUM ('Daily', 'Weekly', 'Monthly');
 CREATE TYPE token_type_enum AS ENUM ('auth', 'reset', 'verify');
-CREATE TYPE pricing_plan_enum AS ENUM ('basic', 'standard', 'premium', 'custom');
+CREATE TYPE pricing_plan_enum AS ENUM ('starter', 'growth', 'advanced', 'enterprise');
 
 -- Tables
 CREATE TABLE accounts (
     account_id SERIAL PRIMARY KEY,
     email VARCHAR(256) UNIQUE NOT NULL,
-    hashed_password VARCHAR(128), -- Null for OAuth users
+    hashed_password VARCHAR(128) NOT NULL,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    stripe_customer_id VARCHAR(128) NULL,
-    has_used_trial BOOLEAN NOT NULL DEFAULT FALSE,
-    oauth_provider VARCHAR(16),
-    oauth_token VARCHAR(2048),
-    oauth_id VARCHAR(64) UNIQUE,
-    oauth_email VARCHAR(256) UNIQUE -- Email can change, but OAuth email cannot
+    stripe_customer_id VARCHAR(128) UNIQUE NULL
 );
 
 CREATE TABLE tokens (
@@ -33,33 +27,17 @@ CREATE TABLE subscriptions (
     subscription_id SERIAL PRIMARY KEY,
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     plan pricing_plan_enum NOT NULL,
-    price NUMERIC(7,2) NOT NULL CHECK (price >= 0), -- If price=0 => free trial
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL,
-    canceled_at TIMESTAMPTZ NULL,
-    plan_details JSONB NOT NULL,
-    stripe_session_id VARCHAR(128) NOT NULL,
     stripe_subscription_id VARCHAR(128) UNIQUE NOT NULL
-);
-
-CREATE TABLE custom_plan_infos (
-    info_id SERIAL PRIMARY KEY,
-    account_id INT UNIQUE NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
-    price NUMERIC(7,2) NOT NULL CHECK (price >= 0),
-    plan_details JSONB NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    stripe_price_id VARCHAR(128) UNIQUE NOT NULL,
-    stripe_product_id VARCHAR(128) NOT NULL,
-    stripe_pending_checkout_url TEXT NULL,
-    UNIQUE (stripe_price_id, stripe_product_id)
 );
 
 CREATE TABLE employees (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     employee_id SERIAL PRIMARY KEY,
     employee_name VARCHAR(40) NOT NULL,
-    min_work_hours INT,
-    max_work_hours INT
+    min_work_hours INT NOT NULL,
+    max_work_hours INT NOT NULL
 );
 
 CREATE TABLE shifts (
@@ -78,12 +56,6 @@ CREATE TABLE schedules (
     year INT NOT NULL
 );
 
-CREATE TABLE schedule_requests (
-    account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
-    num_requests INT NOT NULL,
-    month INT NOT NULL  -- [1-12]
-);
-
 CREATE TABLE holidays (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     holiday_id SERIAL PRIMARY KEY,
@@ -95,16 +67,6 @@ CREATE TABLE holidays (
 
 CREATE TABLE settings (
     account_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
-    -- Preferences --
     dark_theme_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    weekend_days weekend_days_enum NOT NULL DEFAULT 'Saturday & Sunday',
-    email_ntf_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    email_ntf_interval interval_enum NOT NULL DEFAULT 'Monthly',
-    -- Schedule Generation --
-    multi_shifts_one_emp BOOLEAN NOT NULL DEFAULT FALSE,
-    max_emps_in_shift INT NOT NULL DEFAULT 1,
-    use_rotation_pattern BOOLEAN NOT NULL DEFAULT FALSE,
-    rotation_pattern VARCHAR(256)[] NOT NULL DEFAULT ARRAY[NULL::VARCHAR, NULL::VARCHAR, NULL::VARCHAR],
-    avoid_back_to_back_nights BOOLEAN NOT NULL DEFAULT TRUE,
-    max_shifts_per_week INT NOT NULL DEFAULT 7
+    weekend_days weekend_days_enum NOT NULL DEFAULT 'Saturday & Sunday'
 );

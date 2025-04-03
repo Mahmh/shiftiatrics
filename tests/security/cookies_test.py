@@ -52,13 +52,7 @@ def test_invalid_cookies():
 
 
 def test_unauthorized_access_to_account_endpoints():
-    endpoints = [
-        '/accounts/2/employees',
-        '/accounts/2/shifts',
-        '/accounts/2/schedules',
-        '/accounts/2/holidays',
-        '/accounts/2/settings'
-    ]
+    endpoints = ('/employees/2', '/shifts/2', '/schedules/2', '/holidays/2', '/settings/2')
     for endpoint in endpoints:
         response = client.get(endpoint)
         assert response.status_code == 200

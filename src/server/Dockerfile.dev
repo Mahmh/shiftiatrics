@@ -13,11 +13,12 @@ ENV JAVA_HOME=/usr/lib/jvm/temurin-21-jdk
 
 WORKDIR /app
 
-# ✅ Correct path from root context
+# Correct path from root context
 COPY src/server/requirements.txt ./requirements.txt
 
 # Install Python deps
 RUN pip install --no-cache-dir -r requirements.txt
+RUN alias c=clear
 
 # Enable live reload & proper imports
 ENV PYTHONUNBUFFERED=1

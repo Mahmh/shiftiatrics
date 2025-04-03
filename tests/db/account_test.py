@@ -1,19 +1,7 @@
 import pytest
 from src.server.lib.models import Credentials, Cookies
-from src.server.lib.exceptions import EmailTaken, NonExistent
-from src.server.db import (
-    Session,
-    log_in_with_google,
-    create_account,
-    log_in_account,
-    delete_account,
-    change_email,
-    change_password,
-    set_password,
-    _verify_password,
-    _validate_cookies,
-    _generate_new_token
-)
+from src.server.lib.exceptions import EmailTaken
+from src.server.db import create_account, log_in_account, change_email, change_password, _verify_password
 from tests.utils import ctxtest, CRED
 
 # Init
@@ -37,13 +25,6 @@ def test_create_account():
 def test_create_account_email_taken():
     with pytest.raises(EmailTaken):
         create_account(CRED)
-
-
-def test_delete_account(setup_and_teardown):
-    cookies = setup_and_teardown
-    delete_account(cookies)
-    with pytest.raises(NonExistent):
-        log_in_account(CRED)
 
 
 def test_change_email(setup_and_teardown):
@@ -80,64 +61,6 @@ def test_change_password_invalid_current(setup_and_teardown):
 
     with pytest.raises(ValueError, match='Incorrect current password'):
         change_password(cookies, incorrect_password, new_password)
-
-
-def test_change_password_with_oauth():
-    # Mock an OAuth-only user (who has no password set) by creating an OAuth account
-    account, sub, token = log_in_with_google(
-        email='oauthuser@gmail.com',
-        access_token=_generate_new_token('auth')['token'],
-        oauth_id='google-123456'
-    )
-    cookies = Cookies(account_id=account.account_id, token=token)
-    password = 'OldPass!456'
-    new_password = '!456NewPass'
-
-    assert account.hashed_password is None
-    account = set_password(cookies, password)
-    assert account.hashed_password is not None
-    account = change_password(cookies, password, new_password)
-    assert _verify_password(new_password, account.hashed_password)
-    assert sub is None
-
-
-def test_set_password_with_oauth():
-    # Mock an OAuth-only user
-    account, sub, token = log_in_with_google(
-        email='oauthuser@gmail.com',
-        access_token=_generate_new_token('auth')['token'],
-        oauth_id='google-123456'
-    )
-    cookies = Cookies(account_id=account.account_id, token=token)
-    password = 'NewPass!456'
-
-    assert account.hashed_password is None
-    account = set_password(cookies, password)
-    assert account.hashed_password is not None
-    assert _verify_password(password, account.hashed_password)
-    assert sub is None
-
-
-def test_set_password_already_has_password(setup_and_teardown):
-    """Tests that users who already have a password cannot use `set_password()`."""
-    cookies = setup_and_teardown
-    with pytest.raises(ValueError, match='already have a password'):
-        set_password(cookies, 'AnotherPass123')
-
-
-def test_set_password_non_oauth_user(setup_and_teardown):
-    """Tests that non-OAuth users cannot use `set_password()`."""
-    cookies = setup_and_teardown
-
-    # Simulate a non-OAuth user by setting `hashed_password` & `oauth_email` to None
-    with Session() as session:
-        account = _validate_cookies(cookies, session=session)
-        account.hashed_password = None
-        account.oauth_email = None
-        session.commit()
-    
-    with pytest.raises(ValueError, match='Only OAuth users'):
-        set_password(cookies, 'NewPass!456')
 
 
 def test_two_users_have_different_emails_and_no_subs():

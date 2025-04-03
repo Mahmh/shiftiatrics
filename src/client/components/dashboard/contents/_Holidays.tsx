@@ -201,7 +201,7 @@ export default function Holidays() {
             }
 
             const confirmAdd = async () => {
-                await new Request(`accounts/${account.id}/holidays`, () => loadHolidays(account)).post({
+                await new Request(`holidays/${account.id}`, () => loadHolidays(account)).post({
                     holiday_name: tempName,
                     assigned_to: assignedTo,
                     start_date: startDate,

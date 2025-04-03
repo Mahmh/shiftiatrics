@@ -17,6 +17,7 @@ COPY setup.py .
 COPY src/ ./src
 
 RUN pip install --no-cache-dir -r ./src/server/requirements.txt
+RUN alias c=clear
 
 ENV PYTHONPATH="${PYTHONPATH}:/app/src"
 

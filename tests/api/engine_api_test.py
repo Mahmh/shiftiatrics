@@ -2,7 +2,8 @@ import jpype
 from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.constants import SCHEDULE_ENGINE_PATH
-from tests.utils import ctxtest, signup, create_employee, create_shift, create_schedule, SCHEDULE, SHIFT1, SHIFT2
+from src.server.db import create_employee, create_shift
+from tests.utils import ctxtest, signup, create_schedule, EMPLOYEE, SCHEDULE, SHIFT1, SHIFT2
 
 # Init
 client = TestClient(app)
@@ -12,9 +13,9 @@ def setup_and_teardown():
     if not jpype.isJVMStarted():
         jpype.startJVM(classpath=SCHEDULE_ENGINE_PATH)
     account_id = signup(client).json()['account']['account_id']
-    create_employee(client, account_id)
-    create_shift(client, account_id, SHIFT1)
-    create_shift(client, account_id, SHIFT2)
+    create_employee(account_id, **EMPLOYEE)
+    create_shift(account_id, **SHIFT1)
+    create_shift(account_id, **SHIFT2)
     create_schedule(client, account_id)
     yield account_id
 

@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, getAccountLimits } from '@utils'
+import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName } from '@utils'
 import { MIN_YEAR, MAX_YEAR } from '@const'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
 import closeIcon from '@icons/close.png'
@@ -9,11 +9,10 @@ import nextIcon from '@icons/next.png'
 
 export default function Schedules() {
     const {
-        account, subscription, employees, validateEmployeeById, shifts, 
+        account, employees, validateEmployeeById, shifts, 
         schedules, setSchedules, setScheduleValidity, getScheduleValidity,
         setModalContent, openModal, closeModal, setContent, settings
     } = useContext(dashboardContext)
-    const { maxNumScheduleRequests } = getAccountLimits(subscription)
     const [loading, setLoading] = useState(false)
     const today = new Date()
     const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth())
@@ -25,25 +24,11 @@ export default function Schedules() {
         [schedules, selectedYear, selectedMonth]
     )
 
-    /** Handles the max number of schedule requests error */
-    const handleMaxScheduleRequestsLimit = useCallback((error: string) => {
-        if (error.includes('Max number of schedule requests')) {
-            setModalContent(<>
-                <h1>Schedule Request Limit Reached</h1>
-                <p>
-                    You&apos;ve reached the maximum number of schedule requests ({maxNumScheduleRequests}) for this month. 
-                    Your limit will reset on the 1st of next month, or you can upgrade now for more!
-                </p>
-            </>)
-            openModal()
-        }
-    }, [openModal, setModalContent, maxNumScheduleRequests])
-
     /** Stores the schedule in DB */
     const storeSchedule = useCallback(async (schedule: ScheduleOfIDs) => {
         if (schedule.length <= 0) return
         await new Request(
-            `accounts/${account.id}/schedules`,
+            `schedules/${account.id}`,
             (data: { year: number, month: number, schedule_id: number, schedule: ScheduleOfIDs }) => {
                 // Add the new schedule to the state with the returned data
                 setSchedules((prevSchedules) => {
@@ -59,10 +44,9 @@ export default function Schedules() {
                     }
                     return updatedSchedules
                 })
-            },
-            handleMaxScheduleRequestsLimit
+            }
         ).post({ year: selectedYear, month: selectedMonth, schedule })
-    }, [account.id, employees, selectedMonth, selectedYear, setSchedules, validateEmployeeById, handleMaxScheduleRequestsLimit])
+    }, [account.id, employees, selectedMonth, selectedYear, setSchedules, validateEmployeeById])
 
     /** Overwrites the previously generated schedule in DB */
     const updateSchedule = useCallback(async (scheduleId: number, schedule: ScheduleOfIDs) => {
@@ -86,10 +70,9 @@ export default function Schedules() {
                     }
                     return updatedSchedules
                 })
-            },
-            handleMaxScheduleRequestsLimit
+            }
         ).patch({ schedule })
-    }, [employees, setSchedules, validateEmployeeById, handleMaxScheduleRequestsLimit])
+    }, [employees, setSchedules, validateEmployeeById])
 
 
     /** Displays a modal for generating a schedule */

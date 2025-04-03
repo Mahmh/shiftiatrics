@@ -115,6 +115,19 @@
     div {
         @include themed-color('primary-text')
     }
+
+    form {
+        @include vertical-flex;
+        gap: 20px;
+    }
+
+    textarea {
+        outline: none;
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: $main-box-shadow;
+    }
 }
 
 

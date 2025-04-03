@@ -35,13 +35,12 @@ We use your information to:
 - Comply with legal obligations
 
 ## 4. Cookies and Tracking Technologies
-We use **only essential cookies** for authentication purposes. These cookies allow users to securely log in and access their accounts, which store their preferences (e.g., dark theme, scheduling settings). If you use **Google OAuth** for login, Google may place third-party cookies. For more details, refer to our **[Cookie Policy](/legal/cookies)**.
+We use **only essential cookies** for authentication purposes. These cookies allow users to securely log in and access their accounts, which store their preferences (e.g., dark theme, scheduling settings). For more details, refer to our **[Cookie Policy](/legal/cookies)**.
 
 ## 5. How We Share Your Information
 We do **not** sell or rent your personal data. However, we may share information with:
-- **Service providers** (e.g., hosting providers, security tools) for essential operations
-- **Legal authorities** if required by law
-- **Third-party authentication providers** (e.g., Google OAuth) for login
+- **Service providers** (e.g., hosting providers, security tools) for essential operations.
+- **Legal authorities** if required by law.
 
 ## 6. Data Retention
 We retain your personal data **only as long as necessary** to fulfill the purposes outlined in this Privacy Policy. Account-related data is kept until the account is deleted. **User-inputted employee names, scheduling details, and preferences may be retained as long as necessary for account functionality, unless deleted by the user.**

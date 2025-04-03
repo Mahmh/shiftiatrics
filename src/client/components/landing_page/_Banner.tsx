@@ -12,7 +12,7 @@ export default function Banner() {
                     We save you many hours and headaches by speeding up your scheduling process efficiently and effectively.
                     <b> Why schedule manually when automation does it faster and better?</b>
                 </p>
-                <Link href='/pricing'>Try for Free Now</Link>
+                <Link href='/pricing'>Contact Us</Link>
             </section>
             <Image src={dashboardPreview} alt='Dashboard Preview' priority={true}/>
         </section>

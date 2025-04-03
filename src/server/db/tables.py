@@ -1,26 +1,8 @@
-from sqlalchemy import (
-    create_engine,
-    func,
-    Column,
-    Integer,
-    String,
-    Text,
-    Boolean,
-    ForeignKey,
-    Date,
-    DateTime,
-    Time,
-    Enum,
-    ForeignKey,
-    Numeric,
-    CheckConstraint,
-    UniqueConstraint
-)
+from sqlalchemy import create_engine, func, Column, Integer, String, Boolean, ForeignKey, Date, DateTime, Time, Enum, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base
 from src.server.lib.constants import ENGINE_URL
-from src.server.lib.types import WeekendDaysEnum, IntervalEnum, TokenTypeEnum, PricingPlanEnum
-
+from src.server.lib.types import WeekendDaysEnum, TokenTypeEnum, PricingPlanEnum
 
 engine = create_engine(ENGINE_URL)
 Session = sessionmaker(bind=engine)
@@ -32,14 +14,9 @@ class Account(Base):
     __tablename__ = 'accounts'
     account_id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(256), unique=True, nullable=False)
-    hashed_password = Column(String(128), nullable=True)
+    hashed_password = Column(String(128), nullable=False)
     email_verified = Column(Boolean, nullable=False, server_default='false', default=False)
-    stripe_customer_id = Column(String(128), nullable=True)
-    has_used_trial = Column(Boolean, nullable=False, server_default='false', default=False)
-    oauth_provider = Column(String(16), nullable=True)
-    oauth_token = Column(String(2048), nullable=True)
-    oauth_id = Column(String(64), unique=True, nullable=True)
-    oauth_email = Column(String(256), unique=True, nullable=True)
+    stripe_customer_id = Column(String(128), unique=True, nullable=True)
     __repr__ = lambda self: f'Account({self.account_id})'
 
 
@@ -67,32 +44,10 @@ class Subscription(Base):
         Enum(PricingPlanEnum, name='pricing_plan_enum', values_callable=_values_callable),
         nullable=False
     )
-    price = Column(Numeric(7, 2), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
-    canceled_at = Column(DateTime(timezone=True), nullable=True)
-    plan_details = Column(JSONB, nullable=False)
-    stripe_session_id = Column(String(128), nullable=False)
     stripe_subscription_id = Column(String(128), unique=True, nullable=False)
-    __table_args__ = (CheckConstraint('price >= 0', name='positive_price'),)
     __repr__ = lambda self: f'Subscription({self.account_id})'
-
-
-class CustomPlanInfo(Base):
-    __tablename__ = 'custom_plan_infos'
-    info_id = Column(Integer, primary_key=True, autoincrement=True)
-    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), unique=True, nullable=False)
-    price = Column(Numeric(7, 2), nullable=False)
-    plan_details = Column(JSONB, nullable=False)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
-    stripe_price_id = Column(String(128), unique=True, nullable=False)
-    stripe_product_id = Column(String(128), nullable=False)
-    stripe_pending_checkout_url = Column(Text, nullable=True)
-    __table_args__ = (
-        CheckConstraint('price >= 0', name='positive_price'),
-        UniqueConstraint('stripe_price_id', 'stripe_product_id', name='uq_price_product')
-    )
-    __repr__ = lambda self: f'CustomPlanInfo({self.account_id})'
 
 
 class Employee(Base):
@@ -100,8 +55,8 @@ class Employee(Base):
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     employee_id = Column(Integer, primary_key=True, autoincrement=True)
     employee_name = Column(String(40), nullable=False)
-    min_work_hours = Column(Integer, nullable=True)
-    max_work_hours = Column(Integer, nullable=True)
+    min_work_hours = Column(Integer, nullable=False)
+    max_work_hours = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Employee({self.employee_id})'
 
 
@@ -112,7 +67,7 @@ class Shift(Base):
     shift_name = Column(String(40), nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
-    __repr__ = lambda self: f'Employee({self.shift_id})'
+    __repr__ = lambda self: f'Shift({self.shift_id})'
 
 
 class Schedule(Base):
@@ -123,14 +78,6 @@ class Schedule(Base):
     month = Column(Integer, nullable=False)
     year = Column(Integer, nullable=False)
     __repr__ = lambda self: f'Schedule({self.schedule_id})'
-
-
-class ScheduleRequests(Base):
-    __tablename__ = 'schedule_requests'
-    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), primary_key=True)
-    num_requests = Column(Integer, nullable=False)
-    month = Column(Integer, nullable=False)
-    __repr__ = lambda self: f'ScheduleRequests({self.account_id})'
 
 
 class Holiday(Base):
@@ -154,23 +101,4 @@ class Settings(Base):
         server_default='Saturday & Sunday',
         default=WeekendDaysEnum.SAT_SUN.value
     )
-    email_ntf_enabled = Column(Boolean, nullable=False, server_default='false', default=False)
-    email_ntf_interval = Column(
-        Enum(IntervalEnum, name='interval_enum', values_callable=_values_callable),
-        nullable=False,
-        server_default='Monthly',
-        default=IntervalEnum.MONTHLY.value
-    )
-
-    multi_shifts_one_emp = Column(Boolean, default=False, nullable=False)
-    max_emps_in_shift = Column(Integer, default=1, nullable=False)
-    use_rotation_pattern = Column(Boolean, default=False, nullable=False)
-    rotation_pattern = Column(
-        ARRAY(String(256)),
-        nullable=False,
-        default=lambda: [None, None, None],
-        server_default="ARRAY[NULL::VARCHAR, NULL::VARCHAR, NULL::VARCHAR]"
-    )
-    avoid_back_to_back_nights = Column(Boolean, default=True, nullable=False)
-    max_shifts_per_week = Column(Integer, default=7, nullable=False)
     __repr__ = lambda self: f'Settings({self.account_id})'

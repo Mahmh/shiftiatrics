@@ -1,7 +1,5 @@
 from dotenv import load_dotenv; load_dotenv()
 import os, bcrypt, stripe
-from src.server.lib.models import SubscriptionInfo, PlanDetails
-from src.server.lib.types import PricingPlanName
 
 _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # path with respect to this file
 _locate = lambda x: os.path.join(_CURRENT_DIR, x)
@@ -38,70 +36,16 @@ MAIL_TLS = bool(int(os.getenv('MAIL_TLS', '1')))
 MAIL_SSL = bool(int(os.getenv('MAIL_SSL', '0'))) 
 COMPANY_EMAIL = os.getenv('COMPANY_EMAIL')
 
-# OAuth
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
-GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
-GOOGLE_REDIRECT_URI = f'{BACKEND_SERVER_URL}/auth/google/callback'
-GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
-GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
-
-# Freemium & subscriptions
+# Subscription
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-
-FREE_TIER_DETAILS = PlanDetails(
-    max_num_pediatricians=3,
-    max_num_shifts_per_day=2,
-    max_num_schedule_requests=8
-)
-
-PREDEFINED_SUB_INFOS: dict[PricingPlanName, SubscriptionInfo] = {
-    'basic': SubscriptionInfo(
-        plan='basic',
-        price=19.99,
-        plan_details=PlanDetails(
-            max_num_pediatricians=10,
-            max_num_shifts_per_day=3,
-            max_num_schedule_requests=20
-        )
-    ),
-    'standard': SubscriptionInfo(
-        plan='standard',
-        price=49.99,
-        plan_details=PlanDetails(
-            max_num_pediatricians=25,
-            max_num_shifts_per_day=4,
-            max_num_schedule_requests=60
-        )
-    ),
-    'premium': SubscriptionInfo(
-        plan='premium',
-        price=99.99,
-        plan_details=PlanDetails(
-            max_num_pediatricians=999,
-            max_num_shifts_per_day=999,
-            max_num_schedule_requests=999
-        )
-    )
-}
-
-PREDEFINED_PLAN_TO_STRIPE_PRICE_ID: dict[PricingPlanName, str] = {
-    'basic': 'price_1R57GALcPBGZy9UcVui6CMG9',
-    'standard': 'price_1R57GiLcPBGZy9Ucguxtg4Z6',
-    'premium': 'price_1R57H4LcPBGZy9UcPWVco8Ll'
-}
-
-# Misc
-ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
-LOG_DIR = _locate('../logs/')
-SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')
-
-
-# Check keys are defined
-if GOOGLE_CLIENT_ID is None or GOOGLE_CLIENT_SECRET is None:
-    raise ValueError('Google OAuth env variables are not defined.')
+PLAN_NAMES = ['starter', 'growth', 'advanced', 'enterprise']
 
 if STRIPE_SECRET_KEY is None:
     raise ValueError('Stripe API keys are not defined.')
 else:
     stripe.api_key = STRIPE_SECRET_KEY
+
+# Misc
+ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
+LOG_DIR = _locate('../logs/')
+SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')

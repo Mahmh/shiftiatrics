@@ -1,16 +1,16 @@
 from typing import Optional, Callable, Any
+from textwrap import dedent
 from functools import wraps
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session as _SessionType
-from sqlalchemy.sql import exists
-from sqlalchemy import Integer, Boolean, String, Enum, ARRAY
+from sqlalchemy import Boolean, String, Enum
 import unicodedata, re, bcrypt, inspect, secrets, stripe
-from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN, FAKE_HASH, FREE_TIER_DETAILS
+from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
-from src.server.lib.models import Credentials, Cookies, SubscriptionInfo
+from src.server.lib.models import Credentials, Cookies, ContactUsSubmissionData
 from src.server.lib.types import TokenType, SettingValue
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
-from .tables import Session, Account, Token, Subscription, CustomPlanInfo, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
+from .tables import Session, Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
 
 def _handle_args(args: tuple) -> tuple:
     # Sanitize credentials if the first parameter is of type `Credentials`
@@ -77,29 +77,11 @@ def _check_email_is_not_registered(sanitized_email: str, *, session: _SessionTyp
         raise EmailTaken(sanitized_email)
 
 
-def _check_account(account_id: int, enforce_limits: bool = False, *, session: _SessionType) -> Account:
+def _check_account(account_id: int, *, session: _SessionType) -> Account:
     """Returns an account if it exists using its ID."""
     account = session.query(Account).filter_by(account_id=account_id).first()
     if not account: raise NonExistent('account', account_id)
-    if enforce_limits: _check_account_limits(account_id, session=session)
     return account
-
-
-def _check_account_limits(account_id: int, *, session: _SessionType) -> None:
-    """Validates that the account is complying with its subscription plan."""
-    sub = _get_active_sub(account_id, session=session)
-    employee_count = session.query(Employee).filter(Employee.account_id == account_id).count()
-    shifts_per_day_count = session.query(Shift).filter(Shift.account_id == account_id).count()
-    _check_schedule_requests(account_id, session=session)
-
-    max_num_pediatricians = FREE_TIER_DETAILS.max_num_pediatricians if sub is None else sub.plan_details['max_num_pediatricians']
-    max_num_shifts_per_day = FREE_TIER_DETAILS.max_num_shifts_per_day if sub is None else sub.plan_details['max_num_shifts_per_day']
-
-    if employee_count > max_num_pediatricians:
-        raise ValueError('You have exceeded the maximum number of pediatricians allowed by your plan.')
-
-    if shifts_per_day_count > max_num_shifts_per_day:
-        raise ValueError('You have exceeded the maximum number of shift types per day allowed by your plan.')
 
 
 def _check_employee(employee_id: int, *, session: _SessionType) -> Employee:
@@ -248,11 +230,6 @@ def _authenticate_credentials(cred: Credentials, *, session: _SessionType) -> Ac
     account = session.query(Account).filter_by(email=sanitized_cred.email).first()
     if not account:
         raise NonExistent('account', sanitized_cred.email)
-    
-    # If the user didn't provide a password (e.g., OAuth), perform a fake hash check to prevent timing attacks
-    if sanitized_cred.password is None or account.hashed_password is None:
-        bcrypt.checkpw(b'fake_attempt', FAKE_HASH.encode('utf-8'))  # Fake check for timing protection
-        raise InvalidCredentials(cred)
 
     # Verify the provided password against the stored hash
     if not _verify_password(sanitized_cred.password, account.hashed_password):
@@ -341,66 +318,10 @@ def _get_email_from_token(token: str, token_type: TokenType, *, session: _Sessio
     return account.email
 
 
-def _has_custom_plan(account_id: int, *, session: _SessionType) -> bool:
-    """Returns True if the user already has a custom subscription."""
-    return session.query(
-        exists().where(
-            (Subscription.account_id == account_id) &
-            (Subscription.plan == 'custom')
-        )
-    ).scalar()
-
-
-def _validate_sub_info(account_id: int, sub_info: SubscriptionInfo, stripe_session_id: str, stripe_subscription_id: str, *, session: _SessionType) -> dict:
-    """Computes & returns subscription info for a given account and plan."""
-    account = _check_account(account_id, session=session)
-
-    if sub_info.expires_at is None:
-        raise ValueError('Please set an expiry date in the SubscriptionInfo.')
-
-    if session.query(Subscription).filter_by(stripe_session_id=stripe_session_id).first():
-        raise ValueError('Stripe session ID was already processed.')
-    
-    # If the plan is custom, ensure the user doesn't already have one
-    if sub_info.plan == 'custom':
-        if _has_custom_plan(account_id, session=session):
-            raise ValueError('User already has a custom plan.')
-        
-        if not _get_custom_plan_info(account_id, session=session):
-            raise ValueError(f'No custom plan info was already created for account {account_id}.')
-
-        if sub_info.price < 0:
-            raise ValueError('Custom plan price must be >= 0.')
-
-        price = sub_info.price
-    else:
-        # Set price to 0.0 if the user has NOT used a free trial
-        if account.has_used_trial:
-            price = sub_info.price
-        else:
-            price = 0.0
-            account.has_used_trial = True
-
-    return dict(
-        account_id=account_id,
-        plan=sub_info.plan,
-        price=price,
-        expires_at=sub_info.expires_at,
-        plan_details=dict(sub_info.plan_details),
-        stripe_session_id=stripe_session_id,
-        stripe_subscription_id=stripe_subscription_id
-    )
-
-
 def _get_active_sub(account_id: int, *, session: _SessionType) -> Optional[Subscription]:
     """Returns the latest active subscription for the given account, or None if no active subscription exists."""
-    sub = session.query(Subscription).filter(
-        Subscription.account_id == account_id,
-        Subscription.canceled_at.is_(None)
-    ).order_by(Subscription.expires_at.desc()).first()
-
-    if not sub:
-        return None
+    sub = session.query(Subscription).filter(Subscription.account_id == account_id).order_by(Subscription.expires_at.desc()).first()
+    if not sub: return None
 
     if utcnow() > sub.expires_at:
         stripe_sub = stripe.Subscription.retrieve(sub.stripe_subscription_id)
@@ -412,48 +333,7 @@ def _get_active_sub(account_id: int, *, session: _SessionType) -> Optional[Subsc
     return sub if utcnow() < sub.expires_at else None
 
 
-def _get_or_create_auth_token(account_id: int, *, session: _SessionType) -> Token:
-    """Either creates or retrieves an existing auth token from a given account and returns it."""
-    token_obj = _get_token_from_account(account_id, 'auth', session=session)
-    if token_obj is None or utcnow() > token_obj.expires_at:
-        token = _create_new_token(account_id, session=session)
-    else:
-        token = token_obj.token
-    return token
-
-
-def _check_schedule_requests(account_id: int, *, session: _SessionType) -> None:
-    """Validates if an account is permitted to send a schedule request."""
-    sub = _get_active_sub(account_id, session=session)
-    schedule_requests = session.get(ScheduleRequests, account_id)
-    current_month = utcnow().month
-    ERR_MSG = f'Max number of schedule requests for account ID {account_id} was reached.'
-
-    if current_month > schedule_requests.month:
-        schedule_requests.num_requests = 1
-        schedule_requests.month = current_month
-        session.commit()
-
-    if sub is not None:
-        if schedule_requests.num_requests >= sub.plan_details['max_num_schedule_requests']:
-            raise ValueError(ERR_MSG)
-    elif schedule_requests.num_requests >= FREE_TIER_DETAILS.max_num_schedule_requests:
-            raise ValueError(ERR_MSG)
-
-
-def _increment_schedule_requests(account_id: int, *, session: _SessionType) -> None:
-    """Increments the number of schedule requests counter after generating/regenerating schedule(s)."""
-    schedule_requests = session.get(ScheduleRequests, account_id)
-    schedule_requests.num_requests += 1
-    session.commit()
-
-
-def _get_custom_plan_info(account_id: int, *, session: _SessionType) -> CustomPlanInfo:
-    """Returns the custom plan info made for an account."""
-    return session.query(CustomPlanInfo).filter_by(account_id=account_id).first()
-
-
-def _validate_and_cast(setting: str, value: SettingValue, column_type: Integer | Boolean | Enum | ARRAY | String) -> SettingValue:
+def _validate_and_cast(setting: str, value: SettingValue, column_type: Boolean | Enum | String) -> SettingValue:
     """
     Validates and casts the input value based on the SQLAlchemy column type.
 
@@ -468,17 +348,6 @@ def _validate_and_cast(setting: str, value: SettingValue, column_type: Integer |
     Raises:
         ValueError or TypeError: If the value is invalid or doesn't match the column type.
     """
-    # Handle nullable Integer fields like max_shifts_per_week
-    if isinstance(column_type, Integer):
-        try:
-            value = int(value)
-        except (ValueError, TypeError):
-            raise ValueError('Must be an integer')
-        match setting:
-            case 'max_emps_in_shift': assert 1 <= value <= 10, f'Invalid value of max_emps_in_shift: {value}'
-            case 'max_shifts_per_week': assert 1 <= value <= 12, f'Invalid value of max_shifts_per_week: {value}'
-        return value
-
     # Handle Boolean
     if isinstance(column_type, Boolean):
         if isinstance(value, bool):
@@ -498,14 +367,6 @@ def _validate_and_cast(setting: str, value: SettingValue, column_type: Integer |
             return value
         raise ValueError(f"Must be one of: {allowed}")
 
-    # Handle ARRAY of strings (e.g., rotation_pattern)
-    if isinstance(column_type, ARRAY):
-        if not isinstance(value, (list, tuple)):
-            raise ValueError("Must be a list or tuple")
-        if not all(isinstance(item, str) or item is None for item in value):
-            raise ValueError("All array elements must be strings or null (None)")
-        return list(value)
-
     # Handle plain strings
     if isinstance(column_type, String):
         if not isinstance(value, str):
@@ -513,3 +374,20 @@ def _validate_and_cast(setting: str, value: SettingValue, column_type: Integer |
         return value
 
     raise TypeError(f"Unsupported column type: {type(column_type)}")
+
+
+def _get_email_body(data: ContactUsSubmissionData) -> str:
+    return dedent(f'''
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #0056b3;">New Contact Us Submission</h2>
+            <table style="border-collapse: collapse; width: 100%;">
+                <tr><td><strong>Name:</strong></td><td>{data.name}</td></tr>
+                <tr><td><strong>Email:</strong></td><td>{data.email}</td></tr>
+                <tr><td><strong>Query Type:</strong></td><td>{data.query_type}</td></tr>
+                <tr><td><strong>Message:</strong></td></tr>
+                <tr><td colspan="2" style="border-top: 1px solid #ccc; padding-top: 10px;">{data.description}</td></tr>
+            </table>
+        </body>
+        </html>
+    ''')

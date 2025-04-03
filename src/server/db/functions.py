@@ -1,18 +1,18 @@
 from typing import Any, Optional
-from datetime import date, time, datetime, timezone
+from textwrap import dedent
+from datetime import date, time, datetime
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.dialects.postgresql import array
-import stripe
 
 from src.server.lib.utils import log, parse_date, parse_time, utcnow
-from src.server.lib.models import Credentials, Cookies, ScheduleType, SubscriptionInfo, PlanDetails
+from src.server.lib.models import Credentials, Cookies, ScheduleType, ContactUsSubmissionData
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
-from src.server.lib.types import PricingPlanName, SettingValue
-from src.server.lib.constants import WEB_SERVER_URL, PREDEFINED_PLAN_TO_STRIPE_PRICE_ID, PREDEFINED_SUB_INFOS, FREE_TIER_DETAILS
+from src.server.lib.types import PlanName, SettingValue
+from src.server.lib.constants import WEB_SERVER_URL, COMPANY_EMAIL, PLAN_NAMES
 from src.server.lib.emails import send_email
 
-from .tables import Account, Token, Subscription, CustomPlanInfo, Employee, Shift, Schedule, ScheduleRequests, Holiday, Settings
+from .tables import Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
 from .utils import (
     dbsession,
     _check_email_is_not_registered,
@@ -36,12 +36,8 @@ from .utils import (
     _renew_token,
     _validate_cookies,
     _get_email_from_token,
-    _validate_sub_info,
     _get_active_sub,
-    _get_or_create_auth_token,
-    _check_schedule_requests,
-    _increment_schedule_requests,
-    _get_custom_plan_info
+    _get_email_body
 )
 
 ## Account
@@ -51,17 +47,12 @@ def create_account(cred: Credentials, *, session: _SessionType) -> tuple[Account
     _check_email_is_not_registered(_sanitize_email(cred.email), session=session)
     cred = _sanitize_credentials(cred)
 
-    # Step 1: Create account
+    # Create account
     account = Account(email=cred.email, hashed_password=_hash_password(cred.password))
     session.add(account)
     session.commit()  # Commit to generate account_id
 
-    # Step 2: Set number of schedule requests
-    schedule_requests = ScheduleRequests(account_id=account.account_id, num_requests=0, month=utcnow().month)
-    session.add(schedule_requests)
-    session.commit()
-
-    # Step 3: Generate token & set up default settings
+    # Generate token & set up default settings
     token = _create_new_token(account.account_id, session=session)
     _init_settings(account.account_id, session=session)
     log(f'Successful account creation for email: "{account.email}"', 'account')
@@ -85,9 +76,6 @@ def change_password(cookies: Cookies, current_password: str, new_password: str, 
     """Updates the account's password after validation."""
     account = _validate_cookies(cookies, session=session)
 
-    if not account.hashed_password:
-        raise ValueError('This account uses OAuth only. You cannot set a password.')
-
     if not _verify_password(current_password, account.hashed_password):
         raise ValueError('Incorrect current password.')
 
@@ -98,31 +86,19 @@ def change_password(cookies: Cookies, current_password: str, new_password: str, 
 
 
 @dbsession(commit=True)
-def set_password(cookies: Cookies, new_password: str, *, session: _SessionType) -> Account:
-    """Allows OAuth-only users to set a password for the first time."""
-    account = _validate_cookies(cookies, session=session)
-
-    if account.hashed_password:
-        raise ValueError('You already have a password set.')
-
-    if not account.oauth_email or not account.oauth_provider:
-        raise ValueError('Only OAuth users can set a password for the first time.')
-
-    new_password = _sanitize_password(new_password)
-    account.hashed_password = _hash_password(new_password)
-
-    log(f'Account {account.account_id} (OAuth: {account.oauth_provider}) has set a password for the first time.', 'account')
-    return account
-
-
-@dbsession(commit=True)
-def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
+async def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
     """Deletes an account and all of its associated objects, and cancels its subscription."""
     account = _validate_cookies(cookies, session=session)
-    if _get_active_sub(account.account_id, session=session):
-        cancel_sub(account.account_id)
-    session.delete(account)
-    log(f'Deleted account: {account}', 'account')
+    await send_email(
+        subject='Account Deletion Request',
+        body=dedent(f'''
+            <h2>A customer has requested their account to be deleted.</h2>
+            <p>Customer email: {account.email}</p>
+        '''),
+        recipients=[COMPANY_EMAIL],
+        reply_to=[account.email]
+    )
+    log(f'Account to be deleted: {account}', 'account')
 
 
 
@@ -161,86 +137,12 @@ def log_in_account_with_cookies(cookies: Cookies, *, session: _SessionType) -> t
 
 
 @dbsession(commit=True)
-def log_in_with_google(email: str, access_token: str, oauth_id: str, *, session: _SessionType) -> tuple[Account, Optional[Subscription], str]:
-    """Logs in a Google user, handling cases where they changed their email in your web app. 
-    If `plan_name` is provided, it creates a new subscription; otherwise, returns the existing subscription.
-    Ensures the user can only receive one free trial, regardless of plan.
-    """
-    email = _sanitize_email(email)
-    account = session.query(Account).filter(Account.oauth_id == oauth_id).first()
-
-    if account:
-        # Store OAuth email only the first time
-        if account.oauth_email is None:
-            account.oauth_email = email  # Store original Google email (first-time login)
-
-        # If the user changed their email in the web app, do NOT overwrite it.
-        if not account.email:
-            account.email = email  # Set email for first-time login only
-
-        # Update OAuth token
-        account.oauth_token = access_token
-        session.commit()
-
-        sub = _get_active_sub(account.account_id, session=session)
-        token = _get_or_create_auth_token(account.account_id, session=session)
-        return account, sub, token
-
-    # If no matching OAuth ID, check if an account exists with the same email
-    existing_account = session.query(Account).filter(Account.email == email).first()
-
-    if existing_account:
-        if existing_account.oauth_id:
-            # If email exists but is already linked to another OAuth ID, prevent hijacking
-            raise ValueError('This email is already linked to a different OAuth account.')
-
-        # Otherwise, link the existing email/password account to Google OAuth
-        existing_account.oauth_provider = 'google'
-        existing_account.oauth_token = access_token
-        existing_account.oauth_id = oauth_id  # Link Google account
-        existing_account.oauth_email = email  # Store the original OAuth email
-        existing_account.email_verified = True
-        session.commit()
-
-        sub = _get_active_sub(existing_account.account_id, session=session)
-        token = _get_or_create_auth_token(existing_account.account_id, session=session)
-        return existing_account, sub, token
-
-    # No matching account => create a new one
-    new_account = Account(
-        email=email,  # First-time login, set email
-        hashed_password=None,  # No password for OAuth users
-        email_verified=True,
-        oauth_provider='google',
-        oauth_token=access_token,
-        oauth_id=oauth_id,
-        oauth_email=email  # Store OAuth email for future reference
-    )
-    session.add(new_account)
-    session.commit()
-    session.refresh(new_account)
-
-    schedule_requests = ScheduleRequests(account_id=new_account.account_id, num_requests=0, month=utcnow().month)
-    session.add(schedule_requests)
-    session.commit()
-
-    sub = _get_active_sub(new_account.account_id, session=session)
-    token = _get_or_create_auth_token(new_account.account_id, session=session)
-    _init_settings(new_account.account_id, session=session)
-    return new_account, sub, token
-
-
-@dbsession(commit=True)
 async def request_reset_password(email: str, *, session: _SessionType) -> str:
-    """Sends a password reset email to users with a password set, even if they have OAuth."""
+    """Sends a password reset email to users with a password set."""
     email = _sanitize_email(email)
     account = session.query(Account).filter(Account.email == email).first()
     safe_msg = 'If this email exists, a reset link will be sent.'  # Prevents user enumeration attacks
-
     if not account: return safe_msg
-    if not account.hashed_password: raise ValueError(
-        'This account does not have a password. Use OAuth (e.g., Continue with Google) to log in.'
-    )
 
     # Generate a password reset token & send email with reset link
     reset_token = _create_new_token(account.account_id, 'reset', session=session)
@@ -257,7 +159,7 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
 
 @dbsession(commit=True)
 def reset_password(new_password: str, reset_token: str, *, session: _SessionType) -> str:
-    """Resets a user's password after verifying the reset token (when logged-out), without affecting OAuth login."""
+    """Resets a user's password after verifying the reset token (when logged-out)."""
     new_password = _sanitize_password(new_password)
     email = _get_email_from_token(reset_token, 'reset', session=session)
 
@@ -265,8 +167,6 @@ def reset_password(new_password: str, reset_token: str, *, session: _SessionType
     account = session.query(Account).filter(Account.email == email).first()
     if not account:
         raise NonExistent('account', email)
-    if not account.hashed_password:
-        raise ValueError('This account does not have a password. Use OAuth to log in.')
 
     # Hash and store the new password
     account.hashed_password = _hash_password(new_password)
@@ -274,7 +174,7 @@ def reset_password(new_password: str, reset_token: str, *, session: _SessionType
     session.query(Token).filter(Token.token == reset_token, Token.token_type == 'reset').delete()
     session.commit()
 
-    return 'Password reset successfully. You can now log in with your new password or continue using OAuth.'
+    return 'Password reset successfully. You can now log in with your new password.'
 
 
 @dbsession(commit=True)
@@ -329,27 +229,10 @@ def get_all_employees_of_account(account_id: int, *, session: _SessionType) -> l
 
 
 @dbsession(commit=True)
-def create_employee(
-        account_id: int, 
-        employee_name: str, 
-        min_work_hours: Optional[int] = None,
-        max_work_hours: Optional[int] = None,
-        *,
-        session: _SessionType
-    ) -> Employee:
+def create_employee(account_id: int, employee_name: str, min_work_hours: int, max_work_hours: int, *, session: _SessionType) -> Employee:
     """Creates an employee for the given account ID."""
-    _check_account(account_id, enforce_limits=True, session=session)
-
-    # Validate
+    _check_account(account_id, session=session)
     min_work_hours, max_work_hours = _check_work_hours(min_work_hours, max_work_hours)
-    sub = _get_active_sub(account_id, session=session)
-    employee_count = session.query(Employee).filter(Employee.account_id == account_id).count()
-    max_num_pediatricians = FREE_TIER_DETAILS.max_num_pediatricians if sub is None else sub.plan_details['max_num_pediatricians']
-
-    if employee_count >= max_num_pediatricians:
-        raise ValueError('You have exceeded the maximum number of pediatricians allowed by your plan.')
-
-    # Create
     employee = Employee(account_id=account_id, employee_name=employee_name, min_work_hours=min_work_hours, max_work_hours=max_work_hours)
     session.add(employee)
     log(f'Created employee: {employee}', 'db')
@@ -396,21 +279,13 @@ def get_all_shifts_of_account(account_id: int, *, session: _SessionType) -> list
 @dbsession(commit=True)
 def create_shift(account_id: int, shift_name: str, start_time: str|time, end_time: str|time, *, session: _SessionType) -> Shift:
     """Creates a shift for the given account ID."""
-    _check_account(account_id, enforce_limits=True, session=session)
+    _check_account(account_id, session=session)
 
-    # Validate
-    sub = _get_active_sub(account_id, session=session)
-    shifts_per_day_count = session.query(Shift).filter(Shift.account_id == account_id).count()
-    max_num_shifts_per_day = FREE_TIER_DETAILS.max_num_shifts_per_day if sub is None else sub.plan_details['max_num_shifts_per_day']
-
-    if shifts_per_day_count >= max_num_shifts_per_day:
-        raise ValueError('You have exceeded the maximum number of shift types per day allowed by your plan.')
     if session.query(Shift).filter(Shift.account_id == account_id, Shift.shift_name == shift_name).first():
         raise ValueError(f'Shift with name {shift_name} was already created in your account.')
     if type(start_time) is str: start_time = parse_time(start_time)
     if type(end_time) is str: end_time = parse_time(end_time)
 
-    # Create
     shift = Shift(account_id=account_id, shift_name=shift_name, start_time=start_time, end_time=end_time)
     session.add(shift)
     log(f'Created shift: {shift}', 'db')
@@ -452,12 +327,10 @@ def get_all_schedules_of_account(account_id: int, *, session: _SessionType, **fi
 @dbsession(commit=True)
 def create_schedule(account_id: int, schedule: ScheduleType, month: int, year: int, *, session: _SessionType) -> Schedule:
     """Creates a schedule for the given account ID."""
-    _check_account(account_id, enforce_limits=True, session=session)
+    _check_account(account_id, session=session)
     _check_month_and_year(month, year)
-    _check_schedule_requests(account_id, session=session)
     schedule = Schedule(account_id=account_id, schedule=schedule, month=month, year=year)
     session.add(schedule)
-    _increment_schedule_requests(account_id, session=session)
     log(f'Created schedule: {schedule}', 'db')
     return schedule
 
@@ -466,14 +339,12 @@ def create_schedule(account_id: int, schedule: ScheduleType, month: int, year: i
 def update_schedule(schedule_id: int, updates: dict[str, Any], *, session: _SessionType) -> Schedule:
     """Updates a schedule's attributes based on the given schedule ID and updates."""
     schedule = _check_schedule(schedule_id, session=session)
-    _check_schedule_requests(schedule.account_id, session=session)
 
     ALLOWED_FIELDS = {'schedule'}
     for key, value in updates.items():
         if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
         setattr(schedule, key, value)
 
-    _increment_schedule_requests(schedule.account_id, session=session)
     log(f'Updated schedule: {schedule}, updates: {updates}', 'db')
     return schedule
 
@@ -482,9 +353,7 @@ def update_schedule(schedule_id: int, updates: dict[str, Any], *, session: _Sess
 def delete_schedule(schedule_id: int, *, session: _SessionType) -> None:
     """Deletes a schedule by its ID."""
     schedule = _check_schedule(schedule_id, session=session)
-    _check_schedule_requests(schedule.account_id, session=session)
     session.delete(schedule)
-    _increment_schedule_requests(schedule.account_id, session=session)
     log(f'Deleted schedule: {schedule}', 'db')
 
 
@@ -582,13 +451,6 @@ def update_setting(account_id: int, setting: str, new_value: SettingValue, *, se
 
 ## Subscription
 @dbsession()
-def get_num_schedule_requests(account_id: int, *, session: _SessionType) -> int:
-    """Returns the number of schedule requests an account has made."""
-    _check_account(account_id, session=session)
-    return session.get(ScheduleRequests, account_id).num_requests
-
-
-@dbsession()
 def check_sub_expired(account_id: int, *, session: _SessionType) -> bool:
     """Returns a boolean indicating if the account's active subscription has expired and has at least one subscription made in the past."""
     _check_account(account_id, session=session)
@@ -597,284 +459,45 @@ def check_sub_expired(account_id: int, *, session: _SessionType) -> bool:
     return sub is None and all_subs_count > 0
 
 
-@dbsession()
-def create_checkout_session(account_id: int, plan_name: PricingPlanName, *, session: _SessionType) -> str:
-    """Creates a checkout session and returns the checkout URL for subscribing."""
-    account = _check_account(account_id, session=session)
-    price_id = PREDEFINED_PLAN_TO_STRIPE_PRICE_ID.get(plan_name.lower())
-    if not price_id: raise ValueError(f'Invalid plan name: "{plan_name}"')
-
-    sub_data = {} if account.has_used_trial else dict(subscription_data={'trial_period_days': 7})
-    session = stripe.checkout.Session.create(
-        mode='subscription',
-        line_items=[{'price': price_id, 'quantity': 1}],
-        success_url=f'{WEB_SERVER_URL}/dashboard?chkout_session_id={{CHECKOUT_SESSION_ID}}',
-        cancel_url=f'{WEB_SERVER_URL}/dashboard',
-        **sub_data
-    )
-    log(f'Subscription checkout session created for plan "{plan_name}" (price ID: {price_id})', 'subscription')
-    return session.url
-
-
 @dbsession(commit=True)
-def create_sub(account_id: int, stripe_session_id: str, *, session: _SessionType) -> tuple[Account, Subscription]:
-    """Creates a subscription for an account after successfully checking out in Stripe checkout URL."""
-    account = _check_account(account_id, session=session)
-
-    # Retrieve the Stripe Checkout Session
-    stripe_session = stripe.checkout.Session.retrieve(stripe_session_id)
-    if stripe_session.mode != 'subscription':
-        raise ValueError('Session is not a subscription.')
-
-    # Retrieve the actual subscription details
-    stripe_customer_id = stripe_session.customer
-    stripe_subscription_id = stripe_session.subscription
-    stripe_sub = stripe.Subscription.retrieve(stripe_subscription_id)
-
-    price_obj = stripe_sub['items']['data'][0]['price']
-    lookup_key = price_obj.get('lookup_key')
-    unit_amount = price_obj['unit_amount']
-
-    if not lookup_key:
-        raise LookupError('Missing lookup_key in Stripe price.')
-
-    plan_name = lookup_key.lower()
-
-    if plan_name not in PREDEFINED_SUB_INFOS:
-        raise LookupError(f'Unsupported plan: {plan_name}')
-
-    # Create a SubscriptionInfo object from Stripe data and save to DB
-    sub_info = SubscriptionInfo(
-        plan=plan_name,
-        price=unit_amount / 100,
-        expires_at=datetime.fromtimestamp(stripe_sub.current_period_end, tz=timezone.utc),
-        plan_details=PREDEFINED_SUB_INFOS[plan_name].plan_details
-    )
-
-    sub_info = _validate_sub_info(account_id, sub_info, stripe_session_id, stripe_subscription_id, session=session)
-    sub = Subscription(**sub_info)
-    session.add(sub)
-    account.stripe_customer_id = stripe_customer_id
-
-    log(f'Created subscription {sub} for account ID {account_id} (customer ID: "{stripe_customer_id}"): {sub_info}', 'subscription')
-    return account, sub
-
-
-@dbsession()
-def get_invoice(account_id: int, *, session: _SessionType) -> dict:
-    """Returns the most recent invoice tied to the active subscription."""
-    account = _check_account(account_id, session=session)
-    customer_id = account.stripe_customer_id
-    if customer_id is None:
-        raise ValueError(f'Account ID {account_id} does not have a Stripe customer ID.')
-
-    sub = _get_active_sub(account_id, session=session)
-    if not sub:
-        raise LookupError(f'No active subscription found for account ID {account_id}.')
-
-    # List all invoices for the specific subscription
-    invoices = stripe.Invoice.list(
-        customer=customer_id,
-        subscription=sub.stripe_subscription_id,
-        limit=1
-    )
-
-    if not invoices.data:
-        raise LookupError(f'No invoices found for Stripe subscription ID {sub.stripe_subscription_id}.')
-
-    invoice = invoices.data[0]
-
-    return {
-        'invoice_id': invoice.id,
-        'amount_due': invoice.amount_due / 100,
-        'amount_paid': invoice.amount_paid / 100,
-        'currency': invoice.currency.upper(),
-        'status': invoice.status,
-        'invoice_pdf': invoice.invoice_pdf,
-        'hosted_invoice_url': invoice.hosted_invoice_url,
-        'created_at': datetime.fromtimestamp(invoice.created, tz=timezone.utc).isoformat(),
-        'due_date': (
-            datetime.fromtimestamp(invoice.due_date, tz=timezone.utc).isoformat()
-            if invoice.due_date else None
-        ),
-        'description': invoice.description,
-        'subscription_id': invoice.subscription,
-    }
-
-
-@dbsession(commit=True)
-def cancel_sub(account_id: int, *, session: _SessionType) -> None:
-    account = _check_account(account_id, session=session)
-    sub = _get_active_sub(account_id, session=session)
-    if not sub: raise LookupError('Subscription not found.')
-
-    # Cancel immediately with prorated refund
-    try:
-        stripe.Subscription.delete(sub.stripe_subscription_id, prorate=True)
-        sub.canceled_at = utcnow()
-    except Exception as e:
-        log(f'Failed to cancel Stripe subscription for account {account_id}: {e}', 'subscription', 'ERROR')
-        raise RuntimeError('Failed to cancel subscription.') from e
-
-    # Delete customer
-    if account.stripe_customer_id:
-        try:
-            stripe.Customer.delete(account.stripe_customer_id)
-            account.stripe_customer_id = None
-            log(f'Deleted Stripe customer for account {account_id}', 'subscription')
-        except Exception as e:
-            log(f'Failed to delete Stripe customer for account {account_id}: {e}', 'subscription', 'ERROR')
-            raise RuntimeError('Failed to delete Stripe customer.') from e
-
-    log(f'Canceled subscription for account {account_id}', 'subscription')
-
-
-@dbsession(commit=True)
-def change_sub(account_id: int, new_plan: PricingPlanName, *, session: _SessionType) -> Subscription:
-    """Modifies the current subscription to a new one and returns the updated subscription."""
-    account = _check_account(account_id, session=session)
-
-    # 1. Validate the new plan
-    new_price_id = PREDEFINED_PLAN_TO_STRIPE_PRICE_ID.get(new_plan.lower())
-    if not new_price_id: raise ValueError('Invalid plan name.')
-
-    # 2. Get current subscription from DB
-    sub = _get_active_sub(account_id, session=session)
-    if not sub: raise LookupError('No active subscription found.')
-    old_plan = sub.plan
-
-    # 3. Get Stripe subscription details
-    stripe_sub = stripe.Subscription.retrieve(sub.stripe_subscription_id)
-    current_item_id = stripe_sub['items']['data'][0]['id']
-
-    # 4. Modify the sub with proration
-    stripe.Subscription.modify(
-        sub.stripe_subscription_id,
-        items=[{'id': current_item_id, 'price': new_price_id}],
-        proration_behavior='create_prorations',
-        payment_behavior='allow_incomplete',
-        **(dict(trial_end='now') if sub.price == 0.0 else {})
-    )
-
-    # 5. Create, finalize, and pay the proration invoice
-    invoice = stripe.Invoice.create(
-        customer=account.stripe_customer_id,
-        subscription=sub.stripe_subscription_id,
-        description=f'Proration for switching to {new_plan} plan',
-        auto_advance=False  # Disable auto-finalization
-    )
-
-    try:
-        stripe.Invoice.finalize_invoice(invoice.id)
-    except stripe.error.InvalidRequestError as e:
-        if 'already finalized' not in str(e): raise
-
-    try:
-        stripe.Invoice.pay(invoice.id)
-    except stripe.error.InvalidRequestError as e:
-        if 'already paid' not in str(e): raise
-
-
-    # 6. Update DB sub
-    stripe_sub = stripe.Subscription.retrieve(sub.stripe_subscription_id)
-    sub.expires_at = datetime.fromtimestamp(stripe_sub.current_period_end, tz=timezone.utc)
-    sub.plan = new_plan
-    sub.price = PREDEFINED_SUB_INFOS[new_plan].price
-    sub.plan_details = dict(PREDEFINED_SUB_INFOS[new_plan].plan_details)
-
-    log(f'Changed subscription for account {account_id} from plan "{old_plan}" to "{new_plan}"', 'subscription')
-    return sub
-
-
-@dbsession(commit=True)
-def save_custom_plan_metadata(
+def create_sub(
     account_id: int,
-    stripe_product_id: str,
-    stripe_price_id: str,
-    stripe_checkout_url: str,
-    plan_details: PlanDetails,
-    price: float,
+    plan: PlanName,
     expires_at: datetime,
+    stripe_subscription_id: str,
+    stripe_customer_id: str,
     *,
     session: _SessionType
-) -> None:
-    """Saves custom plan info for an account before checking out and receiving a valid custom plan."""
-    _check_account(account_id, session=session)
-
-    # Overwrite existing CustomPlanInfo if it exists
-    existing = _get_custom_plan_info(account_id, session=session)
-    if existing:
-        existing.stripe_product_id = stripe_product_id
-        existing.stripe_price_id = stripe_price_id
-        existing.stripe_pending_checkout_url = stripe_checkout_url
-        existing.plan_details = dict(plan_details)
-        existing.price = price
-        existing.expires_at = expires_at
-    else:
-        info = CustomPlanInfo(
-            account_id=account_id,
-            stripe_price_id=stripe_price_id,
-            stripe_product_id=stripe_product_id,
-            stripe_pending_checkout_url=stripe_checkout_url,
-            plan_details=dict(plan_details),
-            price=price,
-            expires_at=expires_at
-        )
-        session.add(info)
-
-
-@dbsession()
-def get_pending_checkout_url(account_id: int, *, session: _SessionType) -> Optional[str]:
-    """
-    Returns the pending checkout URL for a custom plan that requires the account to
-    input its billing info in order for the server to get the customer ID and subscription ID.
-    """
-    _check_account(account_id, session=session)
-    custom_plan_info = _get_custom_plan_info(account_id, session=session)
-    return custom_plan_info.stripe_pending_checkout_url if custom_plan_info is not None else None
-
-
-@dbsession(commit=True)
-def create_custom_sub(account_id: int, stripe_session_id: str, *, session: _SessionType) -> tuple[Account, Subscription]:
-    """Makes an account subscribe to its custom plan."""
+) -> tuple[Account, Subscription]:
+    """Creates a subscription for an account in DB."""
+    if plan not in PLAN_NAMES: raise ValueError(f'Unsupported plan: "{plan}"')
     account = _check_account(account_id, session=session)
-
-    # Fetch the stored custom plan info
-    stored_info = _get_custom_plan_info(account_id, session=session)
-    if not stored_info:
-        raise LookupError(f'No stored custom plan info found for account {account_id}')
-
-    # Cancel current subscription if one exists
-    if _get_active_sub(account_id, session=session):
-        cancel_sub(account_id)
-
-    # Retrieve the Stripe Checkout Session
-    stripe_session = stripe.checkout.Session.retrieve(stripe_session_id)
-    if stripe_session.mode != 'subscription':
-        raise ValueError('Session is not a subscription.')
-
-    stripe_customer_id = stripe_session.customer
-    stripe_subscription_id = stripe_session.subscription
-
-    # Retrieve the subscription to get price/product metadata
-    stripe_sub = stripe.Subscription.retrieve(stripe_subscription_id)
-
-    # Validate price/product match
-    price_obj = stripe_sub['items']['data'][0]['price']
-    if price_obj['id'] != stored_info.stripe_price_id or price_obj['product'] != stored_info.stripe_product_id:
-        raise ValueError('Stripe subscription price/product mismatch with stored custom plan info.')
-
-    # Create SubscriptionInfo
-    sub_info = SubscriptionInfo(plan='custom', price=stored_info.price, expires_at=stored_info.expires_at, plan_details=stored_info.plan_details)
-    sub_info = _validate_sub_info(account_id, sub_info, stripe_session_id, stripe_subscription_id, session=session)
-
-    # Save subscription
-    sub = Subscription(**sub_info)
+    sub = Subscription(
+        account_id=account.account_id,
+        plan=plan,
+        expires_at=expires_at,
+        stripe_subscription_id=stripe_subscription_id
+    )
     session.add(sub)
     account.stripe_customer_id = stripe_customer_id
-
-    # Clear pending session ID
-    stored_info.stripe_pending_checkout_url = None
-
-    log(f'Created custom subscription for account {account_id}', 'subscription')
+    log(f'Created {sub} for customer ID {stripe_customer_id}', 'subscription')
     return account, sub
+
+
+
+
+# Contact
+@dbsession()
+async def contact(data: ContactUsSubmissionData, cookies: Cookies, *, session) -> None:
+    """Sends an email message that includes the user's email, query type, and query description to the company."""
+    if data.email is None:
+        cookies = _validate_cookies(cookies, session=session)
+        account = _check_account(cookies.account_id, session=session)
+        data.email = account.email
+
+    await send_email(
+        subject='New Contact Us Submission',
+        recipients=[COMPANY_EMAIL],
+        body=_get_email_body(data),
+        reply_to=[data.email]
+    )

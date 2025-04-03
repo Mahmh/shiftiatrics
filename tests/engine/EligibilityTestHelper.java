@@ -1,5 +1,7 @@
 package tests.engine;
-import server.engine.*;
+import server.engine.common.Config;
+import server.engine.common.Employee;
+import server.engine.common.Shift;
 import java.util.*;
 
 public class EligibilityTestHelper {

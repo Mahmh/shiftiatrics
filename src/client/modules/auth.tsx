@@ -1,4 +1,3 @@
-import { useRouter } from 'next/navigation'
 import { Request } from '@utils'
 import type { AccountResponse, Account, AccountAndSubResponse, AccountAndSub, SubscriptionResponse, Subscription, SettingsResponse, Settings } from '@types'
 
@@ -7,37 +6,19 @@ export const parseAccount = (data: AccountResponse): Account => ({
     id: data.account_id,
     email: data.email,
     emailVerified: data.email_verified,
-    isOAuthOnly: data.hashed_password === null && data.oauth_provider !== null,
-    hasUsedTrial: data.has_used_trial,
-    subExpired: data.sub_expired,
-    pendingCheckoutUrl: data.pending_checkout_url
+    subExpired: data.sub_expired
 })
 
 export const parseSub = (data: SubscriptionResponse): Subscription => ({
     id: data.subscription_id,
     plan: data.plan,
-    price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
     createdAt: data.created_at,
     expiresAt: data.expires_at,
-    planDetails: {
-        maxNumPediatricians: data.plan_details.max_num_pediatricians,
-        maxNumShiftsPerDay: data.plan_details.max_num_shifts_per_day,
-        maxNumScheduleRequests: data.plan_details.max_num_schedule_requests
-    }
 })
 
 export const parseSettings = (data: SettingsResponse): Settings => ({
     darkThemeEnabled: data.dark_theme_enabled,
-    weekendDays: data.weekend_days,
-    emailNtfEnabled: data.email_ntf_enabled,
-    emailNtfInterval: data.email_ntf_interval,
-
-    multiShiftsOneEmp: data.multi_shifts_one_emp,
-    maxEmpsInShift: data.max_emps_in_shift,
-    useRotationPattern: data.use_rotation_pattern,
-    rotationPattern: data.rotation_pattern,
-    avoidBackToBackNights: data.avoid_back_to_back_nights,
-    maxShiftsPerWeek: data.max_shifts_per_week
+    weekendDays: data.weekend_days
 })
 
 
@@ -51,19 +32,4 @@ export const isLoggedIn = async (): Promise<AccountAndSub | false> => {
         }),
         () => false
     ).get()
-}
-
-
-/** Lets a user log in or sign up with their Google account */
-export const ContinueWithGoogle = () => {
-    const router = useRouter()
-
-    const redirect = async () => {
-        await new Request(
-            'auth/google',
-            (data: { login_url: string }) => router.push(data.login_url)
-        ).get()
-    }
-
-    return <button id='google-auth-btn' onClick={redirect}>Continue with Google</button>
 }

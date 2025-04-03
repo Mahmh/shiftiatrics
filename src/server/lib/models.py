@@ -1,7 +1,6 @@
 from typing import Optional
-from datetime import datetime
 from pydantic import BaseModel, Field
-from src.server.lib.types import ScheduleType, QueryType, PricingPlanName
+from src.server.lib.types import ScheduleType, QueryType
 
 class Credentials(BaseModel):
     email: str
@@ -41,20 +40,7 @@ class HolidayInfo(BaseModel):
 
 
 class ContactUsSubmissionData(BaseModel):
-    name: Optional[str] = None
-    email: str
+    name: Optional[str] = Field(default=None)
+    email: Optional[str] = Field(default=None)
     query_type: QueryType
     description: str
-
-
-class PlanDetails(BaseModel):
-    max_num_pediatricians: int
-    max_num_shifts_per_day: int
-    max_num_schedule_requests: int
-
-
-class SubscriptionInfo(BaseModel):
-    plan: PricingPlanName
-    price: float
-    expires_at: Optional[datetime] = Field(default=None)
-    plan_details: PlanDetails

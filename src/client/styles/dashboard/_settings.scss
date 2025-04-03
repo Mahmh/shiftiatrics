@@ -71,7 +71,7 @@
         max-width: 35ch;
     }
 
-    label, ul li {
+    label, ul li, p {
         @include themed-color('primary-text');
         margin: 5px 0;
         transition: color 250ms ease;
@@ -82,6 +82,17 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+
+    .card-btn {
+        @include breakpoint(950px) { max-width: unset }
+        @include themed-bgcolor('primary-blue', 'secondary-blue');
+        @include compressible(.97);
+        color: get-color('background');
+        padding: 10px 20px;
+        border-radius: 10px;
+        max-width: 200px;
+        &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue-hover') }
     }
 
     #account-actions-card {
@@ -154,42 +165,9 @@
         }
     }
 
-    .num-input-div div {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        span { @include themed-color('primary-text') }
-        button {
-            @include compressible;
-            @include themed-bgcolor('primary-blue');
-            @include circle(40px);
-            color: white;
-            padding: 5px;
-            font-size: 1.5rem;
-            box-shadow: $main-box-shadow;
-            &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue-hover') }
-
-            &.disabled-num-input-btn {
-                @include themed-bgcolor('gray');
-                scale: 1;
-                &:hover { @include themed-bgcolor('gray') }
-            }
-        }
-    }
-
     .disabled-setting-input {
         @include themed-bgcolor('light-gray');
         @include themed-color('gray');
         box-shadow: none;
-    }
-
-    #rotation-pattern-editor div {
-        @include breakpoint(950px) { width: 80% }
-        display: flex;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-        gap: 10px;
-        width: 40%;
     }
 }

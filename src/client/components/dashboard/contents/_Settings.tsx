@@ -1,68 +1,25 @@
 import { useCallback, useContext, useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { dashboardContext, nullAccount } from '@context'
-import { Choice, Switch, Dropdown, Request, NumInput } from '@utils'
+import { dashboardContext, nullAccount, nullSub } from '@context'
+import { Choice, Switch, Dropdown, Request } from '@utils'
 import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
 import { parseAccount, parseSettings } from '@auth'
-import type { WeekendDays, InputEvent, AccountResponse, SettingsResponse, Settings, Shift } from '@types'
+import type { WeekendDays, InputEvent, AccountResponse, SettingsResponse, Settings } from '@types'
 import LoadingScreen from '@/components/_LoadingScreen'
 
 export default function Settings() {
     return <div className='settings-cards'>
         <Account/>
         <Preferences/>
-        <ScheduleGeneration/>
+        <Help/>
     </div>
 }
 
-const updateSetting = async (setting: string, newValue: number | string | boolean | (string | null)[], accountId: number): Promise<Settings> => {
+const updateSetting = async (setting: string, newValue: boolean | string, accountId: number): Promise<Settings> => {
     return await new Request(
-        `accounts/${accountId}/settings`,
+        `settings/${accountId}`,
         (data: SettingsResponse) => parseSettings(data)
     ).patch({ setting: setting, new_value: newValue })
-}
-
-export const RotationPatternEditor = ({ shifts, days=7, onChange }: { shifts: Shift[], days?: number, onChange?: (pattern: (string | null)[]) => void }) => {
-    const { account, settings, setSettings } = useContext(dashboardContext)
-    const [rotationPattern, setRotationPattern] = useState<(string | null)[]>(settings.rotationPattern)
-    
-    useEffect(() => {
-        // Adjust pattern when day count changes
-        setRotationPattern(prev => {
-            if (days > prev.length) return [...prev, ...Array(days - prev.length).fill(null)]
-            if (days < prev.length) return prev.slice(0, days)
-            return prev
-        })
-    }, [days])
-
-    useEffect(() => {
-        const updatePattern = async () => setSettings(await updateSetting('rotation_pattern', rotationPattern, account.id))
-        updatePattern()
-    }, [rotationPattern, setSettings, account.id])
-
-    const handleChange = (index: number, value: string) => {
-        const updated = [...rotationPattern]
-        updated[index] = value === 'OFF' ? null : value
-        setRotationPattern(updated)
-        onChange?.(updated)
-    }
-
-    return (
-        <div id='rotation-pattern-editor'>
-            <label>Rotation pattern</label>
-            <div>
-                {rotationPattern.map((value, i) => (
-                    <Dropdown
-                        key={i}
-                        label={`Day ${i+1}`}
-                        options={['OFF', ...shifts.map(s => s.name)]}
-                        selectedOption={value ?? 'OFF'}
-                        setSelectedOption={val => handleChange(i, val)}
-                    />
-                ))}
-            </div>
-        </div>
-    )
 }
 
 
@@ -106,7 +63,7 @@ const Account = () => {
             `auth/logout`,
             () => {
                 setAccount(nullAccount)
-                setSubscription(null)
+                setSubscription(nullSub)
                 router.push('/dashboard')
             }
         ).get()
@@ -328,98 +285,6 @@ const Account = () => {
         openModal()
     }, [setAccount, openModal, closeModal, setModalContent])
 
-    /** Displays a modal for setting a new password (OAuth-only users) */
-    const openSetPasswordModal = useCallback(() => {
-        const SetPasswordModalContent = () => {
-            const [tempNewPassword, setNewPassword] = useState('')
-            const [tempConfirmPassword, setConfirmPassword] = useState('')
-            const [isConfirmDisabled, setConfirmDisabled] = useState(true)
-            const [error, setError] = useState('')
-
-            const validateInputs = (newPass: string, confirmPass: string) => {
-                setConfirmDisabled(newPass.trim().length < 3 || confirmPass.trim().length < 3)
-            }
-
-            const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                const newPassword = e.target.value
-                setNewPassword(newPassword)
-                validateInputs(newPassword, tempConfirmPassword)
-            }
-
-            const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                const confirmPassword = e.target.value
-                setConfirmPassword(confirmPassword)
-                validateInputs(tempNewPassword, confirmPassword)
-            }
-
-            const confirmEdit = async () => {
-                if (tempNewPassword.trim() !== tempConfirmPassword.trim()) {
-                    setError('Make sure both entered passwords exactly match.')
-                    return
-                }
-
-                await new Request(
-                    'accounts/password',
-                    (data: AccountResponse) => {
-                        setAccount(parseAccount(data))
-                        closeModal()
-                    },
-                    (error) => {
-                        if (error.includes('429')) {
-                            setError(TOO_MANY_REQS_MSG)
-                            return
-                        }
-                        setError(
-                            error.includes('Invalid cookies') 
-                            ? 'Session has expired. Please log out then log in again to set your password.'
-                            : error
-                        )
-                    }
-                ).patch({ new_password: tempNewPassword })
-            }
-
-            return <>
-                <h2>Set Password</h2>
-
-                <section className='modal-input-sec'>
-                    <label style={{ marginRight: 10 }}>New password: </label>
-                    <input
-                        type='password'
-                        placeholder='New password'
-                        value={tempNewPassword}
-                        onChange={handleNewPasswordChange}
-                        maxLength={32}
-                    />
-                </section>
-
-                <section className='modal-input-sec'>
-                    <label style={{ marginRight: 10 }}>Confirm password: </label>
-                    <input
-                        type='password'
-                        placeholder='Confirm password'
-                        value={tempConfirmPassword}
-                        onChange={handleConfirmPasswordChange}
-                        maxLength={32}
-                    />
-                </section>
-
-                {error && <p className='error'>{error}</p>}
-
-                <button
-                    onClick={confirmEdit}
-                    disabled={isConfirmDisabled}
-                    id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
-                >
-                    Set Password
-                </button>
-            </>
-        }
-
-        setModalContent(<SetPasswordModalContent/>)
-        openModal()
-    }, [setAccount, openModal, closeModal, setModalContent])
-
-
     /** Displays a modal for verifying the account's email */
     const openVerifyEmailModal = useCallback(() => {
         const VerifyEmailModalContent = () => {
@@ -474,9 +339,7 @@ const Account = () => {
                 <section id='account-actions-card'>
                     {!account.emailVerified && <button id='verify-email-btn' onClick={openVerifyEmailModal}>Verify Email</button>}
                     <button className='edit-account-btn' onClick={openChangeEmailModal}>Change Email</button>
-                    <button className='edit-account-btn' onClick={account.isOAuthOnly ? openSetPasswordModal : openChangePasswordModal}>
-                        {account.isOAuthOnly ? 'Set Password' : 'Change Password'}
-                    </button>
+                    <button className='edit-account-btn' onClick={openChangePasswordModal}>Change Password</button>
                     <button id='log-out-btn' onClick={openLogOutModal}>Log Out</button>
                     <button id='delete-account-btn' onClick={openDeleteModal}>Delete Account</button>
                 </section>
@@ -489,19 +352,12 @@ const Account = () => {
 const Preferences = () => {
     const { account, settings, setSettings } = useContext(dashboardContext)
     const [selectedWeekendDays, setSelectedWeekendDays] = useState<WeekendDays>(settings.weekendDays)
-    // const [selectedEmailNtfInterval, setSelectedEmailNtfInterval] = useState<Interval>(settings.emailNtfInterval)
 
     /** Changes the weekend days of the account */
     const changeWeekendDays = async (option: string) => {
         setSettings(await updateSetting('weekend_days', option, account.id))
         setSelectedWeekendDays(option as WeekendDays)
     }
-
-    // /** Changes email notification sending interval */
-    // const changeEmailNtfInterval = async (option: string) => {
-    //     setSettings(await updateSetting('email_ntf_interval', option, account.id))
-    //     setSelectedEmailNtfInterval(option as Interval)
-    // }
 
     return (
         <section className='settings-card'>
@@ -518,81 +374,20 @@ const Preferences = () => {
                     selectedOption={selectedWeekendDays}
                     setSelectedOption={changeWeekendDays}
                 />
-                {/*<div className='horizontal-separator'></div>
-                <Switch
-                    label='Receive e-mail notifications'
-                    handleClick={async () => setSettings(await updateSetting('email_ntf_enabled', !settings.emailNtfEnabled, account.id))}
-                    enabled={settings.emailNtfEnabled}
-                />
-                <Dropdown
-                    label='When to send e-mail notifications'
-                    options={['Daily', 'Weekly', 'Monthly']}
-                    selectedOption={selectedEmailNtfInterval}
-                    setSelectedOption={changeEmailNtfInterval}
-                /> */}
             </div>
         </section>
     )
 }
 
 
-const ScheduleGeneration = () => {
-    const { account, shifts, settings, setSettings } = useContext(dashboardContext)
-    const [patternDayCount, setPatternDayCount] = useState(settings.rotationPattern?.length ?? 5)
-
-    const handlePatternDayCountChange = async (newValue: number) => {
-        setPatternDayCount(newValue)
-
-        const oldPattern = settings.rotationPattern ?? []
-        const updatedPattern = oldPattern.length < newValue
-            ? [...oldPattern, ...Array(newValue - oldPattern.length).fill(null)]
-            : oldPattern.slice(0, newValue)
-
-        const updatedSettings = await updateSetting('rotation_pattern', updatedPattern, account.id)
-        setSettings(updatedSettings)
-    }
-
+const Help = () => {
+    const router = useRouter()
     return (
         <section className='settings-card'>
-            <h3 className='settings-title'>Schedule Generation</h3>
+            <h3 className='settings-title'>Help</h3>
             <div className='card-content'>
-                <Switch
-                    label='Avoid assigning an employee to a night shift two days in a row'
-                    handleClick={async () => setSettings(await updateSetting('avoid_back_to_back_nights', !settings.avoidBackToBackNights, account.id))}
-                    enabled={settings.avoidBackToBackNights}
-                />
-                <Switch
-                    label='Allow pediatricians to take multiple shifts in a day'
-                    handleClick={async () => setSettings(await updateSetting('multi_shifts_one_emp', !settings.multiShiftsOneEmp, account.id))}
-                    enabled={settings.multiShiftsOneEmp}
-                />
-                <NumInput
-                    label='Maximum number of pediatricians in one shift'
-                    initialValue={settings.maxEmpsInShift}
-                    max={10}
-                    onChange={async newValue => setSettings(await updateSetting('max_emps_in_shift', newValue, account.id))}
-                />
-                <NumInput
-                    label='Maximum number of shifts an employee can take per week'
-                    initialValue={settings.maxShiftsPerWeek}
-                    max={12}
-                    onChange={async newValue => setSettings(await updateSetting('max_shifts_per_week', newValue, account.id))}
-                />
-                <div className='horizontal-separator'></div>
-                <Switch
-                    label='Use a consistent shift rotation pattern'
-                    handleClick={async () => setSettings(await updateSetting('use_rotation_pattern', !settings.useRotationPattern, account.id))}
-                    enabled={settings.useRotationPattern}
-                />
-                {settings.useRotationPattern && 
-                    <NumInput
-                        label='Number of days that the rotation pattern consists of'
-                        initialValue={patternDayCount}
-                        max={10}
-                        onChange={handlePatternDayCountChange}
-                    />
-                }
-                {settings.useRotationPattern && <RotationPatternEditor shifts={shifts} days={patternDayCount}/>}
+                <p style={{ marginBottom: 20 }}>Have questions, need help, or want to request a change? Don&apos;t hesitate to contact us!</p>
+                <button className='card-btn' onClick={() => router.push('/support/contact')}>Contact Us</button>
             </div>
         </section>
     )

@@ -1,5 +1,10 @@
 package tests.engine;
 import server.engine.*;
+import server.engine.common.Config;
+import server.engine.common.Employee;
+import server.engine.common.Holiday;
+import server.engine.common.Shift;
+
 import java.util.*;
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,7 +16,7 @@ public class ShiftSchedulerTest {
             { {1}, {2}, {1, 2} }, // Day 1
             { {1}, {}, {2} }      // Day 2
         };
-        HashMap<Integer, Integer> result = ShiftScheduler.getShiftCountsOfEmployees(schedule);
+        HashMap<Integer, Integer> result = Main.getShiftCountsOfEmployees(schedule);
         assert result.get(1) == 3 : "Expected 3 for employee 1";
         assert result.get(2) == 3 : "Expected 3 for employee 2";
     }
@@ -26,7 +31,7 @@ public class ShiftSchedulerTest {
             { {1}, {}, {2} },  // Day 1
             { {}, {2}, {1} }   // Day 2
         };
-        HashMap<Integer, Integer> result = ShiftScheduler.getWorkHoursOfEmployees(schedule, shifts, 2);
+        HashMap<Integer, Integer> result = Main.getWorkHoursOfEmployees(schedule, shifts, 2);
         assert result.get(1) == 16 : "Expected 16h for employee 1";
         assert result.get(2) == 16 : "Expected 16h for employee 2";
     }
@@ -38,8 +43,8 @@ public class ShiftSchedulerTest {
         schedule[0][0] = new Employee[] { alice };
         schedule[0][1] = new Employee[] {};
     
-        assert ShiftScheduler.isAlreadyAssigned(alice, schedule, 0) : "Alice should be assigned";
-        assert !ShiftScheduler.isAlreadyAssigned(bob, schedule, 0) : "Bob should not be assigned";
+        assert Main.isAlreadyAssigned(alice, schedule, 0) : "Alice should be assigned";
+        assert !Main.isAlreadyAssigned(bob, schedule, 0) : "Bob should not be assigned";
     }
 
     public static void testIsNightShiftAssigned() {
@@ -52,7 +57,7 @@ public class ShiftSchedulerTest {
         prevDay[0] = new Employee[] {};
         prevDay[1] = new Employee[] { alice };
     
-        assert ShiftScheduler.isNightShiftAssigned(alice, prevDay, shifts) : "Alice should be flagged for night shift";
+        assert Main.isNightShiftAssigned(alice, prevDay, shifts) : "Alice should be flagged for night shift";
     }
 
     public static void testIsOnHoliday() {
@@ -62,7 +67,7 @@ public class ShiftSchedulerTest {
             new Holiday("Off", List.of(1), "2025-10-10", "2025-10-12")
         );
     
-        assert ShiftScheduler.isOnHoliday(alice, holidays, today) : "Alice should be on holiday";
+        assert Main.isOnHoliday(alice, holidays, today) : "Alice should be on holiday";
     }
 
     public static void testAdvanceRotationPointer() {
@@ -72,7 +77,7 @@ public class ShiftSchedulerTest {
         List<String> pattern = Arrays.asList("D", "E", "N", null, null);
         Config config = new Config(true, 1, true, pattern, false, 7);
     
-        ShiftScheduler.advanceRotationPointer(alice, pointer, config);
+        Main.advanceRotationPointer(alice, pointer, config);
         assert pointer.get(alice) == 0 : "Pointer should wrap to 0";
     }
 
@@ -80,7 +85,7 @@ public class ShiftSchedulerTest {
         Employee[][][] schedule = EligibilityTestHelper.blankSchedule(1, 1);
         schedule[0][0] = new Employee[] { EligibilityTestHelper.testEmp };
     
-        boolean eligible = ShiftScheduler.isEligible(
+        boolean eligible = Main.isEligible(
             EligibilityTestHelper.testEmp,
             schedule,
             EligibilityTestHelper.dayShift,
@@ -98,7 +103,7 @@ public class ShiftSchedulerTest {
     public static void testExceedsMaxWorkHours() {
         Shift longShift = new Shift("L", "08:00", "20:00"); // 12 hours
     
-        boolean eligible = ShiftScheduler.isEligible(
+        boolean eligible = Main.isEligible(
             EligibilityTestHelper.testEmp,
             EligibilityTestHelper.blankSchedule(1, 1),
             longShift,
@@ -114,7 +119,7 @@ public class ShiftSchedulerTest {
     }
 
     public static void testMaxShiftsPerWeek() {
-        boolean eligible = ShiftScheduler.isEligible(
+        boolean eligible = Main.isEligible(
             EligibilityTestHelper.testEmp,
             EligibilityTestHelper.blankSchedule(7, 1),
             EligibilityTestHelper.dayShift,
@@ -135,7 +140,7 @@ public class ShiftSchedulerTest {
     
         Config config = new Config(false, 1, false, null, true, 7);
     
-        boolean eligible = ShiftScheduler.isEligible(
+        boolean eligible = Main.isEligible(
             EligibilityTestHelper.testEmp,
             schedule,
             EligibilityTestHelper.nightShift,
@@ -151,7 +156,7 @@ public class ShiftSchedulerTest {
     }
 
     public static void testIsEligibleSuccess() {
-        boolean eligible = ShiftScheduler.isEligible(
+        boolean eligible = Main.isEligible(
             EligibilityTestHelper.testEmp,
             EligibilityTestHelper.blankSchedule(1, 1),
             EligibilityTestHelper.dayShift,
@@ -181,7 +186,7 @@ public class ShiftSchedulerTest {
             10
         );
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 7, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 7, 2025, 10, config);
         assert schedule.length == 7 : "Schedule should have 7 days";
         for (int d = 0; d < 7; d++) {
             for (int s = 0; s < shifts.size(); s++) {
@@ -200,7 +205,7 @@ public class ShiftSchedulerTest {
         );
 
         Config config = new Config(true, 1, false, null, false, 10);
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
 
         for (int day = 2; day <= 4; day++) { // Oct 3–5
             for (Employee[] shift : schedule[day]) {
@@ -220,7 +225,7 @@ public class ShiftSchedulerTest {
         List<Holiday> holidays = setup.initHolidays();
 
         Config config = new Config(true, 2, false, null, false, 10);
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
 
         for (int d = 0; d < schedule.length; d++) {
             for (int s = 0; s < shifts.size(); s++) {
@@ -239,7 +244,7 @@ public class ShiftSchedulerTest {
 
         List<String> pattern = Arrays.asList("D", "E", "N", null, null);
         Config config = new Config(true, 1, true, pattern, true, 10);
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
 
         for (int d = 0; d < schedule.length; d++) {
             for (int s = 0; s < shifts.size(); s++) {
@@ -265,7 +270,7 @@ public class ShiftSchedulerTest {
 
         Config config = new Config(true, 1, true, pattern, true, 10);
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 10, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 10, 2025, 10, config);
 
         for (int day = 0; day < schedule.length; day++) {
             for (int i = 0; i < employees.size(); i++) {
@@ -304,7 +309,7 @@ public class ShiftSchedulerTest {
         List<String> pattern = Arrays.asList("D", "E", "N", null, null);
         Config config = new Config(true, 1, true, pattern, true, 10);
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
 
         for (int s = 0; s < shifts.size(); s++) {
             Employee[] emps = schedule[1][s]; // Oct 2 = index 1
@@ -325,9 +330,9 @@ public class ShiftSchedulerTest {
 
         Config config = new Config(true, 1, true, pattern, true, 3); // max 3 shifts per week
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 7, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 7, 2025, 10, config);
 
-        Map<Integer, Integer> shiftCounts = ShiftScheduler.getShiftCountsOfEmployees(convertToIdSchedule(schedule));
+        Map<Integer, Integer> shiftCounts = Main.getShiftCountsOfEmployees(convertToIdSchedule(schedule));
         for (Map.Entry<Integer, Integer> entry : shiftCounts.entrySet()) {
             assert entry.getValue() <= 3 : "Employee " + entry.getKey() + " exceeded 3 shifts: " + entry.getValue();
         }
@@ -342,7 +347,7 @@ public class ShiftSchedulerTest {
 
         Config config = new Config(true, 1, true, pattern, true, 10); // only 1 allowed
 
-        Employee[][][] schedule = ShiftScheduler.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
+        Employee[][][] schedule = Main.generateSchedule(employees, shifts, holidays, 5, 2025, 10, config);
 
         for (int day = 0; day < schedule.length; day++) {
             for (int s = 0; s < shifts.size(); s++) {

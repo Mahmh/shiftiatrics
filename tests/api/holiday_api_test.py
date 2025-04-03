@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
-from tests.utils import ctxtest, signup, create_employee, create_holiday, delete_holiday
+from src.server.db import create_employee
+from tests.utils import ctxtest, signup, create_holiday, delete_holiday
 
 # Init
 client = TestClient(app)
@@ -8,8 +9,8 @@ client = TestClient(app)
 @ctxtest()
 def setup_and_teardown():
     account_id = signup(client).json()['account']['account_id']
-    create_employee(client, account_id, {'employee_name': 'testemp1'})
-    create_employee(client, account_id, {'employee_name': 'testemp2'})
+    create_employee(account_id, employee_name='testemp1', min_work_hours= 130, max_work_hours=170)
+    create_employee(account_id, employee_name='testemp2', min_work_hours= 120, max_work_hours=165)
     holiday_id = create_holiday(client, account_id).json()['holiday_id']
     yield account_id, holiday_id
 
@@ -17,7 +18,7 @@ def setup_and_teardown():
 # Tests
 def test_read_holidays(setup_and_teardown):
     account_id, _ = setup_and_teardown
-    response = client.get(f'/accounts/{account_id}/holidays')
+    response = client.get(f'/holidays/{account_id}')
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 

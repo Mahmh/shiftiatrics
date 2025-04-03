@@ -1,37 +1,12 @@
 'use client'
 import { useState, FormEvent, ChangeEvent, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Dropdown, Request, setMetadata } from '@utils'
+import { PLANS, QUERY_TYPES } from '@const'
+import { PlanName, QueryType } from '@types'
+import { Dropdown, getUIPlanName, Request, setMetadata } from '@utils'
 import RegularPage from '@regpage'
 
-const QUERY_TYPES = [
-    'General Inquiry',
-    'Custom Plan',
-    'Technical Issue',
-    'Bug Report',
-    'Feature Suggestion',
-    'Feature Feedback',
-    'Business Inquiry',
-    'Partnership & Collaboration',
-    'Billing & Payment Issue',
-    'Refund Request',
-    'Account Access Issue',
-    'Unable to Log In',
-    'Integration Request',
-    'Customization Inquiry',
-    'Data & Privacy Concerns',
-    'Job & Career Opportunities',
-    'Other'
-] as const
-
-type QueryType = typeof QUERY_TYPES[number]
-type SubmissionData = {
-    name?: string
-    email: string
-    queryType: QueryType
-    description: string
-}
-
+type SubmissionData = { name?: string, email: string, queryType: QueryType, description: string }
 const DEFAULT_QUERY_TYPE: QueryType = 'General Inquiry'
 const DEFAULT_SUBMISSION_DATA: SubmissionData = { name: '', email: '', queryType: DEFAULT_QUERY_TYPE, description: '' }
 
@@ -73,8 +48,10 @@ export default function Contact() {
             description: 'Contact us to seek our help regarding your issues'
         })
 
-        if (queryType === 'custom_plan') setFormData(prev => ({ ...prev, queryType: 'Custom Plan' }))
         if (queryType === 'partnership') setFormData(prev => ({ ...prev, queryType: 'Partnership & Collaboration' }))
+        if (queryType && PLANS.map(p => p.name).includes(queryType.replace('_plan', '') as PlanName)) {
+            setFormData(prev => ({ ...prev, queryType: getUIPlanName(queryType as PlanName) as QueryType }))
+        }
     }, [params, queryType])
 
     return (
@@ -82,7 +59,8 @@ export default function Contact() {
             <h1>Contact Us</h1>
             <p>We&apos;re here to help! Reach out for support or inquiries.</p>
 
-            {submitted ? (
+            {submitted
+            ? (
                 <p className='submit-msg'>
                     {
                         errMsg 
@@ -90,7 +68,8 @@ export default function Contact() {
                         : <>Thank you for reaching out!<br/>We&apos;ll reply to you through email soon.</>
                     }
                 </p>
-            ) : (
+            )
+            : (
                 <form onSubmit={handleSubmit}>
                     <section>
                         <input

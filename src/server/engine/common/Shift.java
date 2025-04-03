@@ -1,4 +1,4 @@
-package server.engine;
+package server.engine.common;
 
 /** Class for employee shifts */
 public record Shift(String name, String startTime, String endTime, int length) {

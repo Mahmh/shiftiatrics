@@ -12,8 +12,8 @@ HOLIDAY = {'holiday_name': 'Holiday', 'assigned_to': [1, 2], 'start_date': '2023
 @ctxtest()
 def setup_and_teardown():
     account_id = create_account(CRED)[0].account_id
-    create_employee(account_id, 'testemp1')
-    create_employee(account_id, 'testemp2')
+    create_employee(account_id, 'testemp1', 120, 150)
+    create_employee(account_id, 'testemp2', 130, 160)
     holiday_id = create_holiday(account_id, **HOLIDAY).holiday_id
     yield account_id, holiday_id
 

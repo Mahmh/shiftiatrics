@@ -285,7 +285,7 @@ a {
     @include vertical-flex;
     @include themed-bgcolor('background', 'primary-blue');
     margin: 4px 0;
-    z-index: 20;
+    z-index: 100;
     min-width: 180px;
     max-height: 250px;
     border-radius: 10px;

@@ -1,12 +1,12 @@
-from typing import Literal, TypeAlias, Optional
+from typing import Literal, TypeAlias
 from enum import Enum
 
-SettingValue: TypeAlias = Optional[str | int | bool | list | tuple | Literal['null']]
+SettingValue: TypeAlias = bool | str
 ScheduleType: TypeAlias = list[list[list[int]]]
 WeekendDays: TypeAlias = Literal['Saturday & Sunday', 'Friday & Saturday', 'Sunday & Monday']
 Interval: TypeAlias = Literal['Daily', 'Weekly', 'Monthly']
 TokenType: TypeAlias = Literal['auth', 'reset', 'verify']
-PricingPlanName: TypeAlias = Literal['basic', 'standard', 'premium', 'custom']
+PlanName: TypeAlias = Literal['starter', 'growth', 'advanced', 'enterprise']
 QueryType: TypeAlias = Literal[
     'General Inquiry',
     'Custom Plan',
@@ -27,11 +27,6 @@ QueryType: TypeAlias = Literal[
     'Other'
 ]
 
-class IntervalEnum(Enum):
-    DAILY = 'Daily'
-    WEEKLY = 'Weekly'
-    MONTHLY = 'Monthly'
-
 class WeekendDaysEnum(Enum):
     SAT_SUN = 'Saturday & Sunday'
     FRI_SAT = 'Friday & Saturday'
@@ -43,7 +38,7 @@ class TokenTypeEnum(Enum):
     VERIFY = 'verify'
 
 class PricingPlanEnum(Enum):
-    BASIC = 'basic'
-    STANDARD = 'standard'
-    PREMIUM = 'premium'
-    CUSTOM = 'custom'
+    STARTER = 'starter'
+    GROWTH = 'growth'
+    ADVANCED = 'advanced'
+    ENTERPRISE = 'enterprise'

@@ -1,14 +1,14 @@
 'use client'
-import { useState, useContext } from 'react'
+import { useState, useContext, FormEvent, ReactNode } from 'react'
 import Image, { StaticImageData } from 'next/image'
 import ExcelJS from 'exceljs'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ChevronDown } from 'lucide-react'
+import { dashboardContext } from '@context'
+import { QUERY_TYPES } from '@const'
 import Link from 'next/link'
 import routeIcon from '@icons/route.png'
-import { dashboardContext } from '@context'
-import { FREE_TIER_DETAILS } from '@const'
-import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PricingPlanName, Subscription } from '@types'
+import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PlanName, Subscription, QueryType } from '@types'
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -234,7 +234,7 @@ export const validatePassword = (password: string): string | null => {
 
 
 /** E.g., 'basic' -> 'Basic Plan'  */
-export const getUIPlanName = (name: PricingPlanName) => (
+export const getUIPlanName = (name: PlanName) => (
     `${name.charAt(0).toUpperCase() + name.slice(1)} Plan`
 )
 
@@ -245,10 +245,57 @@ export const getUIDate = (date: Date) => (
 )
 
 
-/** @returns Max number of entities associated with an account given its subscription */
-export const getAccountLimits = (subscription: Subscription | null) => (
-    subscription ? subscription.planDetails : FREE_TIER_DETAILS
-)
+/** Dashboard component for contacting us without the user manually inputting their email */
+export const openRequestChangeModal = (setModalContent: (content: ReactNode) => void, openModal: () => void) => {
+    const RequestChangeContent = () => {
+        const [formData, setFormData] = useState<{ queryType: QueryType, description: string }>({ queryType: 'General Inquiry', description: '' })
+        const [submitted, setSubmitted] = useState(false)
+        const [errMsg, setErrMsg] = useState<string>('')
+
+        const handleSubmit = async (e: FormEvent) => {
+            e.preventDefault()
+    
+            if (!formData.description.trim()) {
+                alert('Please fill out the description field.')
+                return
+            }
+    
+            await new Request('contact', undefined, setErrMsg).post({ query_type: formData.queryType, description: formData.description })
+            setSubmitted(true)
+        }
+
+        return submitted ? (
+            <p className='submit-msg'>
+                {
+                    errMsg 
+                    ? <>An error occured: {errMsg}<br/>Please try again later.</>
+                    : <>Thank you for reaching out!<br/>We&apos;ll reply to you through email soon.</>
+                }
+            </p>
+        ) :  <form>
+            <h1>Request Change</h1>
+            <Dropdown
+                label='Query Type'
+                options={QUERY_TYPES}
+                selectedOption={formData.queryType}
+                setSelectedOption={option => setFormData({ ...formData, queryType: option as QueryType })}
+            />
+            <textarea
+                name='description'
+                placeholder='Describe your issue or message.'
+                rows={4}
+                className='input'
+                required
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+            ></textarea>
+            <button onClick={handleSubmit}>Submit</button>
+        </form>
+    }
+
+    setModalContent(<RequestChangeContent/>)
+    openModal()
+}
 
 
 /**

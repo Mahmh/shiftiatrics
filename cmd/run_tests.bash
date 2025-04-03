@@ -9,6 +9,7 @@ EXIT_CODE=$?
 
 # Cleanup
 $COMPOSE down -v
+bash down.bash
 
 # Exit with the captured code
 exit $EXIT_CODE

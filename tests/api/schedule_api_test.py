@@ -16,7 +16,7 @@ def setup_and_teardown():
 # Tests
 def test_read_schedules(setup_and_teardown):
     account_id, _ = setup_and_teardown
-    response = client.get(f'/accounts/{account_id}/schedules')
+    response = client.get(f'/schedules/{account_id}')
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 

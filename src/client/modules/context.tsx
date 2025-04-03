@@ -8,36 +8,13 @@ import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Hol
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-export const nullSettings: Settings = {
-    darkThemeEnabled: false,
-    weekendDays: 'Friday & Saturday',
-    emailNtfEnabled: false,
-    emailNtfInterval: 'Monthly',
-    
-    multiShiftsOneEmp: false,
-    avoidBackToBackNights: true,
-    maxEmpsInShift: 1,
-    useRotationPattern: false,
-    rotationPattern: [],
-    maxShiftsPerWeek: 10
-}
-export const nullSub: Subscription = {
-    id: -Infinity,
-    plan: 'basic',
-    price: -Infinity,
-    planDetails: { maxNumPediatricians: -Infinity, maxNumShiftsPerDay: -Infinity, maxNumScheduleRequests: -Infinity },
-    createdAt: '',
-    expiresAt: ''
-}
+export const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
+export const nullSub: Subscription = { id: -Infinity, plan: 'growth', createdAt: '', expiresAt: '' }
 export const nullAccount: Account = {
     id: -Infinity,
     email: '',
-    emailVerified:
-    false,
-    isOAuthOnly: false,
-    hasUsedTrial: false,
-    subExpired: false,
-    pendingCheckoutUrl: null
+    emailVerified: false,
+    subExpired: true
 }
 
 export const dashboardContext = createContext<ContextProps>({
@@ -88,7 +65,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const [hydrated, setHydrated] = useState(false)
     const [content, setContent] = useState<ContentName>(defaultContent)
     const [account, setAccount] = useState<Account>(nullAccount)
-    const [subscription, setSubscription] = useState<Subscription | null>(nullSub)
+    const [subscription, setSubscription] = useState<Subscription>(nullSub)
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
@@ -145,7 +122,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
                 min_work_hours: Employee['minWorkHours'],
                 max_work_hours: Employee['maxWorkHours']
             }[];
-            await new Request(`accounts/${account.id}/employees`, (data: Response) => {
+            await new Request(`employees/${account.id}`, (data: Response) => {
                 const loadedEmployees = data.map(emp => ({
                     id: emp.employee_id,
                     name: emp.employee_name,
@@ -161,7 +138,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const loadShifts = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
         type Response = { shift_id: Shift['id'], shift_name: Shift['name'], start_time: Shift['startTime'], end_time: Shift['endTime'] }[];
-        await new Request(`accounts/${account.id}/shifts`, (data: Response) => {
+        await new Request(`shifts/${account.id}`, (data: Response) => {
             setShifts(data.map(shift => ({
                 id: shift.shift_id,
                 name: shift.shift_name,
@@ -174,7 +151,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const loadSchedules = useCallback(async (account: Account, employees: Employee[]) => {
         if (account.id === -Infinity) return []
         type Response = { account_id: Account['id'], schedule_id: Schedule['id'], month: number, year: number, schedule: ScheduleOfIDs }[];
-        await new Request(`accounts/${account.id}/schedules`, (data: Response) => {
+        await new Request(`schedules/${account.id}`, (data: Response) => {
             const parsedSchedules = new Map<number, Schedule[]>()
 
             data.forEach(scheduleData => {
@@ -218,7 +195,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             start_date: Holiday['startDate'],
             end_date: Holiday['endDate']
         }[];
-        await new Request(`accounts/${account.id}/holidays`, (data: Response) => {
+        await new Request(`holidays/${account.id}`, (data: Response) => {
             setHolidays(data.map(h => ({
                 id: h.holiday_id,
                 name: h.holiday_name,
@@ -232,7 +209,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const loadSettings = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
         await new Request(
-            `accounts/${account.id}/settings`,
+            `settings/${account.id}`,
             (data: SettingsResponse) => setSettings(parseSettings(data))
         ).get()
     }, [account.id, setSettings])
@@ -286,14 +263,6 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             document.body.classList.add('logged-in')
             document.documentElement.classList.add('logged-in')
             if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
-
-            if (res.account.pendingCheckoutUrl !== null) {
-                setModalContent(<>
-                    <p style={{ padding: 20 }}>You have been designated a custom plan!</p>
-                    <button onClick={() => res.account.pendingCheckoutUrl ? router.push(res.account.pendingCheckoutUrl) : null}>Subscribe</button>
-                </>)
-                openModal()
-            }
         }
         fetchAllData()
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,4 +1,4 @@
-package server.engine;
+package server.engine.common;
 import java.util.Objects;
 
 /** A struct to represent an employee with an ID, name, and *monthly* work hours. */

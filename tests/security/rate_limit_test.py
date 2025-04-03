@@ -76,29 +76,15 @@ def test_rate_limit_get_work_hours_of_employees():
     assert response.status_code == 429
 
 
-def test_rate_limit_create_employee():
-    login_response = login(client)
-    employee_info = {'employee_name': 'John Doe', 'min_work_hours': 20, 'max_work_hours': 40}
-    response = hit_endpoint('/accounts/1/employees', method='post', json=employee_info, cookies=login_response.cookies)
-    assert response.status_code == 429
-
-
-def test_rate_limit_create_shift():
-    login_response = login(client)
-    shift_info = {'shift_name': 'Morning Shift', 'start_time': '08:00', 'end_time': '16:00'}
-    response = hit_endpoint('/accounts/1/shifts', method='post', json=shift_info, cookies=login_response.cookies)
-    assert response.status_code == 429
-
-
 def test_rate_limit_create_schedule():
     login_response = login(client)
     schedule_info = {'schedule': [[[1], [2]], [[3], [4]]], 'month': 10, 'year': 2023}
-    response = hit_endpoint('/accounts/1/schedules', method='post', json=schedule_info, cookies=login_response.cookies)
+    response = hit_endpoint('/schedules/1', method='post', json=schedule_info, cookies=login_response.cookies)
     assert response.status_code == 429
 
 
 def test_rate_limit_create_holiday():
     login_response = login(client)
     holiday_info = {'holiday_name': 'Christmas', 'assigned_to': [1, 2], 'start_date': '2023-12-24', 'end_date': '2023-12-26'}
-    response = hit_endpoint('/accounts/1/holidays', method='post', json=holiday_info, cookies=login_response.cookies)
+    response = hit_endpoint('/holidays/1', method='post', json=holiday_info, cookies=login_response.cookies)
     assert response.status_code == 429

@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.models import Credentials
-from src.server.lib.constants import PREDEFINED_SUB_INFOS
 from tests.utils import ctxtest, login, signup, CRED
 
 # Init
@@ -22,7 +21,6 @@ def test_login():
 
     response_data = response.json()
     assert response_data['account']['email'] == CRED.email
-    assert response_data['account']['has_used_trial'] == False
     assert response_data['account']['sub_expired'] == False
     assert response_data['subscription'] == None
 
@@ -36,7 +34,6 @@ def test_create_new_account():
 
     response_data = response.json()
     assert response_data['account']['email'] == new_cred.email
-    assert response_data['account']['has_used_trial'] == False
     assert response_data['account']['sub_expired'] == False
     assert response_data['subscription'] == None
 
@@ -64,14 +61,6 @@ def test_update_password_wrong_current():
     assert response.status_code == 200
     assert 'error' in response.json()
     assert 'Incorrect current password' in response.json()['error']
-
-
-def test_set_password_without_oauth():
-    payload = {'new_password': 'thenewpass'}
-    response = client.patch('/accounts/password', json=payload)
-    assert response.status_code == 200
-    assert 'error' in response.json()
-    assert 'already have a password' in response.json()['error']
 
 
 def test_delete_existing_account():
