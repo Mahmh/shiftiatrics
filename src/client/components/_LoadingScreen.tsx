@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react'
-import { dashboardContext, nullAccount, nullSub } from '@context'
+import { dashboardContext, nullSettings, nullAccount, nullSub } from '@context'
 
 export default function LoadingScreen() {
     const { account, subscription, employees, shifts, schedules, settings } = useContext(dashboardContext)
@@ -8,7 +8,8 @@ export default function LoadingScreen() {
     useEffect(() => {
         setTimeout(() => {
             setIsShown(
-                !(employees && shifts && schedules && settings)
+                !(employees && shifts && schedules)
+                || settings === nullSettings
                 || account === nullAccount
                 || subscription === nullSub
             )

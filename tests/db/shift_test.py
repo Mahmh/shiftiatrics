@@ -1,5 +1,5 @@
 from src.server.lib.utils import parse_time
-from src.server.db import create_account, create_shift, delete_shift, get_all_shifts_of_account, update_shift
+from src.server.db import create_account, create_shift, delete_shift, get_shifts, update_shift
 from tests.utils import ctxtest, CRED
 
 # Init
@@ -23,9 +23,9 @@ def test_create_shift(setup_and_teardown):
     assert shift.end_time == parse_time(SHIFT2['end_time'])
 
 
-def test_get_all_shifts(setup_and_teardown):
+def test_get_shifts(setup_and_teardown):
     account_id, _ = setup_and_teardown
-    shifts = get_all_shifts_of_account(account_id)
+    shifts = get_shifts(account_id)
     assert len(shifts) == 1
     assert shifts[0].shift_name == SHIFT['shift_name']
 
@@ -45,5 +45,5 @@ def test_delete_shift(setup_and_teardown):
     shift = create_shift(account_id, **SHIFT2)
     delete_shift(shift.shift_id)
     delete_shift(shift_id)
-    shifts = get_all_shifts_of_account(account_id)
+    shifts = get_shifts(account_id)
     assert len(shifts) == 0

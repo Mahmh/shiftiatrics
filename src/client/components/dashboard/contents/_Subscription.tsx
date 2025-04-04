@@ -3,23 +3,66 @@ import { useRouter } from 'next/navigation'
 import { dashboardContext } from '@context'
 import { getUIDate, getUIPlanName, Icon } from '@utils'
 import { PLANS } from '@const'
-import type { Plan } from '@types'
+import type { Plan, StripeInvoice } from '@types'
 import checkIcon from '@icons/check.png'
 
 const SECTIONS = ['My Plan', 'All Pricing Plans'] as const
 type SubscriptionSection = typeof SECTIONS[number]
 
 
+const InvoiceCard = ({ invoice }: { invoice: StripeInvoice }) => (
+    <section className='invoice-card'>
+        <table>
+            <tbody>
+                <tr>
+                    <td><b>Status:</b></td>
+                    <td>{invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}</td>
+                </tr>
+                <tr>
+                    <td><b>Amount Due:</b></td>
+                    <td>${invoice.amountDue.toFixed(2)} {invoice.currency}</td>
+                </tr>
+                <tr>
+                    <td><b>Amount Paid:</b></td>
+                    <td>${invoice.amountPaid.toFixed(2)} {invoice.currency}</td>
+                </tr>
+                <tr>
+                    <td><b>Created At:</b></td>
+                    <td>{new Date(invoice.createdAt).toLocaleString()}</td>
+                </tr>
+                <tr>
+                    <td><b>Due Date:</b></td>
+                    <td>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleString() : 'None'}</td>
+                </tr>
+            </tbody>
+        </table>
+        {(invoice.invoicePdf && invoice.hostedInvoiceUrl) && <section className='invoice-btns'>
+            <a href={invoice.invoicePdf} target='_blank' rel='noopener noreferrer'><button>Download as PDF</button></a>
+            <a href={invoice.hostedInvoiceUrl} target='_blank' rel='noopener noreferrer'><button>View on Stripe</button></a>
+        </section>}
+    </section>
+)
+
+
 const MyPlan = () => {
-    const { subscription } = useContext(dashboardContext)
+    const { subscription, invoices } = useContext(dashboardContext)
     const cardBg = subscription ? PLANS.filter(p => p.name === subscription.plan)[0].titleBg : 'linear-gradient(45deg, rgb(66 95 135), rgb(150 179 228))'
 
-    return <div className='card-container'>
-        <section id='sub-card' style={{ background: cardBg }}>
-            <h1>{subscription ? getUIPlanName(subscription.plan) : 'Free Tier'}</h1>
-            {subscription && <p>Valid until {getUIDate(new Date(subscription.expiresAt))}</p>}
-        </section>
-    </div>
+    return (
+        <div className='card-container'>
+            <section id='sub-card' style={{ background: cardBg }}>
+                <h1>{subscription ? getUIPlanName(subscription.plan) : 'Free Tier'}</h1>
+                {subscription && <p>Valid until {getUIDate(new Date(subscription.expiresAt))}</p>}
+            </section>
+
+            <section className='invoices-card'>
+                <h2>Invoices</h2>
+                <div className='invoices'>
+                    {invoices.map(invoice => <InvoiceCard invoice={invoice} key={invoice.invoiceId}/>)}
+                </div>
+            </section>
+        </div>
+    )
 }
 
 

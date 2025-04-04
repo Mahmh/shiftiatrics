@@ -27,7 +27,6 @@
       "@types": ["./modules/types.tsx"],
       "@context": ["./modules/context.tsx"],
       "@stripeconf": ["./modules/stripe.config.ts"],
-      "@auth": ["./modules/auth.tsx"],
       "@styles": ["./styles/main.css"],
       "@regpage": ["./components/RegularPage.tsx"]
     }

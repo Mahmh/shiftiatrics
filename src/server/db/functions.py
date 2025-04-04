@@ -6,11 +6,11 @@ from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.dialects.postgresql import array
 import stripe
 
-from src.server.lib.utils import log, parse_date, parse_time, utcnow
+from src.server.lib.utils import log, parse_date, parse_time, utcnow, todict, todicts
 from src.server.lib.models import Credentials, Cookies, ScheduleType, ContactUsSubmissionData
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
-from src.server.lib.types import PlanName, SettingValue
-from src.server.lib.constants import WEB_SERVER_URL, COMPANY_EMAIL, PLAN_NAMES
+from src.server.lib.types import SettingValue
+from src.server.lib.constants import WEB_SERVER_URL, COMPANY_EMAIL
 from src.server.lib.emails import send_email
 
 from .tables import Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
@@ -101,6 +101,21 @@ async def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
         reply_to=[account.email]
     )
     log(f'Account to be deleted: {account}', 'account')
+
+
+@dbsession()
+def get_account_data(cookies: Cookies, *, session: _SessionType) -> dict[str, list|dict]:
+    account = _validate_cookies(cookies, session=session)
+    account_id = account.account_id
+    return {
+        'employees': todicts(get_employees(account_id)),
+        'shifts': todicts(get_shifts(account_id)),
+        'holidays': todicts(get_holidays(account_id)),
+        'schedules': todicts(get_schedules(account_id)),
+        'settings': todict(get_settings(account_id)),
+        'invoices': get_invoices(account_id) if _get_active_sub(account_id, session=session) else []
+    }
+
 
 
 
@@ -224,7 +239,7 @@ def verify_email(verify_token: str, *, session: _SessionType) -> str:
 
 ## Employee
 @dbsession()
-def get_all_employees_of_account(account_id: int, *, session: _SessionType) -> list[Employee]:
+def get_employees(account_id: int, *, session: _SessionType) -> list[Employee]:
     """Returns all employees in the database."""
     _check_account(account_id, session=session)
     return session.query(Employee).filter_by(account_id=account_id).all()
@@ -272,7 +287,7 @@ def delete_employee(employee_id: int, *, session: _SessionType) -> None:
 
 ## Shift
 @dbsession()
-def get_all_shifts_of_account(account_id: int, *, session: _SessionType) -> list[Shift]:
+def get_shifts(account_id: int, *, session: _SessionType) -> list[Shift]:
     """Returns all shifts associated with the given account ID."""
     _check_account(account_id, session=session)
     return session.query(Shift).filter_by(account_id=account_id).all()
@@ -320,7 +335,7 @@ def delete_shift(shift_id: int, *, session: _SessionType) -> None:
 
 ## Schedule
 @dbsession()
-def get_all_schedules_of_account(account_id: int, *, session: _SessionType, **filter_kwargs) -> list[Schedule]:
+def get_schedules(account_id: int, *, session: _SessionType, **filter_kwargs) -> list[Schedule]:
     """Returns all schedules associated with the given account ID."""
     _check_account(account_id, session=session)
     return session.query(Schedule).filter_by(account_id=account_id, **filter_kwargs).all()
@@ -363,7 +378,7 @@ def delete_schedule(schedule_id: int, *, session: _SessionType) -> None:
 
 ## Holiday
 @dbsession()
-def get_all_holidays_of_account(account_id: int, *, session: _SessionType) -> list[Holiday]:
+def get_holidays(account_id: int, *, session: _SessionType) -> list[Holiday]:
     """Returns all holidays associated with the given account ID."""
     _check_account(account_id, session=session)
     return session.query(Holiday).filter_by(account_id=account_id).all()
@@ -407,7 +422,7 @@ def delete_holiday(holiday_id: int, *, session: _SessionType) -> None:
 
 ## Settings
 @dbsession()
-def get_settings_of_account(account_id: int, *, session: _SessionType) -> Settings:
+def get_settings(account_id: int, *, session: _SessionType) -> Settings:
     """Returns all settings of an account."""
     return session.query(Settings).filter_by(account_id=account_id).first()
 
@@ -495,6 +510,44 @@ def create_sub(account_id: int, chkout_session_id: str, *,  session: _SessionTyp
     account.stripe_customer_id = stripe_customer_id
     log(f'Created {sub} for customer ID {stripe_customer_id}', 'subscription')
     return account, sub
+
+
+@dbsession()
+def get_invoices(account_id: int, *, session: _SessionType) -> list[dict]:
+    """Returns all Stripe invoices associated with the given account."""
+    account = _check_account(account_id, session=session)
+    customer_id = account.stripe_customer_id
+    if customer_id is None: raise LookupError(f'Account ID {account_id} does not have a Stripe customer ID.')
+
+    sub = _get_active_sub(account_id, session=session)
+    if not sub: raise LookupError(f'No active subscription found for account ID {account_id}.')
+
+    # List all invoices for the specific subscription & customer
+    invoices = stripe.Invoice.list(customer=customer_id, subscription=sub.stripe_subscription_id)
+    if not invoices.data: raise LookupError(f'No invoices found for Stripe subscription ID "{sub.stripe_subscription_id}".')
+
+    result = [
+        {
+            'invoice_id': invoice.id,
+            'amount_due': invoice.amount_due / 100,
+            'amount_paid': invoice.amount_paid / 100,
+            'currency': invoice.currency.upper(),
+            'status': invoice.status,
+            'invoice_pdf': invoice.invoice_pdf,
+            'hosted_invoice_url': invoice.hosted_invoice_url,
+            'created_at': datetime.fromtimestamp(invoice.created, tz=timezone.utc).isoformat(),
+            'due_date': (
+                datetime.fromtimestamp(invoice.due_date, tz=timezone.utc).isoformat()
+                if invoice.due_date else None
+            ),
+            'description': invoice.description,
+            'subscription_id': invoice.subscription,
+        }
+        for invoice in invoices.data
+    ]
+    result.sort(key=lambda invoice: invoice['created_at'], reverse=True)  # Sort newest firsts
+    return result
+
 
 
 

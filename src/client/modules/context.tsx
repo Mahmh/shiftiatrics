@@ -1,20 +1,21 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ChangePasswordModalContent, Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
-import { parseSettings, isLoggedIn, parseSub } from '@auth'
+import { isLoggedIn, getEmployeeById, getUIDate, hasScheduleForMonth, ChangePasswordModalContent, Request } from '@utils'
 import type {
     ContextProps, ContentName, Employee,
     Account, Shift, Schedule, Holiday,
     Settings, YearToSchedules, YearToSchedulesValidity,
-    ScheduleOfIDs, ReadonlyChildren, Subscription, SettingsResponse,
-    SubscriptionResponse
+    ReadonlyChildren, Subscription, SettingsResponse,
+    SubscriptionResponse, StripeInvoice, EmployeeResponse, ShiftResponse,
+    ScheduleResponse, HolidayResponse, StripeInvoiceResponse
 } from '@types'
+import { parseEmployee, parseHoliday, parseSettings, parseShift, parseStripeInvoice, parseSub } from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
+export const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
 export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, passwordChanged: false, subExpired: true }
 export const nullSub: Subscription = { id: -Infinity, plan: 'growth', createdAt: '', expiresAt: '' }
 
@@ -27,15 +28,14 @@ export const dashboardContext = createContext<ContextProps>({
 
     subscription: nullSub,
     setSubscription: () => {},
+    invoices: [],
 
     employees: [],
     setEmployees: () => {},
-    loadEmployees: () => {},
     validateEmployeeById: () => nullEmployee,
 
     shifts: [],
     setShifts: () => {},
-    loadShifts: () => {},
 
     schedules: new Map(),
     setSchedules: () => {},
@@ -73,6 +73,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const [holidays, setHolidays] = useState<Holiday[]>([])
     const [schedulesValidity, setSchedulesValidity] = useState<YearToSchedulesValidity>(new Map())
     const [settings, setSettings] = useState(nullSettings)
+    const [invoices, setInvoices] = useState<StripeInvoice[]>([])
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalContent, setModalContent] = useState<ReactNode>(null)
     const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0)
@@ -106,87 +107,47 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         if (employees.length === 0) return nullEmployee
         const employee = getEmployeeById(id, employees)
         let name = employee?.name
-        const minWorkHours = employee?.minWorkHours
-        const maxWorkHours = employee?.maxWorkHours
-        if (typeof name === 'undefined') {
-            name = 'Unknown'
-            setScheduleValidity(false, year, month)
-        }
+        let minWorkHours = employee?.minWorkHours
+        let maxWorkHours = employee?.maxWorkHours
+        if (typeof name === 'undefined') { name = 'Unknown'; setScheduleValidity(false, year, month) }
+        if (typeof minWorkHours === 'undefined') { minWorkHours = -Infinity; setScheduleValidity(false, year, month)}
+        if (typeof maxWorkHours === 'undefined') { maxWorkHours = -Infinity; setScheduleValidity(false, year, month) }
         return { id, name, minWorkHours, maxWorkHours }
     }, [setScheduleValidity])
 
-    const loadEmployees = useCallback(async (account: Account): Promise<Employee[]> => {
-        if (account.id === -Infinity) return []
-        return new Promise(async (resolve) => {
-            type Response = {
-                employee_id: Employee['id'],
-                employee_name: Employee['name'],
-                min_work_hours: Employee['minWorkHours'],
-                max_work_hours: Employee['maxWorkHours']
-            }[];
-            await new Request(`employees/${account.id}`, (data: Response) => {
-                const loadedEmployees = data.map(emp => ({
-                    id: emp.employee_id,
-                    name: emp.employee_name,
-                    minWorkHours: emp.min_work_hours,
-                    maxWorkHours: emp.max_work_hours
-                }))
-                setEmployees(loadedEmployees)
-                resolve(loadedEmployees)
-            }).get()
-        })
-    }, [account.id])
+    const _parseSchedules = useCallback((schedules: ScheduleResponse[], employees: Employee[]): YearToSchedules => {
+        const parsedSchedules = new Map<number, Schedule[]>()
 
-    const loadShifts = useCallback(async (account: Account) => {
-        if (account.id === -Infinity) return []
-        type Response = { shift_id: Shift['id'], shift_name: Shift['name'], start_time: Shift['startTime'], end_time: Shift['endTime'] }[];
-        await new Request(`shifts/${account.id}`, (data: Response) => {
-            setShifts(data.map(shift => ({
-                id: shift.shift_id,
-                name: shift.shift_name,
-                startTime: shift.start_time,
-                endTime: shift.end_time
-            })))
-        }).get()
-    }, [account.id])
+        schedules.forEach(scheduleData => {
+            const { schedule_id: scheduleId, month, year } = scheduleData
 
-    const loadSchedules = useCallback(async (account: Account, employees: Employee[]) => {
-        if (account.id === -Infinity) return []
-        type Response = { account_id: Account['id'], schedule_id: Schedule['id'], month: number, year: number, schedule: ScheduleOfIDs }[];
-        await new Request(`schedules/${account.id}`, (data: Response) => {
-            const parsedSchedules = new Map<number, Schedule[]>()
+            // Initialize validity for this schedule as true
+            setScheduleValidity(true, year, month)
 
-            data.forEach(scheduleData => {
-                const { schedule_id: scheduleId, month, year } = scheduleData
-
-                // Initialize validity for this schedule as true
-                setScheduleValidity(true, year, month)
-
-                // Transform schedule data to match Employee['id'][][][]
-                const parsedSchedule = scheduleData.schedule.map((day: number[][]) =>
-                    day.map((shift: number[]) =>
-                        shift.map(empId => validateEmployeeById(empId, employees, year, month))
-                    )
+            // Transform schedule data to match Employee['id'][][][]
+            const parsedSchedule = scheduleData.schedule.map((day: number[][]) =>
+                day.map((shift: number[]) =>
+                    shift.map(empId => validateEmployeeById(empId, employees, year, month))
                 )
+            )
 
-                // Ensure the year exists in the maps
-                if (!parsedSchedules.has(year)) parsedSchedules.set(year, [])
-                if (!schedulesValidity.has(year)) {
-                    const map = new Map<number, boolean>()
-                    for (let i = 0; i < 12; i++) map.set(i, true)
-                    schedulesValidity.set(year, map)
-                }
+            // Ensure the year exists in the maps
+            if (!parsedSchedules.has(year)) parsedSchedules.set(year, [])
+            if (!schedulesValidity.has(year)) {
+                const map = new Map<number, boolean>()
+                for (let i = 0; i < 12; i++) map.set(i, true)
+                schedulesValidity.set(year, map)
+            }
 
-                const yearSchedules = parsedSchedules.get(year)!
-                yearSchedules[month] = {
-                    id: scheduleId,
-                    schedule: parsedSchedule,
-                }
-            })
+            const yearSchedules = parsedSchedules.get(year)!
+            yearSchedules[month] = {
+                id: scheduleId,
+                schedule: parsedSchedule,
+            }
+        })
 
-            setSchedules(parsedSchedules)
-        }).get()
-    }, [account.id, schedulesValidity, validateEmployeeById, setScheduleValidity])
+        return parsedSchedules
+    }, [schedulesValidity, validateEmployeeById, setScheduleValidity])
 
     const loadHolidays = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
@@ -207,14 +168,6 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             })))
         }).get()
     }, [account.id])
-
-    const loadSettings = useCallback(async (account: Account) => {
-        if (account.id === -Infinity) return []
-        await new Request(
-            `settings/${account.id}`,
-            (data: SettingsResponse) => setSettings(parseSettings(data))
-        ).get()
-    }, [account.id, setSettings])
 
     const _checkIsSubExpiringSoon = useCallback((subscription: Subscription) => {
         const now = new Date()
@@ -267,6 +220,41 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         ).post({ chkout_session_id: chkoutSessionId })
     }, [openModal, setModalContent, setSubscription, router])
 
+    const _load_data = async () => {
+        type Response = {
+            employees: EmployeeResponse[],
+            shifts: ShiftResponse[],
+            schedules: ScheduleResponse[],
+            holidays: HolidayResponse[],
+            settings: SettingsResponse,
+            invoices: StripeInvoiceResponse[]
+        };
+        await new Request(
+            'accounts/data',
+            (data: Response) => {
+                const parsedEmps = data.employees.map(parseEmployee)
+                setEmployees(parsedEmps)
+                setShifts(data.shifts.map(parseShift))
+                setSchedules(_parseSchedules(data.schedules, parsedEmps))
+                setHolidays(data.holidays.map(parseHoliday))
+                setSettings(parseSettings(data.settings))
+                if (subscription !== null)setInvoices(data.invoices.map(parseStripeInvoice))
+            },
+            (error) => {
+                setModalContent(<>
+                    <p>
+                        There has been an error loading your account's data.
+                        Please try to refresh the page. 
+                        If this issue persists, please contact us.
+                        <br/><b>Error message: {error}</b>
+                    </p>
+                    <button onClick={() => router.push('/support/contact')}>Report Issue</button>
+                </>)
+                openModal()
+            }
+        ).get()
+    }
+
     useEffect(() => {
         setHydrated(true)
         const fetchAllData = async () => {
@@ -288,32 +276,27 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             setAccount(res.account)
             setSubscription(res.subscription)
             if (res.subscription !== null) _checkIsSubExpiringSoon(res.subscription)
-    
-            const loadedEmployees = await loadEmployees(res.account)
-            await loadShifts(res.account)
-            await loadSchedules(res.account, loadedEmployees)
-            await loadHolidays(res.account)
-            await loadSettings(res.account)
-    
-            document.body.classList.add('logged-in')
-            document.documentElement.classList.add('logged-in')
-            if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
-    
+
+            await _load_data()
             _handlePasswordChangeUponSignup(res.account.passwordChanged)
     
             const chkoutSessionId = params.get('chkout_session_id')
             if (pathname === '/dashboard' && chkoutSessionId !== null) _handleCheckoutSessionId(chkoutSessionId, res.account.id)
+
+            document.body.classList.add('logged-in')
+            document.documentElement.classList.add('logged-in')
+            if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
         }
         fetchAllData()
     }, [pathname])
 
-    useEffect(() => {
-        const regenerateSchedules = async () => {
-            if (!['/dashboard', '/login', '/signup'].includes(pathname)) return
-            if (account.id && employees.length > 0) await loadSchedules(account, employees)
-        }
-        regenerateSchedules()
-    }, [pathname, account, employees, shifts, holidays])
+    // useEffect(() => {
+    //     const reloadData = async () => {
+    //         if (!['/dashboard', '/login', '/signup'].includes(pathname)) return
+    //         if (account.id && employees.length > 0) await _load_data()
+    //     }
+    //     reloadData()
+    // }, [pathname, account, employees, shifts, holidays])
 
     useEffect(() => {
         if (pathname !== '/dashboard') return
@@ -340,10 +323,10 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     return (
         <dashboardContext.Provider value={{
             account, setAccount,
-            subscription, setSubscription,
+            subscription, setSubscription, invoices,
             content, setContent,
-            employees, setEmployees, loadEmployees, validateEmployeeById,
-            shifts, setShifts, loadShifts,
+            employees, setEmployees, validateEmployeeById,
+            shifts, setShifts,
             schedules, setSchedules, setScheduleValidity, getScheduleValidity,
             holidays, setHolidays, loadHolidays,
             settings, setSettings, darkThemeClassName,

@@ -1,4 +1,4 @@
-from src.server.db import create_account, create_schedule, delete_schedule, get_all_schedules_of_account, update_schedule
+from src.server.db import create_account, create_schedule, delete_schedule, get_schedules, update_schedule
 from tests.utils import ctxtest, CRED
 
 # Init
@@ -18,9 +18,9 @@ def test_create_schedule(setup_and_teardown):
     assert schedule.schedule == SCHEDULE['schedule']
 
 
-def test_get_all_schedules(setup_and_teardown):
+def test_get_schedules(setup_and_teardown):
     account_id, _ = setup_and_teardown
-    schedules = get_all_schedules_of_account(account_id)
+    schedules = get_schedules(account_id)
     assert len(schedules) == 1
     assert schedules[0].schedule == SCHEDULE['schedule']
 
@@ -35,5 +35,5 @@ def test_update_schedule(setup_and_teardown):
 def test_delete_schedule(setup_and_teardown):
     account_id, schedule_id = setup_and_teardown
     delete_schedule(schedule_id)
-    schedules = get_all_schedules_of_account(account_id)
+    schedules = get_schedules(account_id)
     assert len(schedules) == 0

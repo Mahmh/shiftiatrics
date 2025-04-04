@@ -1,4 +1,4 @@
-from src.server.db import create_account, get_all_employees_of_account, create_employee, update_employee, delete_employee
+from src.server.db import create_account, get_employees, create_employee, update_employee, delete_employee
 from tests.utils import ctxtest, CRED, EMPLOYEE
 
 # Init
@@ -17,11 +17,11 @@ def test_create_employee(setup_and_teardown):
     assert employee.account_id == account_id
 
 
-def test_get_all_employees_of_account(setup_and_teardown):
+def test_get_employees(setup_and_teardown):
     '''Test retrieving all employees.'''
     account_id = setup_and_teardown
     create_employee(account_id, **EMPLOYEE)
-    employees = get_all_employees_of_account(account_id)
+    employees = get_employees(account_id)
     assert len(employees) == 1
     assert employees[0].employee_name == EMPLOYEE['employee_name']
 
@@ -40,5 +40,5 @@ def test_delete_employee(setup_and_teardown):
     account_id = setup_and_teardown
     employee = create_employee(account_id, **EMPLOYEE)
     delete_employee(employee.employee_id)
-    employees = get_all_employees_of_account(account_id)
+    employees = get_employees(account_id)
     assert len(employees) == 0

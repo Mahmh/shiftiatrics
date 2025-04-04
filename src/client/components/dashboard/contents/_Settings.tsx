@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { dashboardContext, nullAccount, nullSub } from '@context'
 import { Choice, Switch, Dropdown, Request, ChangePasswordModalContent } from '@utils'
 import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
-import { parseAccount, parseSettings } from '@auth'
+import { parseSettings, parseAccount } from '@types'
 import type { WeekendDays, InputEvent, AccountResponse, SettingsResponse, Settings } from '@types'
 import LoadingScreen from '@/components/_LoadingScreen'
 

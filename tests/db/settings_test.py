@@ -1,6 +1,6 @@
 import pytest
 from src.server.lib.types import WeekendDaysEnum
-from src.server.db import Settings, create_account, get_settings_of_account, update_setting
+from src.server.db import Settings, create_account, get_settings, update_setting
 from tests.utils import ctxtest, CRED
 
 # Init
@@ -13,7 +13,7 @@ def setup_and_teardown():
 # Tests
 def test_get_settings(setup_and_teardown):
     account_id = setup_and_teardown
-    assert isinstance(get_settings_of_account(account_id), Settings)
+    assert isinstance(get_settings(account_id), Settings)
 
 
 def test_update_valid_setting(setup_and_teardown):

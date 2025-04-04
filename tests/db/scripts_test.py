@@ -1,8 +1,6 @@
-from datetime import timedelta
 import subprocess, pytest
 from src.server.lib.models import Cookies
-from src.server.lib.utils import utcnow
-from src.server.db import create_account, get_all_employees_of_account, get_all_shifts_of_account, log_in_account_with_cookies
+from src.server.db import create_account, get_employees, get_shifts
 from tests.utils import ctxtest, CRED
 
 # Init
@@ -30,7 +28,7 @@ def test_create_employee(setup_and_teardown):
     )
     print(result.stdout, result.stderr, end='')
 
-    emps = get_all_employees_of_account(account_id)
+    emps = get_employees(account_id)
     assert result.returncode == 0
     assert '✅' in result.stdout
     assert len(emps) == 1
@@ -54,7 +52,7 @@ def test_create_shift(setup_and_teardown):
     )
     print(result.stdout, result.stderr, end='')
 
-    shifts = get_all_shifts_of_account(account_id)
+    shifts = get_shifts(account_id)
     assert result.returncode == 0
     assert '✅' in result.stdout
     assert len(shifts) == 1

@@ -17,52 +17,6 @@
     h1 { font-size: 2rem }
 }
 
-#sub-details {
-    @include vertical-flex;
-    margin-top: 20px;
-    gap: 20px;
-
-    section {
-        border-radius: 10px;
-        box-shadow: $main-box-shadow;
-        overflow: hidden;
-
-        h2 {
-            @include themed-bgcolor('primary-blue');
-            color: get-color('background');
-            padding: 10px 20px;
-            margin: 0;
-        }
-
-        div {
-            @include themed-bgcolor('alpha-white', 'primary-blue-hover');
-            padding: 20px;
-            padding-left: 25px;
-
-            * { @include themed-color('primary-text') }
-            p { margin: 10px 0 }
-
-            div {
-                display: flex;
-                padding: 0;
-                gap: 10px;
-                margin-top: 30px;
-            }
-
-            button {
-                @include themed-bgcolor('primary-blue', 'secondary-blue');
-                @include compressible(.97);
-                color: get-color('background');
-                padding: 10px 20px;
-                border-radius: 10px;
-                &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue-hover') }
-            }
-        }
-
-        .limit-reached { @include themed-color('primary-red') }
-    }
-}
-
 
 #subscription-content .pricing-cards {
     @include breakpoint(1850px) { justify-content: space-evenly !important }
@@ -99,5 +53,56 @@
     #cancel-sub-btn {
         @include themed-bgcolor('primary-red');
         &:hover { @include themed-bgcolor('primary-red-hover') }
+    }
+}
+
+.invoices-card {
+    @include themed-bgcolor('alpha-white', 'primary-blue-hover');
+    box-shadow: $main-box-shadow;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: background-color 250ms ease;
+
+    h2 {
+        @include themed-bgcolor('primary-blue');
+        color: get-color('background');
+        font-weight: bold;
+        padding: 10px 15px;
+        margin: 0;
+    }
+}
+
+.invoices {
+    padding: 20px;
+
+    .invoice-card {
+        @include themed-bgcolor('light-gray', 'primary-blue');
+        border-radius: 10px;
+        padding: 20px;
+        b, td, div { @include themed-color('primary-text') }
+        table { width: 100%;}
+
+        div {
+            max-width: 40vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .invoice-btns {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
+
+            button {
+                @include compressible;
+                @include themed-bgcolor('primary-blue', 'secondary-blue');
+                color: get-color('background');
+                padding: 10px 20px;
+                border-radius: 10px;
+                &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue-hover'); }
+            }
+        }
     }
 }

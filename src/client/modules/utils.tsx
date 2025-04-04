@@ -1,15 +1,21 @@
 'use client'
 import { useState, useContext, FormEvent, ReactNode } from 'react'
 import Image, { StaticImageData } from 'next/image'
+import Link from 'next/link'
 import ExcelJS from 'exceljs'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ChevronDown } from 'lucide-react'
 import { dashboardContext } from '@context'
 import { QUERY_TYPES, TOO_MANY_REQS_MSG } from '@const'
-import Link from 'next/link'
+import { parseAccount, parseSub } from '@types'
+import type {
+    MonthName, YearToSchedules, Employee, Shift, Schedule,
+    SupportedExportFormat, WeekendDays, EndpointResponse, PlanName,
+    InputEvent, QueryType, AccountResponse, Account, AccountAndSub,
+    AccountAndSubResponse
+} from '@types'
 import routeIcon from '@icons/route.png'
-import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PlanName, InputEvent, QueryType, AccountResponse, Account } from '@types'
-import { parseAccount } from './auth'
+
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -139,6 +145,19 @@ export const setMetadata = ({ title, description }: { title: string, description
         newMeta.content = description
         document.head.appendChild(newMeta)
     }
+}
+
+
+/** @returns false if the user is not logged in; otherwise, returns their account & subscription */
+export const isLoggedIn = async (): Promise<AccountAndSub | false> => {
+    return await new Request(
+        'auth/log_in_account_with_cookies',
+        (data: AccountAndSubResponse) => ({
+            account: parseAccount(data.account),
+            subscription: data.subscription ? parseSub(data.subscription) : null
+        }),
+        () => false
+    ).get()
 }
 
 

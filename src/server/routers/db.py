@@ -6,11 +6,11 @@ from src.server.lib.models import Credentials, Cookies, ScheduleInfo, HolidayInf
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, return_account_and_sub
 from src.server.lib.types import SettingValue
 from src.server.db import (
-    create_account, change_email, change_password, delete_account,
-    get_all_employees_of_account, get_all_shifts_of_account,
-    get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
-    get_settings_of_account, update_setting,
-    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
+    create_account, change_email, change_password, delete_account, get_account_data,
+    get_employees, get_shifts,
+    get_schedules, create_schedule, update_schedule, delete_schedule,
+    get_settings, update_setting,
+    get_holidays, create_holiday, update_holiday, delete_holiday,
     create_sub
 )
 
@@ -58,13 +58,20 @@ async def delete_existing_account(request: Request, response: Response) -> dict:
     return {'detail': 'Account deleted successfully'}
 
 
+@account_router.get('/data')
+@limiter.limit(DEFAULT_RATE_LIMIT)
+@endpoint()
+async def get_all_data_of_account(request: Request) -> dict:
+    return get_account_data(get_cookies(request))
+
+
 
 ## Employee
 @employee_router.get('/{account_id}')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def read_employees(account_id: int, request: Request) -> list[dict] | dict:
-    return get_all_employees_of_account(account_id=account_id)
+    return get_employees(account_id=account_id)
 
 
 
@@ -73,7 +80,7 @@ async def read_employees(account_id: int, request: Request) -> list[dict] | dict
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def read_shifts(account_id: int, request: Request) -> list[dict] | dict:
-    return get_all_shifts_of_account(account_id=account_id)
+    return get_shifts(account_id=account_id)
 
 
 
@@ -82,7 +89,7 @@ async def read_shifts(account_id: int, request: Request) -> list[dict] | dict:
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def read_schedules(account_id: int, request: Request) -> list[dict] | dict:
-    return get_all_schedules_of_account(account_id=account_id)
+    return get_schedules(account_id=account_id)
 
 
 @schedule_router.post('/{account_id}')
@@ -113,7 +120,7 @@ async def delete_existing_schedule(schedule_id: int, request: Request) -> dict:
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def read_holidays(account_id: int, request: Request) -> list[dict] | dict:
-    return get_all_holidays_of_account(account_id=account_id)
+    return get_holidays(account_id=account_id)
 
 
 @holiday_router.post('/{account_id}')
@@ -144,7 +151,7 @@ async def delete_existing_holiday(holiday_id: int, request: Request) -> dict:
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def read_settings(account_id: int, request: Request) -> dict:
-    return get_settings_of_account(account_id=account_id)
+    return get_settings(account_id=account_id)
 
 
 @settings_router.patch('/{account_id}')

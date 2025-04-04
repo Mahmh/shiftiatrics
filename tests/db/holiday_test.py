@@ -2,7 +2,7 @@ from src.server.lib.utils import parse_date
 from src.server.db import (
     create_account,
     create_employee, delete_employee,
-    create_holiday, delete_holiday, get_all_holidays_of_account, update_holiday
+    create_holiday, delete_holiday, get_holidays, update_holiday
 )
 from tests.utils import ctxtest, CRED
 
@@ -27,9 +27,9 @@ def test_create_holiday(setup_and_teardown):
     assert holiday.end_date == parse_date(HOLIDAY['end_date'])
 
 
-def test_get_all_holidays(setup_and_teardown):
+def test_get_holidays(setup_and_teardown):
     account_id, _ = setup_and_teardown
-    holidays = get_all_holidays_of_account(account_id)
+    holidays = get_holidays(account_id)
     assert len(holidays) == 1
     assert holidays[0].assigned_to == HOLIDAY['assigned_to']
 
@@ -50,7 +50,7 @@ def test_delete_holiday(setup_and_teardown):
     holiday = create_holiday(account_id, **HOLIDAY)
     delete_holiday(holiday.holiday_id)
     delete_holiday(holiday_id)
-    holidays = get_all_holidays_of_account(account_id)
+    holidays = get_holidays(account_id)
     assert len(holidays) == 0
 
 
@@ -58,7 +58,7 @@ def test_removed_employee_not_in_holiday(setup_and_teardown):
     account_id, _ = setup_and_teardown
     holiday = create_holiday(account_id, **HOLIDAY)
     delete_employee(1)
-    holidays = get_all_holidays_of_account(account_id)
+    holidays = get_holidays(account_id)
     for holiday in holidays:
         assert 1 not in holiday.assigned_to
 
@@ -67,5 +67,5 @@ def test_holiday_deleted_if_only_employee_deleted(setup_and_teardown):
     account_id, _ = setup_and_teardown
     delete_employee(1)
     delete_employee(2)
-    holidays = get_all_holidays_of_account(account_id)
+    holidays = get_holidays(account_id)
     assert len(holidays) == 0

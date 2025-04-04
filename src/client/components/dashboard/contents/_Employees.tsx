@@ -33,7 +33,7 @@ export default function Employees() {
 
 const EmployeeCard = ({ name, minWorkHours, maxWorkHours }: Employee) => (
     <div className='dashboard-card'>
-        <div className='dashboard-card-details' style={{ paddingBottom: 10 }}>
+        <div className='dashboard-card-details'>
             <h1>{name}</h1>
             <span><b>Min work hours:</b> {minWorkHours}</span>
             <span><b>Max work hours:</b> {maxWorkHours}</span>
