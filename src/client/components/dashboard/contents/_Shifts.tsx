@@ -9,7 +9,7 @@ export default function Shifts() {
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>
-                    <button onClick={() => openRequestChangeModal(setModalContent, openModal)}>Request Change</button>
+                    <button onClick={() => openRequestChangeModal('Register a Daily Shift', setModalContent, openModal)}>Request Change</button>
                 </section>
             </section>
             {shifts.length === 0 && <p className='header-msg'>No shifts registered.</p>}

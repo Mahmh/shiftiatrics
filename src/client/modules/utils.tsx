@@ -5,10 +5,11 @@ import ExcelJS from 'exceljs'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ChevronDown } from 'lucide-react'
 import { dashboardContext } from '@context'
-import { QUERY_TYPES } from '@const'
+import { QUERY_TYPES, TOO_MANY_REQS_MSG } from '@const'
 import Link from 'next/link'
 import routeIcon from '@icons/route.png'
-import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PlanName, Subscription, QueryType } from '@types'
+import type { MonthName, YearToSchedules, Employee, Shift, Schedule, SupportedExportFormat, WeekendDays, EndpointResponse, PlanName, InputEvent, QueryType, AccountResponse, Account } from '@types'
+import { parseAccount } from './auth'
 
 /** Component for icons */
 export const Icon = ({ src, alt, size=20 }: {src: StaticImageData, alt: string, size?: number}) => (
@@ -245,10 +246,119 @@ export const getUIDate = (date: Date) => (
 )
 
 
+/** Modal content for changing an account's password */
+export const ChangePasswordModalContent = ({ setAccount, closeModal }: { setAccount: (account: Account) => void, closeModal: () => void }) => {
+    const [tempCurrentPassword, setCurrentPassword] = useState('')
+    const [tempNewPassword, setNewPassword] = useState('')
+    const [tempConfirmPassword, setConfirmPassword] = useState('')
+    const [isConfirmDisabled, setConfirmDisabled] = useState(true)
+    const [error, setError] = useState('')
+
+    const validateInputs = (current: string, newPass: string, confirmPass: string) => {
+        setConfirmDisabled(
+            current.trim().length < 3 ||
+            newPass.trim().length < 3 ||
+            confirmPass.trim().length < 3
+        )
+    }
+
+    const handleCurrentPasswordChange = (e: InputEvent) => {
+        const currentPassword = e.target.value
+        setCurrentPassword(currentPassword)
+        validateInputs(currentPassword, tempNewPassword, tempConfirmPassword)
+    }
+
+    const handleNewPasswordChange = (e: InputEvent) => {
+        const newPassword = e.target.value
+        setNewPassword(newPassword)
+        validateInputs(tempCurrentPassword, newPassword, tempConfirmPassword)
+    }
+
+    const handleConfirmPasswordChange = (e: InputEvent) => {
+        const confirmPassword = e.target.value
+        setConfirmPassword(confirmPassword)
+        validateInputs(tempCurrentPassword, tempNewPassword, confirmPassword)
+    }
+
+    const confirmEdit = async () => {
+        if (tempNewPassword.trim() !== tempConfirmPassword.trim()) {
+            setError('Make sure both entered passwords exactly match.')
+            return
+        }
+
+        await new Request(
+            'accounts/password',
+            (data: AccountResponse) => {
+                setAccount(parseAccount(data))
+                closeModal()
+            },
+            (error) => {
+                if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
+                setError(
+                    error.includes('Invalid cookies') 
+                    ? 'Session has expired. Please log out then log in again to update your password.'
+                    : error
+                )
+            }
+        ).patch({ 
+            current_password: tempCurrentPassword,
+            new_password: tempNewPassword 
+        })
+    }
+
+    return <>
+        <h2>Change Password</h2>
+        
+        <section className='modal-input-sec'>
+            <label style={{ marginRight: 10 }}>Current password: </label>
+            <input
+                type='password'
+                placeholder='Current password'
+                value={tempCurrentPassword}
+                onChange={handleCurrentPasswordChange}
+                maxLength={32}
+            />
+        </section>
+
+        <section className='modal-input-sec'>
+            <label style={{ marginRight: 10 }}>New password: </label>
+            <input
+                type='password'
+                placeholder='New password'
+                value={tempNewPassword}
+                onChange={handleNewPasswordChange}
+                maxLength={32}
+            />
+        </section>
+
+        <section className='modal-input-sec'>
+            <label style={{ marginRight: 10 }}>Confirm password: </label>
+            <input
+                type='password'
+                placeholder='Confirm password'
+                value={tempConfirmPassword}
+                onChange={handleConfirmPasswordChange}
+                maxLength={32}
+            />
+        </section>
+
+        {error && <p className='error'>{error}</p>}
+
+        <button
+            onClick={confirmEdit}
+            disabled={isConfirmDisabled}
+            id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+        >
+            Confirm
+        </button>
+    </>
+}
+
+
 /** Dashboard component for contacting us without the user manually inputting their email */
-export const openRequestChangeModal = (setModalContent: (content: ReactNode) => void, openModal: () => void) => {
+export const openRequestChangeModal = (queryType: QueryType, setModalContent: (content: ReactNode) => void, openModal: () => void) => {
     const RequestChangeContent = () => {
-        const [formData, setFormData] = useState<{ queryType: QueryType, description: string }>({ queryType: 'General Inquiry', description: '' })
+        const [formData, setFormData] = useState<{ queryType: QueryType, description: string }>({ queryType, description: '' })
         const [submitted, setSubmitted] = useState(false)
         const [errMsg, setErrMsg] = useState<string>('')
 

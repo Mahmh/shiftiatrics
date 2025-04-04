@@ -16,6 +16,7 @@ class Account(Base):
     email = Column(String(256), unique=True, nullable=False)
     hashed_password = Column(String(128), nullable=False)
     email_verified = Column(Boolean, nullable=False, server_default='false', default=False)
+    password_changed = Column(Boolean, nullable=False, server_default='false', default=False)
     stripe_customer_id = Column(String(128), unique=True, nullable=True)
     __repr__ = lambda self: f'Account({self.account_id})'
 

@@ -81,6 +81,7 @@ def change_password(cookies: Cookies, current_password: str, new_password: str, 
 
     new_password = _sanitize_password(new_password)
     account.hashed_password = _hash_password(new_password)
+    account.password_changed = True
     log(f'Modified account: {account}; password has changed', 'account')
     return account
 

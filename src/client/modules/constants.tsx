@@ -60,6 +60,8 @@ export const QUERY_TYPES = [
     'General Inquiry',
     ...PLANS.map(p => `${p.name.charAt(0).toUpperCase() + p.name.slice(1)} Plan`),
     'Change My Plan',
+    'Register a Pediatrican',
+    'Register a Daily Shift',
     'Technical Issue',
     'Bug Report',
     'Feature Suggestion',

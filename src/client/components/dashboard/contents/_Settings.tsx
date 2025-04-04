@@ -1,7 +1,7 @@
 import { useCallback, useContext, useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { dashboardContext, nullAccount, nullSub } from '@context'
-import { Choice, Switch, Dropdown, Request } from '@utils'
+import { Choice, Switch, Dropdown, Request, ChangePasswordModalContent } from '@utils'
 import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
 import { parseAccount, parseSettings } from '@auth'
 import type { WeekendDays, InputEvent, AccountResponse, SettingsResponse, Settings } from '@types'
@@ -174,114 +174,7 @@ const Account = () => {
 
     /** Displays a modal for creating a new password */
     const openChangePasswordModal = useCallback(() => {
-        const ChangePasswordModalContent = () => {
-            const [tempCurrentPassword, setCurrentPassword] = useState('')
-            const [tempNewPassword, setNewPassword] = useState('')
-            const [tempConfirmPassword, setConfirmPassword] = useState('')
-            const [isConfirmDisabled, setConfirmDisabled] = useState(true)
-            const [error, setError] = useState('')
-
-            const validateInputs = (current: string, newPass: string, confirmPass: string) => {
-                setConfirmDisabled(
-                    current.trim().length < 3 ||
-                    newPass.trim().length < 3 ||
-                    confirmPass.trim().length < 3
-                )
-            }
-
-            const handleCurrentPasswordChange = (e: InputEvent) => {
-                const currentPassword = e.target.value
-                setCurrentPassword(currentPassword)
-                validateInputs(currentPassword, tempNewPassword, tempConfirmPassword)
-            }
-
-            const handleNewPasswordChange = (e: InputEvent) => {
-                const newPassword = e.target.value
-                setNewPassword(newPassword)
-                validateInputs(tempCurrentPassword, newPassword, tempConfirmPassword)
-            }
-
-            const handleConfirmPasswordChange = (e: InputEvent) => {
-                const confirmPassword = e.target.value
-                setConfirmPassword(confirmPassword)
-                validateInputs(tempCurrentPassword, tempNewPassword, confirmPassword)
-            }
-
-            const confirmEdit = async () => {
-                if (tempNewPassword.trim() !== tempConfirmPassword.trim()) {
-                    setError('Make sure both entered passwords exactly match.')
-                    return
-                }
-
-                await new Request(
-                    'accounts/password',
-                    (data: AccountResponse) => {
-                        setAccount(parseAccount(data))
-                        closeModal()
-                    },
-                    (error) => {
-                        if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
-                        setError(
-                            error.includes('Invalid cookies') 
-                            ? 'Session has expired. Please log out then log in again to update your password.'
-                            : error
-                        )
-                    }
-                ).patch({ 
-                    current_password: tempCurrentPassword,
-                    new_password: tempNewPassword 
-                })
-            }
-
-            return <>
-                <h2>Change Password</h2>
-                
-                <section className='modal-input-sec'>
-                    <label style={{ marginRight: 10 }}>Current password: </label>
-                    <input
-                        type='password'
-                        placeholder='Current password'
-                        value={tempCurrentPassword}
-                        onChange={handleCurrentPasswordChange}
-                        maxLength={32}
-                    />
-                </section>
-
-                <section className='modal-input-sec'>
-                    <label style={{ marginRight: 10 }}>New password: </label>
-                    <input
-                        type='password'
-                        placeholder='New password'
-                        value={tempNewPassword}
-                        onChange={handleNewPasswordChange}
-                        maxLength={32}
-                    />
-                </section>
-
-                <section className='modal-input-sec'>
-                    <label style={{ marginRight: 10 }}>Confirm password: </label>
-                    <input
-                        type='password'
-                        placeholder='Confirm password'
-                        value={tempConfirmPassword}
-                        onChange={handleConfirmPasswordChange}
-                        maxLength={32}
-                    />
-                </section>
-
-                {error && <p className='error'>{error}</p>}
-
-                <button
-                    onClick={confirmEdit}
-                    disabled={isConfirmDisabled}
-                    id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
-                >
-                    Confirm
-                </button>
-            </>
-        }
-
-        setModalContent(<ChangePasswordModalContent/>)
+        setModalContent(<ChangePasswordModalContent setAccount={setAccount} closeModal={closeModal}/>)
         openModal()
     }, [setAccount, openModal, closeModal, setModalContent])
 

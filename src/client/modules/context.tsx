@@ -1,21 +1,21 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
+import { ChangePasswordModalContent, Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
 import { parseSettings, isLoggedIn } from '@auth'
-import type { ContextProps, ContentName, Employee, Account, Shift, Schedule, Holiday, Settings, YearToSchedules, YearToSchedulesValidity, ScheduleOfIDs, WeekendDays, ReadonlyChildren, Interval, Subscription, SettingsResponse } from '@types'
+import type {
+    ContextProps, ContentName, Employee,
+    Account, Shift, Schedule, Holiday,
+    Settings, YearToSchedules, YearToSchedulesValidity,
+    ScheduleOfIDs, ReadonlyChildren, Subscription, SettingsResponse
+} from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
 export const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
 export const nullSub: Subscription = { id: -Infinity, plan: 'growth', createdAt: '', expiresAt: '' }
-export const nullAccount: Account = {
-    id: -Infinity,
-    email: '',
-    emailVerified: false,
-    subExpired: true
-}
+export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, passwordChanged: false, subExpired: true }
 
 export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,
@@ -263,6 +263,16 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             document.body.classList.add('logged-in')
             document.documentElement.classList.add('logged-in')
             if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
+            
+            if (!res.account.passwordChanged) {
+                const INITIAL_CONTENT = <>
+                    <h1>Welcome to your Shiftiatrics dashboard!</h1>
+                    <p>Before you start using this platform, please set your password and keep it secure.</p>
+                    <button onClick={() => setModalContent(<ChangePasswordModalContent setAccount={setAccount} closeModal={closeModal}/>)}>Next</button>
+                </>
+                setModalContent(INITIAL_CONTENT)
+                openModal()
+            }
         }
         fetchAllData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -299,7 +309,6 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     }, [])
 
     if (!hydrated) return null
-
     return (
         <dashboardContext.Provider value={{
             account, setAccount,

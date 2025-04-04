@@ -11,6 +11,7 @@ CREATE TABLE accounts (
     email VARCHAR(256) UNIQUE NOT NULL,
     hashed_password VARCHAR(128) NOT NULL,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    password_changed BOOLEAN NOT NULL DEFAULT FALSE,
     stripe_customer_id VARCHAR(128) UNIQUE NULL
 );
 

@@ -2,13 +2,12 @@ from typing import Optional
 from fastapi import APIRouter, Request, Response, Body
 from src.server.rate_limit import limiter
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
-from src.server.lib.models import Credentials, Cookies, EmployeeInfo, ShiftInfo, ScheduleInfo, HolidayInfo
+from src.server.lib.models import Credentials, Cookies, ScheduleInfo, HolidayInfo
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, return_account_and_sub
 from src.server.lib.types import SettingValue
 from src.server.db import (
     create_account, change_email, change_password, delete_account,
-    get_all_employees_of_account, create_employee, update_employee, delete_employee,
-    get_all_shifts_of_account, create_shift, update_shift, delete_shift,
+    get_all_employees_of_account, get_all_shifts_of_account,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
     get_settings_of_account, update_setting,
     get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday

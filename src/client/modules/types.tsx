@@ -73,6 +73,7 @@ export interface AccountResponse {
     account_id: number
     email: string
     email_verified: boolean
+    password_changed: boolean
     sub_expired: boolean
 }
 
@@ -94,6 +95,7 @@ export interface Account {
     id: number
     email: string
     emailVerified: boolean
+    passwordChanged: boolean
     subExpired: boolean
 }
 

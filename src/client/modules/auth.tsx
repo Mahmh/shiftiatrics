@@ -6,6 +6,7 @@ export const parseAccount = (data: AccountResponse): Account => ({
     id: data.account_id,
     email: data.email,
     emailVerified: data.email_verified,
+    passwordChanged: data.password_changed,
     subExpired: data.sub_expired
 })
 

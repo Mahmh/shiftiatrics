@@ -9,7 +9,7 @@ export default function Employees() {
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>
-                    <button onClick={() => openRequestChangeModal(setModalContent, openModal)}>Request Change</button>
+                    <button onClick={() => openRequestChangeModal('Register a Pediatrican', setModalContent, openModal)}>Request Change</button>
                 </section>
             </section>
             {employees.length === 0 && <p className='header-msg'>No pediatrician registered.</p>}

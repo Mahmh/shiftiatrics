@@ -14,18 +14,6 @@ class Cookies(BaseModel):
     available = lambda self: (self.account_id is not None and self.token is not None) and self.account_id > 0 and len(self.token) > 0
 
 
-class EmployeeInfo(BaseModel):
-    employee_name: str
-    min_work_hours: Optional[int] = Field(default=None)
-    max_work_hours: Optional[int] = Field(default=None)
-
-
-class ShiftInfo(BaseModel):
-    shift_name: str
-    start_time: str
-    end_time: str
-
-
 class ScheduleInfo(BaseModel):
     schedule: ScheduleType
     month: int
