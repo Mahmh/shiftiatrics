@@ -12,6 +12,7 @@ htmlcov/
 
 src/server/logs/
 src/server/engine/bin/
+src/server/scripts/example.sh
 
 src/client/next-env.d.ts
 src/client/node_modules/
