@@ -48,6 +48,7 @@ class Subscription(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
     stripe_subscription_id = Column(String(128), unique=True, nullable=False)
+    stripe_chkout_session_id = Column(String(128), unique=True, nullable=False)
     __repr__ = lambda self: f'Subscription({self.account_id})'
 
 

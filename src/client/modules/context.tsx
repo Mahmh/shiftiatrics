@@ -1,21 +1,22 @@
 'use client'
 import { useState, createContext, ReactNode, useEffect, useCallback, useMemo } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChangePasswordModalContent, Request, getEmployeeById, getUIDate, hasScheduleForMonth } from '@utils'
-import { parseSettings, isLoggedIn } from '@auth'
+import { parseSettings, isLoggedIn, parseSub } from '@auth'
 import type {
     ContextProps, ContentName, Employee,
     Account, Shift, Schedule, Holiday,
     Settings, YearToSchedules, YearToSchedulesValidity,
-    ScheduleOfIDs, ReadonlyChildren, Subscription, SettingsResponse
+    ScheduleOfIDs, ReadonlyChildren, Subscription, SettingsResponse,
+    SubscriptionResponse
 } from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
 const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
-export const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
-export const nullSub: Subscription = { id: -Infinity, plan: 'growth', createdAt: '', expiresAt: '' }
+const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
 export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, passwordChanged: false, subExpired: true }
+export const nullSub: Subscription = { id: -Infinity, plan: 'growth', createdAt: '', expiresAt: '' }
 
 export const dashboardContext = createContext<ContextProps>({
     content: defaultContent,
@@ -76,10 +77,11 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const [modalContent, setModalContent] = useState<ReactNode>(null)
     const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0)
     const [isMenuShown, setIsMenuShown] = useState(screenWidth > 950)
-    const router = useRouter()
     const darkThemeClassName = useMemo(() => settings.darkThemeEnabled ? 'dark-theme' : '', [settings.darkThemeEnabled])
     const openModal = useCallback(() => setIsModalOpen(true), [])
     const closeModal = useCallback(() => setIsModalOpen(false), [])
+    const router = useRouter()
+    const params = useSearchParams()
     const pathname = usePathname()
 
     /** Collects whether a schedule is valid  */
@@ -214,7 +216,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         ).get()
     }, [account.id, setSettings])
 
-    const checkIsSubExpiringSoon = useCallback((subscription: Subscription) => {
+    const _checkIsSubExpiringSoon = useCallback((subscription: Subscription) => {
         const now = new Date()
         const expiryDate = new Date(subscription.expiresAt)
         const timeDiff = expiryDate.getTime() - now.getTime()
@@ -232,11 +234,44 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         }
     }, [openModal, setModalContent])
 
+    const _handlePasswordChangeUponSignup = useCallback((passwordChanged: boolean) => {
+        if (passwordChanged) return
+        setModalContent(<>
+            <h1>Welcome to your Shiftiatrics dashboard!</h1>
+            <p>Before you start using this platform, please set your password and keep it secure.</p>
+            <button onClick={() => setModalContent(<ChangePasswordModalContent setAccount={setAccount} closeModal={closeModal}/>)}>Next</button>
+        </>)
+        openModal()
+    }, [openModal, setModalContent])
+
+    const _handleCheckoutSessionId = useCallback(async (chkoutSessionId: string, accountId: number) => {
+        await new Request(
+            `sub/create/${accountId}`,
+            (data: SubscriptionResponse) => {
+                setSubscription(parseSub(data))
+                setModalContent(<>
+                    <h1>Your subscription was created!</h1>
+                    <p>Now you can enjoy all of your custom-tailored features and start automatically generating your schedules.</p>
+                    <button onClick={closeModal}>Proceed</button>
+                </>)
+                openModal()
+            },
+            (error) => {
+                if (error.includes('session ID was processed')) {
+                    router.push('/dashboard')
+                } else {
+                    setModalContent(<p style={{ padding: 20 }}>Error occurred: {error}</p>)
+                    openModal()
+                }
+            }
+        ).post({ chkout_session_id: chkoutSessionId })
+    }, [openModal, setModalContent, setSubscription, router])
+
     useEffect(() => {
         setHydrated(true)
         const fetchAllData = async () => {
             if (!['/dashboard', '/login', '/signup'].includes(pathname)) return
-
+    
             const res = await isLoggedIn()
             if (res === false) {
                 document.body.classList.remove('logged-in')
@@ -244,38 +279,32 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
                 if (pathname === '/dashboard') router.push('/')
                 return
             }
-
+    
             if (['/login', '/signup'].includes(pathname)) {
                 router.push('/dashboard')
                 return
             }
-
+    
             setAccount(res.account)
             setSubscription(res.subscription)
-            if (res.subscription !== null) checkIsSubExpiringSoon(res.subscription)
-
+            if (res.subscription !== null) _checkIsSubExpiringSoon(res.subscription)
+    
             const loadedEmployees = await loadEmployees(res.account)
             await loadShifts(res.account)
             await loadSchedules(res.account, loadedEmployees)
             await loadHolidays(res.account)
             await loadSettings(res.account)
-
+    
             document.body.classList.add('logged-in')
             document.documentElement.classList.add('logged-in')
             if (darkThemeClassName) document.documentElement.classList.add(darkThemeClassName)
-            
-            if (!res.account.passwordChanged) {
-                const INITIAL_CONTENT = <>
-                    <h1>Welcome to your Shiftiatrics dashboard!</h1>
-                    <p>Before you start using this platform, please set your password and keep it secure.</p>
-                    <button onClick={() => setModalContent(<ChangePasswordModalContent setAccount={setAccount} closeModal={closeModal}/>)}>Next</button>
-                </>
-                setModalContent(INITIAL_CONTENT)
-                openModal()
-            }
+    
+            _handlePasswordChangeUponSignup(res.account.passwordChanged)
+    
+            const chkoutSessionId = params.get('chkout_session_id')
+            if (pathname === '/dashboard' && chkoutSessionId !== null) _handleCheckoutSessionId(chkoutSessionId, res.account.id)
         }
         fetchAllData()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname])
 
     useEffect(() => {
@@ -284,7 +313,6 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             if (account.id && employees.length > 0) await loadSchedules(account, employees)
         }
         regenerateSchedules()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname, account, employees, shifts, holidays])
 
     useEffect(() => {

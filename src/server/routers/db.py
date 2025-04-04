@@ -10,7 +10,8 @@ from src.server.db import (
     get_all_employees_of_account, get_all_shifts_of_account,
     get_all_schedules_of_account, create_schedule, update_schedule, delete_schedule,
     get_settings_of_account, update_setting,
-    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday
+    get_all_holidays_of_account, create_holiday, update_holiday, delete_holiday,
+    create_sub
 )
 
 # Init
@@ -20,6 +21,7 @@ shift_router = APIRouter(prefix='/shifts')
 schedule_router = APIRouter(prefix='/schedules')
 holiday_router = APIRouter(prefix='/holidays')
 settings_router = APIRouter(prefix='/settings')
+sub_router = APIRouter(prefix='/sub')
 
 
 # Endpoints
@@ -150,3 +152,12 @@ async def read_settings(account_id: int, request: Request) -> dict:
 @endpoint()
 async def update_one_setting(account_id: int, request: Request, setting: str = Body(..., embed=True), new_value: SettingValue = Body(..., embed=True)) -> dict:
     return update_setting(account_id, setting, new_value)
+
+
+
+## Subscription
+@sub_router.post('/create/{account_id}')
+@limiter.limit('10/minute')
+@endpoint()
+async def create_subscription(account_id: int, request: Request, chkout_session_id: str = Body(..., embed=True)) -> dict:
+    return create_sub(account_id, chkout_session_id)[1]

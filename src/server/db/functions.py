@@ -1,9 +1,10 @@
 from typing import Any, Optional
 from textwrap import dedent
-from datetime import date, time, datetime
+from datetime import date, time, datetime, timezone
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy.dialects.postgresql import array
+import stripe
 
 from src.server.lib.utils import log, parse_date, parse_time, utcnow
 from src.server.lib.models import Credentials, Cookies, ScheduleType, ContactUsSubmissionData
@@ -461,29 +462,39 @@ def check_sub_expired(account_id: int, *, session: _SessionType) -> bool:
 
 
 @dbsession(commit=True)
-def create_sub(
-    account_id: int,
-    plan: PlanName,
-    expires_at: datetime,
-    stripe_subscription_id: str,
-    stripe_customer_id: str,
-    *,
-    session: _SessionType
-) -> tuple[Account, Subscription]:
+def create_sub(account_id: int, chkout_session_id: str, *,  session: _SessionType) -> tuple[Account, Subscription]:
     """Creates a subscription for an account in DB."""
-    if plan not in PLAN_NAMES: raise ValueError(f'Unsupported plan: "{plan}"')
     account = _check_account(account_id, session=session)
+
+    if session.query(Subscription).filter(Subscription.stripe_chkout_session_id == chkout_session_id).first():
+        raise ValueError('Checkout session ID was processed.')
+
+    # Retrieve the Stripe Checkout Session
+    stripe_session = stripe.checkout.Session.retrieve(chkout_session_id)
+    if stripe_session.mode != 'subscription': raise ValueError('Session is not a subscription.')
+
+    # Retrieve the actual subscription details
+    stripe_subscription_id = stripe_session.subscription
+    stripe_customer_id = stripe_session.customer
+    stripe_sub = stripe.Subscription.retrieve(stripe_subscription_id)
+
+    # Retrieve plan
+    price_obj = stripe_sub['items']['data'][0]['price']
+    lookup_key = price_obj.get('lookup_key')
+    if not lookup_key: raise LookupError('Missing lookup_key in Stripe price.')
+    plan = lookup_key.lower()
+
     sub = Subscription(
-        account_id=account.account_id,
+        account_id=account_id,
         plan=plan,
-        expires_at=expires_at,
-        stripe_subscription_id=stripe_subscription_id
+        expires_at=datetime.fromtimestamp(stripe_sub.current_period_end, tz=timezone.utc),
+        stripe_subscription_id=stripe_subscription_id,
+        stripe_chkout_session_id=chkout_session_id
     )
     session.add(sub)
     account.stripe_customer_id = stripe_customer_id
     log(f'Created {sub} for customer ID {stripe_customer_id}', 'subscription')
     return account, sub
-
 
 
 

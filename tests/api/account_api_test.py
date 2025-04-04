@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.models import Credentials
+from src.server.db import log_in_account
 from tests.utils import ctxtest, login, signup, CRED
 
 # Init
@@ -46,13 +47,12 @@ def test_update_email():
 
 
 def test_update_password():
-    account = login(client).json()['account']
-    old_password_hash = account['hashed_password']
-
+    old_password_hash = log_in_account(CRED)[0].hashed_password
     payload = {'current_password': CRED.password, 'new_password': 'thenewpass'}
     response = client.patch('/accounts/password', json=payload)
+    new_password_hash = log_in_account(Credentials(email=CRED.email, password=payload['new_password']))[0].hashed_password
     assert response.status_code == 200
-    assert response.json()['hashed_password'] != old_password_hash
+    assert new_password_hash != old_password_hash
 
 
 def test_update_password_wrong_current():

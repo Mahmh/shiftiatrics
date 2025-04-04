@@ -150,3 +150,11 @@ export interface Subscription {
     createdAt: string
     expiresAt: string
 }
+
+export interface SubscriptionResponse {
+    subscription_id: number
+    account_id: number
+    plan: PlanName
+    created_at: string
+    expires_at: string
+}

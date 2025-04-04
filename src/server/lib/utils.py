@@ -64,7 +64,10 @@ def get_token_expiry_datetime() -> datetime:
 def todict(obj: object, **additional_info) -> Optional[dict]:
     """Converts a SQLAlchemy object to a dictionary."""
     if obj is None: return None
-    return {col.name: getattr(obj, col.name) for col in obj.__table__.columns} | additional_info
+    result = {col.name: getattr(obj, col.name) for col in obj.__table__.columns}
+    result |= additional_info
+    if 'hashed_password' in result: del result['hashed_password']
+    return result
 
 
 def todicts(objs: list[object]) -> list[Optional[dict]]:

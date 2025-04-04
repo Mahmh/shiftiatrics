@@ -28,7 +28,7 @@ def test_create_employee(setup_and_teardown):
         capture_output=True,
         text=True
     )
-    print(result.stdout, result.stderr)
+    print(result.stdout, result.stderr, end='')
 
     emps = get_all_employees_of_account(account_id)
     assert result.returncode == 0
@@ -52,7 +52,7 @@ def test_create_shift(setup_and_teardown):
         capture_output=True,
         text=True
     )
-    print(result.stdout, result.stderr)
+    print(result.stdout, result.stderr, end='')
 
     shifts = get_all_shifts_of_account(account_id)
     assert result.returncode == 0
@@ -61,49 +61,36 @@ def test_create_shift(setup_and_teardown):
     assert shifts[0].shift_name == 'D'
 
 
-def test_create_sub(setup_and_teardown):
-    cookies = setup_and_teardown
-    account_id = cookies.account_id
+def test_create_checkout_url():
+    STARTER_PLAN_PRICE_ID = 'price_1R57GALcPBGZy9UcVui6CMG9'
 
+    # Mock checkout session creation
     result = subprocess.run(
         [
-            'python3', '-m', 'src.server.scripts.create_sub',
-            '--account_id', str(account_id),
-            '--plan', 'starter',
-            '--expires_at', '2025-11-23',
-            '--stripe_customer_id', 'cus_test123',
-            '--stripe_subscription_id', 'sub_test123'
+            'python3', '-m', 'src.server.scripts.create_checkout_url',
+            '--price_id', STARTER_PLAN_PRICE_ID
         ],
         capture_output=True,
         text=True
     )
-    print(result.stdout, result.stderr)
+    print(result.stdout, result.stderr, end='')
 
-    sub = log_in_account_with_cookies(cookies)[1]
     assert result.returncode == 0
     assert '✅' in result.stdout
-    assert sub is not None
-    assert sub.plan.value == 'starter'
 
 
 @pytest.mark.parametrize('script, args', [
     (
         'src.server.scripts.create_employee',
-        ['--account_id', '999999', '--employee_name', 'Ghost', '--min_work_hours', '100', '--max_work_hours', '160']
+        ['--account_id', '9999', '--employee_name', 'Ghost', '--min_work_hours', '100', '--max_work_hours', '160']
     ),
     (
         'src.server.scripts.create_shift',
-        ['--account_id', '999999', '--shift_name', 'G', '--start_time', '09:00', '--end_time', '17:00']
+        ['--account_id', '9999', '--shift_name', 'G', '--start_time', '09:00', '--end_time', '17:00']
     ),
     (
-        'src.server.scripts.create_sub',
-        [
-            '--account_id', '999999',
-            '--plan', 'starter',
-            '--expires_at', (utcnow() + timedelta(days=30)).isoformat(),
-            '--stripe_customer_id', 'cus_ghost',
-            '--stripe_subscription_id', 'sub_ghost'
-        ]
+        'src.server.scripts.create_checkout_url',
+        ['--price_id', 'price_id_invalid']
     )
 ])
 def test_scripts_invalid_account(script, args):
@@ -112,6 +99,6 @@ def test_scripts_invalid_account(script, args):
         capture_output=True,
         text=True
     )
-    print(result.stdout, result.stderr)
-    assert result.returncode == 0  # Script runs, but fails internally
+    print(result.stdout, result.stderr, end='')
+    assert result.returncode == 0
     assert '❌' in result.stdout or '❌' in result.stderr

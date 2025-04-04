@@ -30,7 +30,8 @@ CREATE TABLE subscriptions (
     plan pricing_plan_enum NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL,
-    stripe_subscription_id VARCHAR(128) UNIQUE NOT NULL
+    stripe_subscription_id VARCHAR(128) UNIQUE NOT NULL,
+    stripe_chkout_session_id VARCHAR(128) UNIQUE NOT NULL
 );
 
 CREATE TABLE employees (

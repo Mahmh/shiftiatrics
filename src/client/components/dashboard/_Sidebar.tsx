@@ -13,7 +13,7 @@ import closeIcon from '@icons/white_close.png'
 import SubscriptionIcon from '@icons/subscription.png'
 
 export default function Sidebar() {
-    const { content, setContent, darkThemeClassName, screenWidth, isMenuShown, setIsMenuShown } = useContext(dashboardContext)
+    const { subscription, content, setContent, darkThemeClassName, screenWidth, isMenuShown, setIsMenuShown } = useContext(dashboardContext)
 
     const SidebarButton = ({ name, src, contentName=name }: { name: string, src: StaticImageData, contentName?: string }) => {
         const handleClick = () => {
@@ -36,7 +36,7 @@ export default function Sidebar() {
                 <SidebarButton name='Holidays' src={holidayIcon}/>
             </section>
             <section id='sidebar-lower'>
-                <SidebarButton name='Subscription' src={SubscriptionIcon}/>
+                {subscription !== null && <SidebarButton name='Subscription' src={SubscriptionIcon}/>}
                 <SidebarButton name='Settings' src={settingsIcon}/>
             </section>
         </nav>

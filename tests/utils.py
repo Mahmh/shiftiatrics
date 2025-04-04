@@ -83,7 +83,7 @@ class FakeStripeCheckoutSession:
 @dataclass
 class FakeStripeSubscription:
     unit_amount: int = 4900
-    lookup_key: str = 'standard'
+    lookup_key: str = 'advanced'
     status: str = 'active'
     period_end: Optional[datetime] = None
     items: Optional[dict[str, Any]] = None  # Allow override
