@@ -212,7 +212,7 @@ export default function Schedules() {
             const currentYearSchedules = schedules.get(selectedYear)
             const currentSchedule = currentYearSchedules?.[selectedMonth]
             if (!currentSchedule) { alert('No schedule available to export.'); return }
-            const exporter = new ScheduleExporter(currentSchedule.schedule, shifts, selectedYear, selectedMonth, settings.weekendDays)
+            const exporter = new ScheduleExporter(currentSchedule.schedule, shifts, employees, selectedYear, selectedMonth, settings.weekendDays)
             switch (format) {
                 case 'xlsx': exporter.exportExcel(); break
                 case 'csv': exporter.exportCSV(); break

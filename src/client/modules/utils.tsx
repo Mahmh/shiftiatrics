@@ -528,13 +528,22 @@ export class Request {
 export class ScheduleExporter {
     private readonly scheduleToExport: Schedule['schedule']
     private readonly shifts: Shift[]
+    private readonly employees: Employee[]
     private readonly year: number
     private readonly month: number
     private readonly weekendDays: WeekendDays
 
-    public constructor(scheduleToExport: Schedule['schedule'], shifts: Shift[], year: number, month: number, weekendDays: WeekendDays) {
+    public constructor(
+        scheduleToExport: Schedule['schedule'],
+        shifts: Shift[],
+        employees: Employee[],
+        year: number,
+        month: number,
+        weekendDays: WeekendDays
+    ) {
         this.scheduleToExport = scheduleToExport
         this.shifts = shifts
+        this.employees = employees
         this.year = year
         this.month = month
         this.weekendDays = weekendDays
@@ -638,7 +647,22 @@ export class ScheduleExporter {
                     record['(Total)'] = (record['(Total)'] as number) + 1 // Increment total count
                 })
             })
-        })        
+        })
+
+        // Ensure all registered employees are included in the export, even if they did not work any shifts
+        this.employees.forEach(emp => {
+            if (!employeeShiftMap.has(emp.name)) {
+                const record: Record<string, string | number> = { employee: emp.name }
+                for (let i = 1; i <= daysInMonth; i++) {
+                    record[`day${i}`] = '-' // Default to hyphen for no shifts
+                }
+                uniqueShifts.forEach(shift => {
+                    record[shift] = 0
+                })
+                record['(Total)'] = 0
+                employeeShiftMap.set(emp.name, record)
+            }
+        })
 
         // Add shift count headers for each unique shift
         uniqueShifts.forEach((shift, index) => {
