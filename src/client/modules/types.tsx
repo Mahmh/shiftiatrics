@@ -80,8 +80,8 @@ export interface Account {
 export interface Employee {
     id: number
     name: string
-    minWorkHours: number
-    maxWorkHours: number
+    minWorkHours: number | null
+    maxWorkHours: number | null
 }
 
 export interface Shift {
@@ -186,8 +186,8 @@ export interface SubscriptionResponse {
 export interface EmployeeResponse {
     employee_id: number
     employee_name: string
-    min_work_hours: number
-    max_work_hours: number
+    min_work_hours: number | null
+    max_work_hours: number | null
 }
 
 export interface ShiftResponse {

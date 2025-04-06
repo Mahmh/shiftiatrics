@@ -178,21 +178,30 @@ export default function Schedules() {
 
             return scheduleAvailable
             ? <>
-                <h2 style={{ textAlign: 'center' }}>Total Shifts and Work Hours per Pediatrician This Month</h2>
+                <h2 style={{ textAlign: 'center' }}>
+                    Total Shifts and Work Hours per Pediatrician This Month
+                </h2>
                 <section id='modal-content' style={{ textAlign: 'left', margin: '0 auto', marginBottom: 5 }}>
-                    {!loading 
-                        ? shiftCounts.size > 0 
-                            ? Array.from(shiftCounts.entries()).map(([emp, numShifts], i) => (
-                                <li key={i}>
-                                    <b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts ({workHours.get(emp) || 0} hours)
-                                </li>
-                            )) 
-                            : <p>
+                    {!loading ? (
+                        employees.length > 0 ? (
+                            employees.map((emp, i) => {
+                                const numShifts = shiftCounts.get(emp) || 0;
+                                const hours = workHours.get(emp) || 0;
+                                return (
+                                    <li key={i}>
+                                        <b>{emp?.name || 'Unknown'}</b>: {numShifts} shifts ({hours} hours)
+                                    </li>
+                                );
+                            })
+                        ) : (
+                            <p>
                                 No pediatrician was assigned a shift in this month.
                                 Please ensure you have entered correct information, then regenerate the schedule.
                             </p>
-                        : <p>Loading...</p>
-                    }
+                        )
+                    ) : (
+                        <p>Loading...</p>
+                    )}
                 </section>
             </>
             : <>

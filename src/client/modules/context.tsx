@@ -14,7 +14,7 @@ import { parseEmployee, parseHoliday, parseSettings, parseShift, parseStripeInvo
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
-const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: Infinity, maxWorkHours: Infinity }
+const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: null, maxWorkHours: null }
 export const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
 export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, passwordChanged: false, subExpired: true }
 export const nullSub: Subscription = { id: -Infinity, plan: 'growth', createdAt: '', expiresAt: '' }

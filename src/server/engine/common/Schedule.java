@@ -30,26 +30,37 @@ public record Schedule(Employee[][][] schedule, List<Employee> employees, List<S
 
     /** Prints the schedule to stdout. */
     public void print() {
-        // Print the schedule with shift names
+        // Print each day of the schedule on its own line
         for (int day = 0; day < schedule.length; day++) {
-            System.out.println("Day " + (day + 1) + ":");
+            StringBuilder line = new StringBuilder("Day " + (day + 1) + ":\t");
+
             for (int shift = 0; shift < schedule[day].length; shift++) {
                 String shiftName = shifts.get(shift).name();
-                System.out.print("  " + shiftName + ": ");
+                line.append(shiftName).append(" [");
+
                 if (schedule[day][shift].length == 0) {
-                    System.out.println("No employees assigned");
+                    line.append("None");
                 } else {
-                    for (Employee emp : schedule[day][shift]) {
-                        System.out.print(employees.stream().filter(e -> e.id() == emp.id()).findFirst().get().name() + " ");
+                    for (int i = 0; i < schedule[day][shift].length; i++) {
+                        Employee emp = schedule[day][shift][i];
+                        String name = employees.stream()
+                            .filter(e -> e.id() == emp.id())
+                            .findFirst()
+                            .map(Employee::name)
+                            .orElse("Unknown");
+                        line.append(name);
+                        if (i < schedule[day][shift].length - 1) line.append(", ");
                     }
-                    System.out.println();
                 }
+                line.append("] \t");
             }
+
+            System.out.println(line.toString().trim());
         }
 
+        // Print shift counts and work hours
         HashMap<Integer, Integer> shiftCounts = getShiftCountsOfEmployees();
         HashMap<Integer, Integer> workHours = getWorkHoursOfEmployees();
-
         System.out.println("\nShift counts and work hours:");
         for (Employee employee : employees) {
             int shiftCount = shiftCounts.getOrDefault(employee.id(), 0);

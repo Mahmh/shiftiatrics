@@ -5,8 +5,8 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Create a new employee')
     parser.add_argument('--account_id', type=int, required=True, help='Account ID')
     parser.add_argument('--employee_name', required=True, help='Employee name')
-    parser.add_argument('--min_work_hours', type=int, required=True, help='Minimum work hours per month')
-    parser.add_argument('--max_work_hours', type=int, required=True, help='Maximum work hours per month')
+    parser.add_argument('--min_work_hours', type=int, help='Minimum work hours per month')
+    parser.add_argument('--max_work_hours', type=int, help='Maximum work hours per month')
     args = parser.parse_args()
 
     try:

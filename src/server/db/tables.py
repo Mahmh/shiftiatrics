@@ -57,8 +57,8 @@ class Employee(Base):
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     employee_id = Column(Integer, primary_key=True, autoincrement=True)
     employee_name = Column(String(40), nullable=False)
-    min_work_hours = Column(Integer, nullable=False)
-    max_work_hours = Column(Integer, nullable=False)
+    min_work_hours = Column(Integer, nullable=True)
+    max_work_hours = Column(Integer, nullable=True)
     __repr__ = lambda self: f'Employee({self.employee_id})'
 
 

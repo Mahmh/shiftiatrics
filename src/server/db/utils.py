@@ -112,7 +112,7 @@ def _check_schedule(schedule_id: int, *, session: _SessionType) -> Schedule:
     return schedule
 
 
-def _check_holiday(holiday_id: int, *, session: _SessionType) -> Schedule:
+def _check_holiday(holiday_id: int, *, session: _SessionType) -> Holiday:
     """Returns an schedule if it exists using its ID."""
     holiday = session.query(Holiday).filter_by(holiday_id=holiday_id).first()
     if not holiday: raise NonExistent('holiday', holiday_id)

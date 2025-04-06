@@ -4,16 +4,16 @@ import server.engine.algorithms.*;
 import java.util.List;
 import java.util.Arrays;
 
-/** Class for generating shift schedules for employees. */
+/** Demo class */
 public class Main {
     public static void main(String[] args) {
         List<Employee> employees = List.of(
-            new Employee(1, "Alice", 140, 168),
-            new Employee(2, "Bob", 140, 168),
-            new Employee(3, "Jack", 140, 168),
-            new Employee(4, "Diana", 140, 168),
-            new Employee(5, "Sam", 140, 168),
-            new Employee(6, "Emily", 140, 168)
+            new Employee(1, "Alice"),
+            new Employee(2, "Bob"),
+            new Employee(3, "Jack"),
+            new Employee(4, "Diana"),
+            new Employee(5, "Sam"),
+            new Employee(6, "Emily")
         );
 
         List<Shift> shifts = List.of(
@@ -23,7 +23,7 @@ public class Main {
         );
 
         List<Holiday> holidays = List.of(
-            new Holiday("Holiday", Arrays.asList(4), "2025-10-04", "2025-10-18") // Diana on holiday Oct 4–5
+            new Holiday("Holiday", Arrays.asList(4), "2025-10-01", "2025-10-30") // Diana on annual leave holiday
         );
 
         Schedule schedule = A1.generate(employees, shifts, holidays, 30, 2025, 10);

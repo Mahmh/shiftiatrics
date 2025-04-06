@@ -246,7 +246,14 @@ def get_employees(account_id: int, *, session: _SessionType) -> list[Employee]:
 
 
 @dbsession(commit=True)
-def create_employee(account_id: int, employee_name: str, min_work_hours: int, max_work_hours: int, *, session: _SessionType) -> Employee:
+def create_employee(
+    account_id: int,
+    employee_name: str,
+    min_work_hours: Optional[int] = None,
+    max_work_hours: Optional[int] = None,
+    *,
+    session: _SessionType
+) -> Employee:
     """Creates an employee for the given account ID."""
     _check_account(account_id, session=session)
     min_work_hours, max_work_hours = _check_work_hours(min_work_hours, max_work_hours)

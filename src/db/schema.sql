@@ -38,8 +38,8 @@ CREATE TABLE employees (
     account_id INT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     employee_id SERIAL PRIMARY KEY,
     employee_name VARCHAR(40) NOT NULL,
-    min_work_hours INT NOT NULL,
-    max_work_hours INT NOT NULL
+    min_work_hours INT NULL,
+    max_work_hours INT NULL
 );
 
 CREATE TABLE shifts (

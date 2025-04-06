@@ -4,6 +4,6 @@ if ! pytest tests -sv --cov=. --cov-report=html --cov-fail-under=85; then
 fi
 
 cd tests/engine
-if ! sh run_engine_tests.sh; then
+if ! sh run_engine_tests.bash; then
     exit 1
 fi

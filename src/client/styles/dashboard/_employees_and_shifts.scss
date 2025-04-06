@@ -8,6 +8,8 @@
         flex-wrap: wrap;
 
         .dashboard-card {
+            @include vertical-flex;
+            @include breakpoint(950px) { min-width: auto }
             min-width: 400px;
             .dashboard-card-details { padding-bottom: 10px }
         }

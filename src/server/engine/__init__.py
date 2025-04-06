@@ -78,7 +78,15 @@ class Engine:
 
     def _prepare_employees(self, employees: list[Employee]) -> JArray:
         """Creates a list of Employee objects & convert it to Java ArrayList."""
-        emp_list = [self.Employee(e.employee_id, JString(e.employee_name), e.min_work_hours, e.max_work_hours) for e in employees]
+        emp_list = [
+            self.Employee(
+                e.employee_id,
+                JString(e.employee_name),
+                e.min_work_hours or -1,
+                e.max_work_hours or -1
+            )
+            for e in employees
+        ]
         java_emp_list = java.util.ArrayList()
         for employee in emp_list: java_emp_list.add(employee)
         return java_emp_list
