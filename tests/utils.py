@@ -49,7 +49,10 @@ def _reset_whole_db() -> None:
 
 
 def ctxtest(*, disable_rate_limiting: bool = True):
-    """Decorator to reset the database and optionally disable rate limiting for tests."""
+    """
+    Decorator to reset the database after executing a test and optionally disable rate limiting for tests.
+    Its wrapped function is executed before and optionally tears down after every test.
+    """
     def decorator(testfunc):
         @pytest.fixture(scope='function', autouse=True)
         @wraps(testfunc)

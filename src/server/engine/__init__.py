@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 from jpype import java, JPackage, JInt, JString, JArray
+import os
 from src.server.lib.models import ScheduleType
 from src.server.db.tables import Employee, Shift, Holiday
 
@@ -11,7 +12,11 @@ class Engine:
         self.Employee = common.Employee
         self.Shift = common.Shift
         self.Holiday = common.Holiday
-        self._generate = getattr(algorithms, f'A{account_id}').generate
+        try:
+            self._generate = getattr(algorithms, f'A{account_id}').generate
+        except AttributeError as e:
+            raise NotImplementedError(f'Algorithm for account {account_id} is not yet implemented.') from e
+        
 
 
     def generate(self, employees: list[Employee], shifts: list[Shift], holidays: list[Holiday], num_days: int, year: int, month: int) -> ScheduleType:

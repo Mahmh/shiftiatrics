@@ -74,7 +74,7 @@ export const QUERY_TYPES = [
     'Billing & Payment Issue',
     'Refund Request',
     'Account Access Issue',
-    'Unable to Log In',
+    'Implement Algorithm for Account',
     'Integration Request',
     'Customization Inquiry',
     'Data & Privacy Concerns',

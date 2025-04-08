@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName } from '@utils'
+import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, openRequestChangeModal } from '@utils'
 import { MIN_YEAR, MAX_YEAR } from '@const'
 import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
 import closeIcon from '@icons/close.png'
@@ -23,6 +23,20 @@ export default function Schedules() {
         () => hasScheduleForMonth(schedules, selectedYear, selectedMonth),
         [schedules, selectedYear, selectedMonth]
     )
+
+    const handleUnimplementedAlgorithmError = useCallback((error: string) => {
+        if (error.includes('not yet implemented')) {
+            setModalContent(<>
+                <h1>Cannot Generate Schedule</h1>
+                <p>
+                    The auto-scheduling algorithm is not yet implemented for this account.
+                    Please contact us to implement this system for you.
+                </p>
+                <button onClick={() => openRequestChangeModal('Implement Algorithm for Account', setModalContent, openModal)}>Contact Us</button>
+            </>)
+            openModal()
+        }
+    }, [setModalContent, openModal])
 
     /** Stores the schedule in DB */
     const storeSchedule = useCallback(async (schedule: ScheduleOfIDs) => {
@@ -272,12 +286,13 @@ export default function Schedules() {
         // Send a request to generate a schedule
         await new Request(
             `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}&year=${selectedYear}&month=${selectedMonth+1}`,
-            (data: Employee['id'][][][]) => { newSchedule = data }
+            (data: Employee['id'][][][]) => { newSchedule = data },
+            handleUnimplementedAlgorithmError
         ).get()
     
         await storeSchedule(newSchedule)
         setLoading(false)
-    }, [account.id, employees.length, loading, openGenerateScheduleModal, selectedMonth, selectedYear, shifts.length, storeSchedule])
+    }, [account.id, employees.length, loading, openGenerateScheduleModal, selectedMonth, selectedYear, shifts.length, storeSchedule, handleUnimplementedAlgorithmError])
 
     /** Generates the schedule again then overwrites the old one in DB */
     const regenerateSchedule = useCallback(async () => {
@@ -302,12 +317,13 @@ export default function Schedules() {
         // Send a request to regenerate the schedule
         await new Request(
             `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}&year=${selectedYear}&month=${selectedMonth+1}`,
-            (data: Employee['id'][][][]) => { newSchedule = data }
+            (data: Employee['id'][][][]) => { newSchedule = data },
+            handleUnimplementedAlgorithmError
         ).get()
 
         await updateSchedule(scheduleId, newSchedule)
         setLoading(false)
-    }, [account.id, employees.length, loading, schedules, selectedMonth, selectedYear, setScheduleValidity, shifts.length, updateSchedule, openGenerateScheduleModal])
+    }, [account.id, employees.length, loading, schedules, selectedMonth, selectedYear, setScheduleValidity, shifts.length, updateSchedule, openGenerateScheduleModal, handleUnimplementedAlgorithmError])
 
 
     useEffect(() => {
