@@ -31,12 +31,16 @@ services:
       - backend
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./src/nginx
+      dockerfile: Dockerfile
     container_name: nginx_c
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./src/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./src/nginx/default.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - client
       - server

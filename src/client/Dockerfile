@@ -9,7 +9,7 @@ RUN npm ci
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# ✅ FIXED: copy only the content of client/
+# FIXED: copy only the content of client/
 COPY --from=deps /app/node_modules ./node_modules
 COPY src/client/ ./
 ENV NEXT_TELEMETRY_DISABLED 1

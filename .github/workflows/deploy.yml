@@ -1,0 +1,40 @@
+name: Deploy Frontend to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code (just for context, not used on VPS)
+        uses: actions/checkout@v3
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "🔄 Navigating to app directory..."
+            cd /var/www/app
+
+            echo "📦 Force-pulling latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "🔐 Injecting .env..."
+            echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+
+            echo "♻️ Rebuilding and restarting client container only..."
+            docker compose build client
+            docker compose up -d client
+
+            echo "✅ Deployment complete!"

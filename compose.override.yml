@@ -19,3 +19,13 @@ services:
       - /app/node_modules  # Prevent host-node_modules conflicts
     ports:
       - "3000:3000"
+
+  nginx:
+    build:
+      context: ./src/nginx
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./src/nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"

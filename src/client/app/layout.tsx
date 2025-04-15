@@ -1,5 +1,6 @@
 import '@styles'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { DashboardProvider } from '@context'
 
 export const metadata: Metadata = {
@@ -11,7 +12,9 @@ export default function RootLayout({ children }: Readonly<{children: React.React
     return (
         <html lang='en'>
             <body>
-                <DashboardProvider>{children}</DashboardProvider>
+                <Suspense fallback={<div>Loading app...</div>}>
+                    <DashboardProvider>{children}</DashboardProvider>
+                </Suspense>
             </body>
         </html>
     )
