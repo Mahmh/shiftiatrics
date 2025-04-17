@@ -10,7 +10,7 @@ from src.server.lib.utils import log, parse_date, parse_time, utcnow, todict, to
 from src.server.lib.models import Credentials, Cookies, ScheduleType, ContactUsSubmissionData
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import SettingValue
-from src.server.lib.constants import WEB_SERVER_URL, COMPANY_EMAIL
+from src.server.lib.constants import WEB_SERVER_URL, SUPPORT_EMAIL
 from src.server.lib.emails import send_email
 
 from .tables import Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
@@ -88,7 +88,7 @@ def change_password(cookies: Cookies, current_password: str, new_password: str, 
 
 
 @dbsession(commit=True)
-async def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
+async def request_delete_account(cookies: Cookies, *, session: _SessionType) -> None:
     """Deletes an account and all of its associated objects, and cancels its subscription."""
     account = _validate_cookies(cookies, session=session)
     await send_email(
@@ -97,10 +97,17 @@ async def delete_account(cookies: Cookies, *, session: _SessionType) -> None:
             <h2>A customer has requested their account to be deleted.</h2>
             <p>Customer email: {account.email}</p>
         '''),
-        recipients=[COMPANY_EMAIL],
+        recipients=[SUPPORT_EMAIL],
         reply_to=[account.email]
     )
     log(f'Account to be deleted: {account}', 'account')
+
+
+@dbsession(commit=True)
+def delete_account(account_id: int, *, session: _SessionType) -> None:
+    """This functions is used by `src.server.scripts.delete_account` to manually delete an account."""
+    account = session.get(Account, account_id)
+    session.delete(account)
 
 
 @dbsession()
@@ -168,7 +175,8 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
     await send_email(
         subject='Reset Your Password',
         body=f'<a href="{reset_link}">Click here to reset your password</a>',
-        recipients=[account.email]
+        recipients=[account.email],
+        noreply=True
     )
 
     return safe_msg
@@ -569,7 +577,8 @@ async def contact(data: ContactUsSubmissionData, cookies: Cookies, *, session) -
 
     await send_email(
         subject='New Contact Us Submission',
-        recipients=[COMPANY_EMAIL],
+        recipients=[SUPPORT_EMAIL],
         body=_get_email_body(data),
-        reply_to=[data.email]
+        reply_to=[data.email],
+        noreply=True
     )

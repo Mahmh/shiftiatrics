@@ -1,2 +1,2 @@
 # #!/bin/bash
-sudo COMPOSE_BAKE=true docker compose down -v
+sudo COMPOSE_BAKE=true docker compose down

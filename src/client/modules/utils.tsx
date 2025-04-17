@@ -389,7 +389,7 @@ export const openRequestChangeModal = (queryType: QueryType, setModalContent: (c
                 return
             }
     
-            await new Request('contact', undefined, setErrMsg).post({ query_type: formData.queryType, description: formData.description })
+            await new Request('contact', undefined, setErrMsg, false).post({ query_type: formData.queryType, description: formData.description })
             setSubmitted(true)
         }
 
@@ -437,7 +437,6 @@ export const openRequestChangeModal = (queryType: QueryType, setModalContent: (c
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export class Request {
-    //// Properties ////
     private readonly endpointUrl: string
     private readonly responseCallback: (data: any) => any
     private readonly errorHandler: (error: string) => void
@@ -504,7 +503,7 @@ export class Request {
      * @param method REST API Method
      * @returns The appropriate payload for the method
      */
-    private getPayload(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', requestData: object): Record<string, string|object|undefined> {
+    private getPayload(method: 'GET'|'POST'|'PATCH'|'DELETE', requestData: object): Record<string, string|object|undefined> {
         const payload: Record<string, string|object|undefined> = {
             method: method,
             headers: method !== 'GET' ? { 'Content-Type': 'application/json' } : undefined,

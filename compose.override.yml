@@ -25,6 +25,7 @@ services:
       context: ./src/nginx
       dockerfile: Dockerfile.dev
     volumes:
+      - ./src/nginx/default.dev.conf:/etc/nginx/conf.d/default.conf:ro
       - ./src/nginx/certs:/etc/nginx/certs:ro
     ports:
       - "80:80"

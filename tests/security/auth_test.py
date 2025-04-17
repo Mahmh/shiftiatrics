@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 import pytest
 from src.server.main import app
@@ -35,7 +36,8 @@ def test_log_in_account_nonexistent_user():
         log_in_account(nonexistent_credentials)
 
 
-def test_request_reset_password(setup_and_teardown):
+@patch('src.server.db.functions.send_email', new_callable=AsyncMock, return_value=None)
+def test_request_reset_password(_, setup_and_teardown):
     account_id, _ = setup_and_teardown
     response = request_reset_password()
     assert response.status_code == 200
@@ -44,7 +46,8 @@ def test_request_reset_password(setup_and_teardown):
         assert _get_token_from_account(account_id, 'reset', session=session) is not None
 
 
-def test_reset_password(setup_and_teardown):
+@patch('src.server.db.functions.send_email', new_callable=AsyncMock, return_value=None)
+def test_reset_password(_, setup_and_teardown):
     account_id, _ = setup_and_teardown
     new_password = 'newtestpass'
     request_reset_password()
@@ -60,7 +63,8 @@ def test_reset_password(setup_and_teardown):
     assert account.email == CRED.email
 
 
-def test_request_verify_email(setup_and_teardown):
+@patch('src.server.db.functions.send_email', new_callable=AsyncMock, return_value=None)
+def test_request_verify_email(_, setup_and_teardown):
     account_id, _ = setup_and_teardown
     response = request_verify_email()
     assert response.status_code == 200
@@ -69,7 +73,8 @@ def test_request_verify_email(setup_and_teardown):
         assert _get_token_from_account(account_id, 'verify', session=session) is not None
 
 
-def test_verify_email(setup_and_teardown):
+@patch('src.server.db.functions.send_email', new_callable=AsyncMock, return_value=None)
+def test_verify_email(_, setup_and_teardown):
     account_id, _ = setup_and_teardown
     request_verify_email()
 

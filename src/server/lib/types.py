@@ -9,7 +9,13 @@ TokenType: TypeAlias = Literal['auth', 'reset', 'verify']
 PlanName: TypeAlias = Literal['starter', 'growth', 'advanced', 'enterprise']
 QueryType: TypeAlias = Literal[
     'General Inquiry',
-    'Custom Plan',
+    'Starter Plan',
+    'Growth Plan',
+    'Advanced Plan',
+    'Enterprise Plan',
+    'Change My Plan',
+    'Register a Pediatrican',
+    'Register a Daily Shift',
     'Technical Issue',
     'Bug Report',
     'Feature Suggestion',
@@ -19,7 +25,7 @@ QueryType: TypeAlias = Literal[
     'Billing & Payment Issue',
     'Refund Request',
     'Account Access Issue',
-    'Unable to Log In',
+    'Implement Algorithm for Account',
     'Integration Request',
     'Customization Inquiry',
     'Data & Privacy Concerns',

@@ -1,9 +1,8 @@
-from typing import Any, Optional, LiteralString
+from typing import Any, Optional
 from functools import wraps
 from fastapi import Request, Response
-from fastapi.responses import RedirectResponse
 from src.server.db import Account, Subscription, Employee, Shift, Schedule, Holiday, Settings, log_in_account_with_cookies, check_sub_expired
-from src.server.lib.constants import WEB_SERVER_URL, COOKIE_DOMAIN, TOKEN_EXPIRY_SECONDS
+from src.server.lib.constants import COOKIE_DOMAIN, TOKEN_EXPIRY_SECONDS
 from src.server.lib.models import Cookies
 from src.server.lib.utils import log, errlog, todict, todicts
 from src.server.lib.exceptions import CookiesUnavailable, InvalidCookies, EndpointAuthError, NonExistent, EmailTaken
@@ -85,13 +84,6 @@ def store_cookies(cookies: Cookies, response: Response) -> None:
     log(f'Storing cookies: {cookies}', 'auth')
     _set_cookie('account_id', cookies.account_id, response)
     _set_cookie('auth_token', cookies.token, response)
-
-
-def store_cookies_then_redirect(cookies: Cookies, endpoint_url: LiteralString = '/dashboard') -> RedirectResponse:
-    """Stores the HttpOnly cookies in the client before redirecting, then redirects the client."""
-    response = RedirectResponse(WEB_SERVER_URL + endpoint_url)
-    store_cookies(cookies, response)
-    return response
 
 
 def return_account_and_sub(account: Account, sub: Optional[Subscription] = None) -> dict:

@@ -5,8 +5,11 @@ _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # path with respect t
 _locate = lambda x: os.path.join(_CURRENT_DIR, x)
 
 # Net
-BACKEND_SERVER_URL = os.getenv('BACKEND_SERVER_URL', 'http://localhost:8000')
-WEB_SERVER_URL = os.getenv('WEB_SERVER_URL', 'http://localhost:3000')
+BACKEND_SERVER_URL = os.getenv('BACKEND_SERVER_URL')
+WEB_SERVER_URL = os.getenv('WEB_SERVER_URL')
+
+if not (BACKEND_SERVER_URL and WEB_SERVER_URL):
+    raise ValueError('BACKEND_SERVER_URL and WEB_SERVER_URL are None')
 
 # DB
 PSQL_HOST = os.getenv('POSTGRES_HOST', 'localhost')
@@ -30,11 +33,12 @@ COOKIE_DOMAIN = None
 MAIL_USERNAME = os.getenv('MAIL_USERNAME')
 MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
 MAIL_FROM = os.getenv('MAIL_FROM')
-MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
+MAIL_PORT = int(os.getenv('MAIL_PORT', 465))
 MAIL_SERVER = os.getenv('MAIL_SERVER')
 MAIL_TLS = bool(int(os.getenv('MAIL_TLS', '1')))
 MAIL_SSL = bool(int(os.getenv('MAIL_SSL', '0'))) 
-COMPANY_EMAIL = os.getenv('COMPANY_EMAIL')
+SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL')
+NOREPLY_EMAIL = os.getenv('NOREPLY_EMAIL')
 
 # Subscription
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
@@ -47,5 +51,6 @@ else:
 
 # Misc
 ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
-LOG_DIR = _locate('../logs/')
 SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')
+LOG_DIR = _locate('../logs/')
+os.makedirs(LOG_DIR, exist_ok=True)

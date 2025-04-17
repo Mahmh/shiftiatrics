@@ -6,7 +6,7 @@ from src.server.lib.models import Credentials, Cookies, ScheduleInfo, HolidayInf
 from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, return_account_and_sub
 from src.server.lib.types import SettingValue
 from src.server.db import (
-    create_account, change_email, change_password, delete_account, get_account_data,
+    create_account, change_email, change_password, request_delete_account, get_account_data,
     get_employees, get_shifts,
     get_schedules, create_schedule, update_schedule, delete_schedule,
     get_settings, update_setting,
@@ -53,7 +53,7 @@ async def change_password_endpoint(request: Request, current_password: Optional[
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def delete_existing_account(request: Request, response: Response) -> dict:
-    await delete_account(get_cookies(request))
+    await request_delete_account(get_cookies(request))
     clear_cookies(response)
     return {'detail': 'Account deleted successfully'}
 
