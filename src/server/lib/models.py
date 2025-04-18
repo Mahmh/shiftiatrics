@@ -28,6 +28,7 @@ class HolidayInfo(BaseModel):
 
 
 class ContactUsSubmissionData(BaseModel):
+    account_id: Optional[int] = Field(default=None)
     name: Optional[str] = Field(default=None)
     email: Optional[str] = Field(default=None)
     query_type: QueryType

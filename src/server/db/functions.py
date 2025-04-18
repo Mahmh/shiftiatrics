@@ -10,7 +10,7 @@ from src.server.lib.utils import log, parse_date, parse_time, utcnow, todict, to
 from src.server.lib.models import Credentials, Cookies, ScheduleType, ContactUsSubmissionData
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import SettingValue
-from src.server.lib.constants import WEB_SERVER_URL, SUPPORT_EMAIL
+from src.server.lib.constants import WEB_SERVER_URL, SUPPORT_EMAIL, PROD_URL
 from src.server.lib.emails import send_email
 
 from .tables import Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
@@ -73,12 +73,15 @@ def change_email(cookies: Cookies, new_email: str, *, session: _SessionType) -> 
 
 
 @dbsession(commit=True)
-def change_password(cookies: Cookies, current_password: str, new_password: str, *, session: _SessionType) -> Account:
+def change_password(cookies: Cookies, new_password: str, current_password: Optional[str] = None, require_current: bool = True, *, session: _SessionType) -> Account:
     """Updates the account's password after validation."""
+    if current_password is None: assert require_current is False, 'Please provide the current password.'
+
     account = _validate_cookies(cookies, session=session)
 
-    if not _verify_password(current_password, account.hashed_password):
-        raise ValueError('Incorrect current password.')
+    if current_password is not None:
+        if not _verify_password(current_password, account.hashed_password):
+            raise ValueError('Incorrect current password.')
 
     new_password = _sanitize_password(new_password)
     account.hashed_password = _hash_password(new_password)
@@ -173,8 +176,15 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
     reset_link = f'{WEB_SERVER_URL}/reset-password?token={reset_token}'
 
     await send_email(
-        subject='Reset Your Password',
-        body=f'<a href="{reset_link}">Click here to reset your password</a>',
+        subject='Reset Your Shiftiatrics Password',
+        body=dedent(f'''
+            <html>
+            <body>
+                <p>You have sent a password reset request: <a href="{reset_link}">Click here to reset your password</a></p>
+                <p>If you have problems with accessing that link, do not hesitate to <a href="{PROD_URL}/support/contact">contact us.</a></p>
+            </body>
+            </html>
+        '''),
         recipients=[account.email],
         noreply=True
     )
@@ -573,6 +583,7 @@ async def contact(data: ContactUsSubmissionData, cookies: Cookies, *, session) -
     if data.email is None:
         cookies = _validate_cookies(cookies, session=session)
         account = _check_account(cookies.account_id, session=session)
+        data.account_id = account.account_id
         data.email = account.email
 
     await send_email(

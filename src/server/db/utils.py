@@ -382,10 +382,11 @@ def _get_email_body(data: ContactUsSubmissionData) -> str:
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <h2 style="color: #0056b3;">New Contact Us Submission</h2>
             <table style="border-collapse: collapse; width: 100%;">
-                <tr><td><strong>Name:</strong></td><td>{data.name}</td></tr>
-                <tr><td><strong>Email:</strong></td><td>{data.email}</td></tr>
-                <tr><td><strong>Query Type:</strong></td><td>{data.query_type}</td></tr>
-                <tr><td><strong>Message:</strong></td></tr>
+                <tr><td><b>Account ID:</b></td><td>{data.account_id}</td></tr>
+                <tr><td><b>Name:</b></td><td>{data.name}</td></tr>
+                <tr><td><b>Email:</b></td><td>{data.email}</td></tr>
+                <tr><td><b>Query Type:</b></td><td>{data.query_type}</td></tr>
+                <tr><td><b>Message:</b></td></tr>
                 <tr><td colspan="2" style="border-top: 1px solid #ccc; padding-top: 10px;">{data.description}</td></tr>
             </table>
         </body>

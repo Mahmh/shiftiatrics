@@ -45,8 +45,15 @@ async def change_email_endpoint(request: Request, email: str = Body(..., embed=T
 @account_router.patch('/password')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-async def change_password_endpoint(request: Request, current_password: Optional[str] = Body(None, embed=True), new_password: str = Body(..., embed=True)) -> dict:
-    return change_password(get_cookies(request), current_password, new_password)
+async def change_password_endpoint(request: Request, current_password: str = Body(None, embed=True), new_password: str = Body(..., embed=True)) -> dict:
+    return change_password(get_cookies(request), new_password, current_password)
+
+
+@account_router.patch('/password_upon_signup')
+@limiter.limit(DEFAULT_RATE_LIMIT)
+@endpoint()
+async def change_password_upon_signup(request: Request, new_password: str = Body(..., embed=True)) -> dict:
+    return change_password(get_cookies(request), new_password, require_current=False)
 
 
 @account_router.delete('/')

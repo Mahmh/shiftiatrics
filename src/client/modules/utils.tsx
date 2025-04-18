@@ -266,7 +266,10 @@ export const getUIDate = (date: Date) => (
 
 
 /** Modal content for changing an account's password */
-export const ChangePasswordModalContent = ({ setAccount, closeModal }: { setAccount: (account: Account) => void, closeModal: () => void }) => {
+export const ChangePasswordModalContent = (
+    { requireCurrent=true, setAccount, closeModal }:
+    { requireCurrent?: boolean, setAccount: (account: Account) => void, closeModal: () => void }
+) => {
     const [tempCurrentPassword, setCurrentPassword] = useState('')
     const [tempNewPassword, setNewPassword] = useState('')
     const [tempConfirmPassword, setConfirmPassword] = useState('')
@@ -274,26 +277,27 @@ export const ChangePasswordModalContent = ({ setAccount, closeModal }: { setAcco
     const [error, setError] = useState('')
 
     const validateInputs = (current: string, newPass: string, confirmPass: string) => {
-        setConfirmDisabled(
-            current.trim().length < 3 ||
-            newPass.trim().length < 3 ||
-            confirmPass.trim().length < 3
-        )
+        const isValid =
+            (!requireCurrent || current.trim().length >= 3) &&
+            newPass.trim().length >= 3 &&
+            confirmPass.trim().length >= 3
+
+        setConfirmDisabled(!isValid)
     }
 
-    const handleCurrentPasswordChange = (e: InputEvent) => {
+    const handleCurrentPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const currentPassword = e.target.value
         setCurrentPassword(currentPassword)
         validateInputs(currentPassword, tempNewPassword, tempConfirmPassword)
     }
 
-    const handleNewPasswordChange = (e: InputEvent) => {
+    const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newPassword = e.target.value
         setNewPassword(newPassword)
         validateInputs(tempCurrentPassword, newPassword, tempConfirmPassword)
     }
 
-    const handleConfirmPasswordChange = (e: InputEvent) => {
+    const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const confirmPassword = e.target.value
         setConfirmPassword(confirmPassword)
         validateInputs(tempCurrentPassword, tempNewPassword, confirmPassword)
@@ -305,72 +309,79 @@ export const ChangePasswordModalContent = ({ setAccount, closeModal }: { setAcco
             return
         }
 
+        const payload: Record<string, string> = { new_password: tempNewPassword.trim() }
+        if (requireCurrent) payload.current_password = tempCurrentPassword.trim()
+
         await new Request(
-            'accounts/password',
+            requireCurrent ? 'accounts/password' : 'accounts/password_upon_signup',
             (data: AccountResponse) => {
                 setAccount(parseAccount(data))
                 closeModal()
             },
             (error) => {
-                if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
+                if (error.includes('429')) {
+                    setError(TOO_MANY_REQS_MSG)
+                    return
+                }
                 setError(
-                    error.includes('Invalid cookies') 
-                    ? 'Session has expired. Please log out then log in again to update your password.'
-                    : error
+                    error.includes('Invalid cookies')
+                        ? 'Session has expired. Please log out then log in again to update your password.'
+                        : error
                 )
             }
-        ).patch({ 
-            current_password: tempCurrentPassword,
-            new_password: tempNewPassword 
-        })
+        ).patch(payload)
     }
 
-    return <>
-        <h2>Change Password</h2>
-        
-        <section className='modal-input-sec'>
-            <label style={{ marginRight: 10 }}>Current password: </label>
-            <input
-                type='password'
-                placeholder='Current password'
-                value={tempCurrentPassword}
-                onChange={handleCurrentPasswordChange}
-                maxLength={32}
-            />
-        </section>
+    return (
+        <>
+            <h2>Change Password</h2>
 
-        <section className='modal-input-sec'>
-            <label style={{ marginRight: 10 }}>New password: </label>
-            <input
-                type='password'
-                placeholder='New password'
-                value={tempNewPassword}
-                onChange={handleNewPasswordChange}
-                maxLength={32}
-            />
-        </section>
+            {requireCurrent && (
+                <section className="modal-input-sec">
+                    <label style={{ marginRight: 10 }}>Current password: </label>
+                    <input
+                        type="password"
+                        placeholder="Current password"
+                        value={tempCurrentPassword}
+                        onChange={handleCurrentPasswordChange}
+                        maxLength={32}
+                    />
+                </section>
+            )}
 
-        <section className='modal-input-sec'>
-            <label style={{ marginRight: 10 }}>Confirm password: </label>
-            <input
-                type='password'
-                placeholder='Confirm password'
-                value={tempConfirmPassword}
-                onChange={handleConfirmPasswordChange}
-                maxLength={32}
-            />
-        </section>
+            <section className="modal-input-sec">
+                <label style={{ marginRight: 10 }}>New password: </label>
+                <input
+                    type="password"
+                    placeholder="New password"
+                    value={tempNewPassword}
+                    onChange={handleNewPasswordChange}
+                    maxLength={32}
+                />
+            </section>
 
-        {error && <p className='error'>{error}</p>}
+            <section className="modal-input-sec">
+                <label style={{ marginRight: 10 }}>Confirm password: </label>
+                <input
+                    type="password"
+                    placeholder="Confirm password"
+                    value={tempConfirmPassword}
+                    onChange={handleConfirmPasswordChange}
+                    maxLength={32}
+                />
+            </section>
 
-        <button
-            onClick={confirmEdit}
-            disabled={isConfirmDisabled}
-            id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
-        >
-            Confirm
-        </button>
-    </>
+            {error && <p className="error">{error}</p>}
+
+            <button
+                onClick={confirmEdit}
+                disabled={isConfirmDisabled}
+                id={isConfirmDisabled ? 'disabled-confirm-btn' : ''}
+            >
+                Confirm
+            </button>
+        </>
+    )
 }
 
 

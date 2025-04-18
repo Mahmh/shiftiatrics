@@ -48,7 +48,7 @@ def test_change_password(setup_and_teardown):
     cookies = setup_and_teardown
     current_password = CRED.password
     new_password = 'NewPass!456'
-    modified_account = change_password(cookies, current_password, new_password)
+    modified_account = change_password(cookies, new_password, current_password)
 
     assert not _verify_password(current_password, modified_account.hashed_password)
     assert _verify_password(new_password, modified_account.hashed_password)
@@ -56,11 +56,11 @@ def test_change_password(setup_and_teardown):
 
 def test_change_password_invalid_current(setup_and_teardown):
     cookies = setup_and_teardown
-    incorrect_password = 'WrongPass!'
+    incorrect_current = 'WrongPass!'
     new_password = 'NewPass!456'
 
     with pytest.raises(ValueError, match='Incorrect current password'):
-        change_password(cookies, incorrect_password, new_password)
+        change_password(cookies, new_password, incorrect_current)
 
 
 def test_two_users_have_different_emails_and_no_subs():

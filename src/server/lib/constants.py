@@ -50,6 +50,7 @@ else:
     stripe.api_key = STRIPE_SECRET_KEY
 
 # Misc
+PROD_URL = 'https://shiftiatrics.com'
 ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
 SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')
 LOG_DIR = _locate('../logs/')

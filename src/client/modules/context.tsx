@@ -192,7 +192,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         setModalContent(<>
             <h1>Welcome to your Shiftiatrics dashboard!</h1>
             <p>Before you start using this platform, please set your password and keep it secure.</p>
-            <button onClick={() => setModalContent(<ChangePasswordModalContent setAccount={setAccount} closeModal={closeModal}/>)}>Next</button>
+            <button onClick={() => setModalContent(<ChangePasswordModalContent requireCurrent={false} setAccount={setAccount} closeModal={closeModal}/>)}>Next</button>
         </>)
         openModal()
     }, [openModal, setModalContent])
