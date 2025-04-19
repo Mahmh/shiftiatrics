@@ -39,6 +39,7 @@ MAIL_TLS = bool(int(os.getenv('MAIL_TLS', '1')))
 MAIL_SSL = bool(int(os.getenv('MAIL_SSL', '0'))) 
 SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL')
 NOREPLY_EMAIL = os.getenv('NOREPLY_EMAIL')
+SYSTEM_EMAIL = os.getenv('SYSTEM_EMAIL')
 
 # Subscription
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
@@ -51,7 +52,10 @@ else:
 
 # Misc
 PROD_URL = 'https://shiftiatrics.com'
-ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
+
 SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')
+DB_SCHEMA_PATH = _locate('../../db/schema.sql')
+
+ENABLE_LOGGING = bool(int(os.getenv('ENABLE_LOGGING', '0')))
 LOG_DIR = _locate('../logs/')
 os.makedirs(LOG_DIR, exist_ok=True)

@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
-from src.server.db import create_employee
+from src.server.db import create_team, create_employee
 from tests.utils import ctxtest, signup, create_holiday, delete_holiday
 
 # Init
@@ -9,8 +9,9 @@ client = TestClient(app)
 @ctxtest()
 def setup_and_teardown():
     account_id = signup(client).json()['account']['account_id']
-    create_employee(account_id, employee_name='testemp1', min_work_hours= 130, max_work_hours=170)
-    create_employee(account_id, employee_name='testemp2', min_work_hours= 120, max_work_hours=165)
+    create_team(account_id, 'Test Team')
+    create_employee(account_id, 'testemp1', 1, 130, 170)
+    create_employee(account_id, 'testemp2', 1, 120, 165)
     holiday_id = create_holiday(client, account_id).json()['holiday_id']
     yield account_id, holiday_id
 

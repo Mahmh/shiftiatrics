@@ -63,9 +63,9 @@ def test_update_password_wrong_current():
     assert 'Incorrect current password' in response.json()['error']
 
 
-def test_delete_existing_account():
+def test_request_delete_account():
     response = client.request('DELETE', '/accounts')
     assert response.status_code == 200
     assert response.cookies.get('account_id') == None
     assert response.cookies.get('auth_token') == None
-    assert response.json()['detail'] == 'Account deleted successfully'
+    assert response.json()['detail'] == 'Account deletion request sent'

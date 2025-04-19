@@ -1,4 +1,4 @@
 #!/bin/bash
-sh compile.sh
+bash compile.bash
 echo '-------------------'
 java -jar engine.jar

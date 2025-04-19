@@ -1,6 +1,6 @@
 from src.server.lib.utils import parse_date
 from src.server.db import (
-    create_account,
+    create_account, create_team,
     create_employee, delete_employee,
     create_holiday, delete_holiday, get_holidays, update_holiday
 )
@@ -12,8 +12,9 @@ HOLIDAY = {'holiday_name': 'Holiday', 'assigned_to': [1, 2], 'start_date': '2023
 @ctxtest()
 def setup_and_teardown():
     account_id = create_account(CRED)[0].account_id
-    create_employee(account_id, 'testemp1', 120, 150)
-    create_employee(account_id, 'testemp2', 130, 160)
+    create_team(account_id, 'Test Team')
+    create_employee(account_id, 'testemp1', 1, 120, 150)
+    create_employee(account_id, 'testemp2', 1, 130, 160)
     holiday_id = create_holiday(account_id, **HOLIDAY).holiday_id
     yield account_id, holiday_id
 

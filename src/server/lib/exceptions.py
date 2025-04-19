@@ -15,7 +15,7 @@ class InvalidCredentials(Exception):
 
 class NonExistent(Exception):
     """Exception for non-existent entities."""
-    def __init__(self, entity: Literal['account', 'token', 'employee', 'shift', 'schedule', 'holiday', 'setting'], identifier: str|int):
+    def __init__(self, entity: Literal['account', 'token', 'team', 'employee', 'shift', 'schedule', 'holiday', 'setting'], identifier: str|int):
         self.entity = entity
         msg = ''
         if type(identifier) is int: msg = f'{entity.title()} with ID "{identifier}" does not exist.'
@@ -39,3 +39,8 @@ class EndpointAuthError(Exception):
     """Exception for unsuccessful authentication using a request to a back-end server's endpoint."""
     def __init__(self):
         super().__init__(f'Authentication required')
+
+
+class NotFoundForEngineInput(ValueError):
+    def __init__(self, entity: Literal['schedule', 'shift'], account_id: int, team_id: int, year: int, month: int):
+        super().__init__(f'No {entity} found, given {account_id=}, {year=}, {month=}, {team_id=}.')

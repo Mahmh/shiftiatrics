@@ -1,11 +1,11 @@
-package server.engine.algorithms;
+package server.engine.algorithms.A1;
 import server.engine.common.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 
-public class A1 {
+public class T1 {
     private static final record ShiftSlot(int day, int shiftIdx, Shift shift) {}
     private static final EnumSet<DayOfWeek> weekendDays = EnumSet.of(DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
     private static final List<String> rotationPattern = Arrays.asList("D", "E", "N", null, null);
@@ -17,6 +17,7 @@ public class A1 {
      * Each employee follows the pattern with a staggered offset.
      * When an employee is unavailable (holiday), the next eligible employee fills in,
      * strictly respecting the rotation pattern.
+     * @notice month is in the range [0,11].
      * @return 3D array where each day and shift contains an array of assigned employees.
      */
     public static Schedule generate(List<Employee> employees, List<Shift> shifts, List<Holiday> holidays, int numDays, int year, int month) {
@@ -43,7 +44,7 @@ public class A1 {
     
         for (int day = 0; day < numDays; day++) {
             final int currentDay = day;
-            LocalDate currentDate = LocalDate.of(year, month, currentDay + 1);
+            LocalDate currentDate = LocalDate.of(year, month+1, currentDay+1);
             boolean isNewWeek = currentDate.getDayOfWeek() == DayOfWeek.SUNDAY;
             if (isNewWeek) shuffledEmployees.forEach(e -> totalWeeklyShifts.put(e, 0));
     
@@ -124,13 +125,13 @@ public class A1 {
                 int patternPos = (day - 1 + shuffledEmployees.indexOf(employee)) % rotationPattern.size();
                 if (day > 0 && "N".equalsIgnoreCase(rotationPattern.get(patternPos))) continue;
 
-                LocalDate date = LocalDate.of(year, month, day + 1);
+                LocalDate date = LocalDate.of(year, month+1, day+1);
                 for (int shiftIdx = 0; shiftIdx < shifts.size(); shiftIdx++) {
                     Shift shift = shifts.get(shiftIdx);
 
                     if (!shift.name().equalsIgnoreCase("E")) continue;
-                    if (Utils.isOnHoliday(employee, holidays, date)) continue;
-                    if (Utils.isAlreadyAssigned(employee, schedule, day)) continue;
+                    if (employee.isOnHoliday(holidays, date)) continue;
+                    if (employee.isAlreadyAssigned(schedule, day)) continue;
                     if (schedule[day][shiftIdx] == null) schedule[day][shiftIdx] = new Employee[0];
                     if (schedule[day][shiftIdx].length >= maxEmpsInShift) continue;
 
@@ -187,8 +188,8 @@ public class A1 {
         int day
     ) {
         return (
-            !Utils.isOnHoliday(employee, holidays, currentDate) &&
-            !Utils.isAlreadyAssigned(employee, schedule, day) &&
+            !employee.isOnHoliday(holidays, currentDate) &&
+            !employee.isAlreadyAssigned(schedule, day) &&
             totalWeeklyShifts.get(employee) < maxShiftsPerWeek &&
             todayAssignments.get(shiftIdx).size() < 1 &&
             (totalWorkMinutes.get(employee) + shift.length()) / 60 <= maxWorkHours

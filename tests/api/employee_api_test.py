@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
-from src.server.db import create_employee
+from src.server.db import create_team, create_employee
 from tests.utils import ctxtest, signup, EMPLOYEE
 
 # Init
@@ -9,6 +9,7 @@ client = TestClient(app)
 @ctxtest()
 def setup_and_teardown():
     account_id = signup(client).json()['account']['account_id']
+    create_team(account_id, 'Test Team')
     create_employee(account_id, **EMPLOYEE)
     yield account_id
 

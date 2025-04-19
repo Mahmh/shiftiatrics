@@ -4,7 +4,7 @@ import type { ContentName } from '@types'
 import { dashboardContext } from '@context'
 import { Icon } from '@utils'
 import scheduleIcon from '@icons/schedule.png'
-import employeeIcon from '@icons/employee.png'
+import staffIcon from '@icons/staff.png'
 import shiftIcon from '@icons/shift.png'
 import holidayIcon from '@icons/holiday.png'
 import settingsIcon from '@icons/settings.png'
@@ -31,7 +31,7 @@ export default function Sidebar() {
         <nav id='sidebar' className={darkThemeClassName}>
             <section id='sidebar-upper'>
                 <SidebarButton name='Schedules' src={scheduleIcon}/>
-                <SidebarButton name='Pediatricians' contentName='Employees' src={employeeIcon}/>
+                <SidebarButton name='Staff' src={staffIcon}/>
                 <SidebarButton name='Shifts per Day' contentName='Shifts' src={shiftIcon}/>
                 <SidebarButton name='Holidays' src={holidayIcon}/>
             </section>

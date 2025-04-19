@@ -7,7 +7,7 @@ export default function Dashboard() {
     useEffect(() => {
         setMetadata({
             title: 'Dashboard | Shiftiatrics',
-            description: 'Control and generate shift schedules for your registered pediatricians'
+            description: 'Control and generate shift schedules for your registered ER staff members'
         })
     }, [])
     return <DashboardPage/>

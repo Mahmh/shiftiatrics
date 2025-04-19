@@ -30,6 +30,10 @@
         }
     }
 
+    #header-upper #back-to-team-selector-btn {
+        @include circle(40px);
+    }
+
     .card-container {
         @include themed-bgcolor('background');
         @include breakpoint(2510px) { margin-left: 130px }
@@ -93,6 +97,33 @@
                     tr:nth-child(even) { @include themed-bgcolor('light-gray', 'secondary-blue') }
                 }
             }
+        }
+    }
+
+
+    .team-selector {
+        @include breakpoint(1110px) { padding-top: 140px }
+        @include breakpoint(1250px) { section { max-width: unset !important } }
+        padding: 50px;
+        padding-top: 90px;
+        h1 { @include themed-color('primary-text', 'light-gray') }
+
+        .team-cards {
+            @include vertical-flex;
+            gap: 10px;
+        }
+
+        section {
+            @include themed-bgcolor('primary-blue');
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 50vw;
+            padding: 10px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            h2 { @include themed-color('background', 'primary-text') }
+            &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue') }
         }
     }
 }

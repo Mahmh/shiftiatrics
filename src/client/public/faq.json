@@ -4,11 +4,11 @@
         "questions": [
             {
                 "question": "What does this scheduling app do?",
-                "answer": "Our platform automates shift scheduling for pediatricians, ensuring fair, optimized, and conflict-free work schedules."
+                "answer": "Our platform automates shift scheduling for ER staff members, ensuring fair, optimized, and conflict-free work schedules."
             },
             {
                 "question": "Who can use this app?",
-                "answer": "Pediatricians, hospital administrators, HR teams, and clinic managers."
+                "answer": "ER staff members, hospital administrators, HR teams, and clinic managers."
             },
             {
                 "question": "How does the app ensure fairness in scheduling?",
@@ -42,7 +42,7 @@
             },
             {
                 "question": "Can I set preferences for my shifts?",
-                "answer": "Yes, doctors can set preferences for night shifts, weekends, or specific availability. Holidays can be assigned to selected pediatricians, and the system will keep that in mind when generating a schedule."
+                "answer": "Yes, doctors can set preferences for night shifts, weekends, or specific availability. Holidays can be assigned to selected ER staff members, and the system will keep that in mind when generating a schedule."
             },
             {
                 "question": "Can I get notifications about upcoming shifts?",
@@ -59,11 +59,11 @@
         "questions": [
             {
                 "question": "Does the app ensure compliance with labor laws and pediatric shift regulations?",
-                "answer": "Currently, users can set the minimum and maximum work hours for each pediatrician registered. In the future, we are considering implementing various global and regional labor laws to suit your needs."
+                "answer": "Currently, users can set the minimum and maximum work hours for each ER staff member registered. In the future, we are considering implementing various global and regional labor laws to suit your needs."
             },
             {
                 "question": "How does the app prevent over-scheduling?",
-                "answer": "The system enforces fair distribution and flags potential burnout risks. All pediatricians are given equal (or approximately equal) number of work hours."
+                "answer": "The system enforces fair distribution and flags potential burnout risks. All ER staff members are given equal (or approximately equal) number of work hours."
             }
         ]
     },

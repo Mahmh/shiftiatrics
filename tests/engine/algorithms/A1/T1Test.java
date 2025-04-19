@@ -1,21 +1,21 @@
-package tests.engine.algorithms;
-import tests.engine.*;
-import server.engine.algorithms.A1;
+package tests.engine.algorithms.A1;
+import server.engine.algorithms.A1.T1;
 import server.engine.common.*;
+import tests.engine.*;
 import java.util.List;
 import java.util.stream.Stream;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class A1Test {
+public class T1Test {
     public static void main(String[] args) {
         AtomicInteger passed = new AtomicInteger(0), failed = new AtomicInteger(0);
 
         // Run tests in parallel
         Stream.<Runnable>of(
-            () -> Utils.runTest(A1Test::testBasicRotationPattern, "testBasicRotationPattern", passed, failed),
-            () -> Utils.runTest(A1Test::testAssignmentsRespectsMaxWorkHours, "testAssignmentsRespectsMaxWorkHours", passed, failed),
-            () -> Utils.runTest(A1Test::testPostProcessingFixesUnderworkedEmployees, "testPostProcessingFixesUnderworkedEmployees", passed, failed),
-            () -> Utils.runTest(A1Test::testAllShiftsCovered, "testAllShiftsCovered", passed, failed)
+            () -> Utils.runTest(T1Test::testBasicRotationPattern, "testBasicRotationPattern", passed, failed),
+            () -> Utils.runTest(T1Test::testAssignmentsRespectsMaxWorkHours, "testAssignmentsRespectsMaxWorkHours", passed, failed),
+            () -> Utils.runTest(T1Test::testPostProcessingFixesUnderworkedEmployees, "testPostProcessingFixesUnderworkedEmployees", passed, failed),
+            () -> Utils.runTest(T1Test::testAllShiftsCovered, "testAllShiftsCovered", passed, failed)
         ).parallel().forEach(Runnable::run);
 
         System.out.println(passed.get() + " passed, " + failed.get() + " failed");
@@ -29,7 +29,7 @@ public class A1Test {
         List<Shift> shifts = setup.initShifts(true);        // 3 shifts (D, E, N)
         List<Holiday> holidays = setup.initHolidays();
 
-        A1.generate(employees, shifts, holidays, 10, 2025, 4); // April 2025
+        T1.generate(employees, shifts, holidays, 10, 2025, 4); // April 2025
     }
 
     private static void testAssignmentsRespectsMaxWorkHours() {
@@ -38,7 +38,7 @@ public class A1Test {
         List<Shift> shifts = setup.initShifts(true);
         List<Holiday> holidays = setup.initHolidays();
 
-        Schedule schedule = A1.generate(employees, shifts, holidays, 30, 2025, 4);
+        Schedule schedule = T1.generate(employees, shifts, holidays, 30, 2025, 4);
         var workHours = schedule.getWorkHoursOfEmployees();
 
         for (Employee e : employees) {
@@ -55,7 +55,7 @@ public class A1Test {
         List<Shift> shifts = setup.initShifts(true);
         List<Holiday> holidays = setup.initHolidays();
 
-        Schedule schedule = A1.generate(employees, shifts, holidays, 30, 2025, 4);
+        Schedule schedule = T1.generate(employees, shifts, holidays, 30, 2025, 4);
         var workHours = schedule.getWorkHoursOfEmployees();
 
         for (Employee e : employees) {
@@ -72,7 +72,7 @@ public class A1Test {
         List<Shift> shifts = setup.initShifts(true);
         List<Holiday> holidays = setup.initHolidays();
 
-        Schedule schedule = A1.generate(employees, shifts, holidays, 7, 2025, 4);
+        Schedule schedule = T1.generate(employees, shifts, holidays, 7, 2025, 4);
         Employee[][][] data = schedule.schedule();
 
         for (int day = 0; day < data.length; day++) {

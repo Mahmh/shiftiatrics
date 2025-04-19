@@ -1,6 +1,6 @@
 package server.engine;
 import server.engine.common.*;
-import server.engine.algorithms.*;
+import server.engine.algorithms.A1.T1;
 import java.util.List;
 import java.util.Arrays;
 
@@ -26,7 +26,7 @@ public class Main {
             new Holiday("Holiday", Arrays.asList(4), "2025-10-01", "2025-10-30") // Diana on annual leave holiday
         );
 
-        Schedule schedule = A1.generate(employees, shifts, holidays, 30, 2025, 10);
+        Schedule schedule = T1.generate(employees, shifts, holidays, 30, 2025, 9);
         schedule.print();
     }
 }

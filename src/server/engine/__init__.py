@@ -1,22 +1,26 @@
 from datetime import datetime, timedelta
 from jpype import java, JPackage, JInt, JString, JArray
-import os
 from src.server.lib.models import ScheduleType
 from src.server.db.tables import Employee, Shift, Holiday
 
 class Engine:
     """Class for the schedule generator engine API."""
-    def __init__(self, account_id: int):
-        common = JPackage('server.engine.common')
+    def __init__(self, account_id: int, team_id: int):
         algorithms = JPackage('server.engine.algorithms')
+        common = JPackage('server.engine.common')
         self.Employee = common.Employee
         self.Shift = common.Shift
         self.Holiday = common.Holiday
+
         try:
-            self._generate = getattr(algorithms, f'A{account_id}').generate
+            account_algorithms = getattr(algorithms, f'A{account_id}')
         except AttributeError as e:
-            raise NotImplementedError(f'Algorithm for account {account_id} is not yet implemented.') from e
-        
+            raise NotImplementedError(f'Algorithm for account {account_id} was not yet implemented.') from e
+
+        try:
+            self._generate = getattr(account_algorithms, f'T{team_id}').generate
+        except AttributeError as e:
+            raise NotImplementedError(f'Team {team_id} algorithm for account {account_id} was not yet implemented.') from e 
 
 
     def generate(self, employees: list[Employee], shifts: list[Shift], holidays: list[Holiday], num_days: int, year: int, month: int) -> ScheduleType:
@@ -45,7 +49,7 @@ class Engine:
 
     @classmethod
     def get_shift_counts_of_employees(cls, schedule: ScheduleType) -> dict[int, int]:
-        """Returns a mapping from employee ID to the number of shifts they’ve worked."""
+        """Returns a mapping from employee ID to the number of shifts they've worked."""
         shift_counts = {}
         for day in schedule:
             for shift in day:

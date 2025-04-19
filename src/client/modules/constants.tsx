@@ -1,9 +1,16 @@
 import { Plan } from '@types'
 
-export const DOMAIN_NAME = 'shiftiatrics.com'
-export const MIN_YEAR = 2023
-export const MAX_YEAR = 2025
+const CURRENT_YEAR = new Date().getFullYear()
+export const MIN_YEAR = CURRENT_YEAR - 2
+export const MAX_YEAR = CURRENT_YEAR + 2
 export const TOO_MANY_REQS_MSG = 'You have sent too many requests. Please try again later.'
+export const DOMAIN_NAME = 'shiftiatrics.com'
+
+export const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const
+export const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June', 
+    'July', 'August', 'September', 'October', 'November', 'December'
+] as const
 
 export const PLAN_NAMES = ['starter', 'growth', 'advanced', 'enterprise'] as const
 export const PLANS: Plan[] = [
@@ -63,7 +70,7 @@ export const QUERY_TYPES = [
     'Advanced Plan',
     'Enterprise Plan',
     'Change My Plan',
-    'Register a Pediatrican',
+    'Register Staff',
     'Register a Daily Shift',
     'Technical Issue',
     'Bug Report',

@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from src.server.main import app
 from src.server.lib.models import Credentials
+from src.server.db import create_team
 from tests.utils import ctxtest, login, signup, CRED
 
 # Init
@@ -10,8 +11,8 @@ CRED2 = Credentials(email='testuser2@gmail.com', password='testpass2')
 @ctxtest()
 def setup_and_teardown():
     signup(client, CRED2)
-    signup(client, CRED)
-    yield
+    account_id = signup(client, CRED).json()['account']['account_id']
+    yield account_id
 
 
 # Tests
@@ -59,13 +60,19 @@ def test_unauthorized_access_to_account_endpoints():
         assert response.json()['error'] == 'Authentication required'
 
 
-def test_unauthorized_access_to_engine_endpoints():
-    endpoints = [
+def test_unauthorized_access_to_engine_endpoints(setup_and_teardown):
+    account_id = setup_and_teardown
+    team_id = create_team(account_id, 'Test Team').team_id
+
+    ENDPOINTS = [
         '/engine/generate_schedule',
         '/engine/get_shift_counts_of_employees',
         '/engine/get_work_hours_of_employees'
     ]
-    for endpoint in endpoints:
-        response = client.get(endpoint, params={'account_id': 1, 'num_days': 30, 'year': 2023, 'month': 5})
+
+    for endpoint in ENDPOINTS:
+        params = {'account_id': 1, 'num_days': 30, 'year': 2023, 'month': 5}
+        if 'generate_schedule' not in endpoint: params['team_id'] = team_id
+        response = client.get(endpoint, params=params)
         assert response.status_code == 200
         assert response.json()['error'] == 'Authentication required'

@@ -4,17 +4,16 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { isLoggedIn, getEmployeeById, getUIDate, hasScheduleForMonth, ChangePasswordModalContent, Request } from '@utils'
 import type {
     ContextProps, ContentName, Employee,
-    Account, Shift, Schedule, Holiday,
+    Account, Shift, Schedule, Holiday, Team,
     Settings, YearToSchedules, YearToSchedulesValidity,
-    ReadonlyChildren, Subscription, SettingsResponse,
-    SubscriptionResponse, StripeInvoice, EmployeeResponse, ShiftResponse,
-    ScheduleResponse, HolidayResponse, StripeInvoiceResponse
+    ReadonlyChildren, Subscription, SubscriptionResponse,
+    StripeInvoice, ScheduleResponse, AccountData
 } from '@types'
-import { parseEmployee, parseHoliday, parseSettings, parseShift, parseStripeInvoice, parseSub } from '@types'
+import { parseEmployee, parseHoliday, parseSettings, parseShift, parseStripeInvoice, parseSub, parseTeam } from '@types'
 
 // Context for dashboard content
 const defaultContent: ContentName = 'schedules'
-const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: null, maxWorkHours: null }
+const nullEmployee: Employee = { id: -Infinity, name: '', minWorkHours: null, maxWorkHours: null, teamId: -Infinity }
 export const nullSettings: Settings = { darkThemeEnabled: false, weekendDays: 'Friday & Saturday' }
 export const nullAccount: Account = { id: -Infinity, email: '', emailVerified: false, passwordChanged: false, subExpired: true }
 export const nullSub: Subscription = { id: -Infinity, plan: 'growth', createdAt: '', expiresAt: '' }
@@ -29,6 +28,9 @@ export const dashboardContext = createContext<ContextProps>({
     subscription: nullSub,
     setSubscription: () => {},
     invoices: [],
+
+    teams: [],
+    setTeams: () => {},
 
     employees: [],
     setEmployees: () => {},
@@ -67,6 +69,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const [content, setContent] = useState<ContentName>(defaultContent)
     const [account, setAccount] = useState<Account>(nullAccount)
     const [subscription, setSubscription] = useState<Subscription>(nullSub)
+    const [teams, setTeams] = useState<Team[]>([])
     const [employees, setEmployees] = useState<Employee[]>([])
     const [shifts, setShifts] = useState<Shift[]>([])
     const [schedules, setSchedules] = useState<YearToSchedules>(new Map())
@@ -106,48 +109,53 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
     const validateEmployeeById = useCallback((id: number, employees: Employee[], year: number, month: number): Employee => {
         if (employees.length === 0) return nullEmployee
         const employee = getEmployeeById(id, employees)
-        let name = employee?.name
-        let minWorkHours = employee?.minWorkHours
-        let maxWorkHours = employee?.maxWorkHours
+        let name = employee?.name, minWorkHours = employee?.minWorkHours, maxWorkHours = employee?.maxWorkHours, teamId = employee?.teamId
         if (typeof name === 'undefined') { name = 'Unknown'; setScheduleValidity(false, year, month) }
         if (typeof minWorkHours === 'undefined') { minWorkHours = -Infinity; setScheduleValidity(false, year, month)}
         if (typeof maxWorkHours === 'undefined') { maxWorkHours = -Infinity; setScheduleValidity(false, year, month) }
-        return { id, name, minWorkHours, maxWorkHours }
+        if (typeof teamId === 'undefined') { teamId = -Infinity; setScheduleValidity(false, year, month) }
+        return { id, name, minWorkHours, maxWorkHours, teamId }
     }, [setScheduleValidity])
 
     const _parseSchedules = useCallback((schedules: ScheduleResponse[], employees: Employee[]): YearToSchedules => {
-        const parsedSchedules = new Map<number, Schedule[]>()
-
+        const parsedSchedules = new Map<number, Map<number, Schedule[]>>() // year -> teamId -> Schedule[]
+    
         schedules.forEach(scheduleData => {
-            const { schedule_id: scheduleId, month, year } = scheduleData
-
+            const { schedule_id: scheduleId, team_id: teamId, month, year, schedule } = scheduleData
+    
             // Initialize validity for this schedule as true
             setScheduleValidity(true, year, month)
-
-            // Transform schedule data to match Employee['id'][][][]
-            const parsedSchedule = scheduleData.schedule.map((day: number[][]) =>
-                day.map((shift: number[]) =>
-                    shift.map(empId => validateEmployeeById(empId, employees, year, month))
+    
+            // Transform schedule data to Schedule[] format
+            const parsedSchedule = schedule.map(day =>
+                day.map(shift =>
+                    shift.map(empId => validateEmployeeById(empId, employees, month, year))
                 )
             )
-
-            // Ensure the year exists in the maps
-            if (!parsedSchedules.has(year)) parsedSchedules.set(year, [])
-            if (!schedulesValidity.has(year)) {
-                const map = new Map<number, boolean>()
-                for (let i = 0; i < 12; i++) map.set(i, true)
-                schedulesValidity.set(year, map)
+    
+            // Ensure the year map exists
+            if (!parsedSchedules.has(year)) {
+                parsedSchedules.set(year, new Map())
             }
-
+    
             const yearSchedules = parsedSchedules.get(year)!
-            yearSchedules[month] = {
+    
+            // Ensure teamId has a 12-slot array
+            if (!yearSchedules.has(teamId)) {
+                yearSchedules.set(teamId, new Array(12).fill(null))
+            }
+    
+            const teamMonthlySchedules = yearSchedules.get(teamId)!
+            teamMonthlySchedules[month] = {
                 id: scheduleId,
-                schedule: parsedSchedule,
+                teamId: teamId,
+                schedule: parsedSchedule
             }
         })
-
+    
         return parsedSchedules
     }, [schedulesValidity, validateEmployeeById, setScheduleValidity])
+    
 
     const loadHolidays = useCallback(async (account: Account) => {
         if (account.id === -Infinity) return []
@@ -220,25 +228,18 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         ).post({ chkout_session_id: chkoutSessionId })
     }, [openModal, setModalContent, setSubscription, router])
 
-    const _load_data = async () => {
-        type Response = {
-            employees: EmployeeResponse[],
-            shifts: ShiftResponse[],
-            schedules: ScheduleResponse[],
-            holidays: HolidayResponse[],
-            settings: SettingsResponse,
-            invoices: StripeInvoiceResponse[]
-        };
+    const _loadData = async () => {
         await new Request(
             'accounts/data',
-            (data: Response) => {
+            (data: AccountData) => {
                 const parsedEmps = data.employees.map(parseEmployee)
+                setTeams(data.teams.map(parseTeam))
                 setEmployees(parsedEmps)
                 setShifts(data.shifts.map(parseShift))
                 setSchedules(_parseSchedules(data.schedules, parsedEmps))
                 setHolidays(data.holidays.map(parseHoliday))
                 setSettings(parseSettings(data.settings))
-                if (subscription !== null)setInvoices(data.invoices.map(parseStripeInvoice))
+                if (subscription !== null) setInvoices(data.invoices.map(parseStripeInvoice))
             },
             (error) => {
                 setModalContent(<>
@@ -277,7 +278,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             setSubscription(res.subscription)
             if (res.subscription !== null) _checkIsSubExpiringSoon(res.subscription)
 
-            await _load_data()
+            await _loadData()
             _handlePasswordChangeUponSignup(res.account.passwordChanged)
     
             const chkoutSessionId = params.get('chkout_session_id')
@@ -289,14 +290,6 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
         }
         fetchAllData()
     }, [pathname])
-
-    // useEffect(() => {
-    //     const reloadData = async () => {
-    //         if (!['/dashboard', '/login', '/signup'].includes(pathname)) return
-    //         if (account.id && employees.length > 0) await _load_data()
-    //     }
-    //     reloadData()
-    // }, [pathname, account, employees, shifts, holidays])
 
     useEffect(() => {
         if (pathname !== '/dashboard') return
@@ -325,6 +318,7 @@ export function DashboardProvider({ children }: ReadonlyChildren) {
             account, setAccount,
             subscription, setSubscription, invoices,
             content, setContent,
+            teams, setTeams,
             employees, setEmployees, validateEmployeeById,
             shifts, setShifts,
             schedules, setSchedules, setScheduleValidity, getScheduleValidity,

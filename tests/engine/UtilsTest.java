@@ -47,8 +47,8 @@ public class UtilsTest {
         LocalDate end = LocalDate.of(2024, 4, 15);
         Holiday holiday = new Holiday("Eid", List.of(1), start, end);
 
-        assert Utils.isOnHoliday(emp, List.of(holiday), LocalDate.of(2024, 4, 12)) : "Should be on holiday";
-        assert !Utils.isOnHoliday(emp, List.of(holiday), LocalDate.of(2024, 4, 9)) : "Should not be on holiday";
+        assert emp.isOnHoliday(List.of(holiday), LocalDate.of(2024, 4, 12)) : "Should be on holiday";
+        assert !emp.isOnHoliday(List.of(holiday), LocalDate.of(2024, 4, 9)) : "Should not be on holiday";
     }
 
     static void testIsAlreadyAssigned() {
@@ -58,8 +58,8 @@ public class UtilsTest {
         schedule[0][0] = new Employee[]{emp1};
         schedule[0][1] = new Employee[]{};
 
-        assert Utils.isAlreadyAssigned(emp1, schedule, 0) : "Alice should be already assigned";
-        assert !Utils.isAlreadyAssigned(emp2, schedule, 0) : "Bob should not be assigned";
+        assert emp1.isAlreadyAssigned(schedule, 0) : "Alice should be already assigned";
+        assert !emp2.isAlreadyAssigned(schedule, 0) : "Bob should not be assigned";
     }
 
     static void testGetWeeklyShifts() {

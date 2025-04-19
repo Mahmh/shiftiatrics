@@ -1,12 +1,13 @@
 import subprocess, pytest
 from src.server.lib.models import Cookies
-from src.server.db import create_account, get_employees, get_shifts
+from src.server.db import create_account, create_team, get_teams, get_employees, get_shifts
 from tests.utils import ctxtest, CRED
 
 # Init
 @ctxtest()
 def setup_and_teardown():
     account, token = create_account(CRED)
+    create_team(account.account_id, 'Test Team')
     yield Cookies(account_id=account.account_id, token=token)
 
 
@@ -20,6 +21,7 @@ def test_create_employee(setup_and_teardown):
             'python3', '-m', 'src.server.scripts.create_employee',
             '--account_id', str(account_id),
             '--employee_name', 'Dr. Alice',
+            '--team_id', '1',
             '--min_work_hours', '100',
             '--max_work_hours', '160'
         ],
@@ -59,6 +61,46 @@ def test_create_shift(setup_and_teardown):
     assert shifts[0].shift_name == 'D'
 
 
+def test_create_team(setup_and_teardown):
+    cookies = setup_and_teardown
+    account_id = cookies.account_id
+
+    result = subprocess.run(
+        [
+            'python3', '-m', 'src.server.scripts.create_team',
+            '--account_id', str(account_id),
+            '--team_name', 'Surgical Squad'
+        ],
+        capture_output=True,
+        text=True
+    )
+    print(result.stdout, result.stderr, end='')
+
+    teams = get_teams(account_id)
+    assert result.returncode == 0
+    assert '✅' in result.stdout
+    assert len(teams) == 2  # One from setup, one from this script
+    assert any(team.team_name == 'Surgical Squad' for team in teams)
+
+
+def test_delete_account(setup_and_teardown):
+    cookies = setup_and_teardown
+    account_id = cookies.account_id
+
+    result = subprocess.run(
+        [
+            'python3', '-m', 'src.server.scripts.delete_account',
+            '--account_id', str(account_id)
+        ],
+        capture_output=True,
+        text=True
+    )
+    print(result.stdout, result.stderr, end='')
+
+    assert result.returncode == 0
+    assert f"✅ Account deleted: {account_id}" in result.stdout
+
+
 def test_create_checkout_url():
     STARTER_PLAN_PRICE_ID = 'price_1R57GALcPBGZy9UcVui6CMG9'
 
@@ -80,7 +122,7 @@ def test_create_checkout_url():
 @pytest.mark.parametrize('script, args', [
     (
         'src.server.scripts.create_employee',
-        ['--account_id', '9999', '--employee_name', 'Ghost', '--min_work_hours', '100', '--max_work_hours', '160']
+        ['--account_id', '9999', '--employee_name', 'Ghost', '--team_id', '1', '--min_work_hours', '100', '--max_work_hours', '160']
     ),
     (
         'src.server.scripts.create_shift',

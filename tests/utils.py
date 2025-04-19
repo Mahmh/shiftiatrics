@@ -6,19 +6,18 @@ from sqlalchemy import text
 import pytest
 from src.server.rate_limit import limiter
 from src.server.lib.models import Credentials
-from src.server.db import Session, Account, Token, Employee, Shift, Schedule, Holiday
+from src.server.db import Session, Account, Token, Team, Employee, Shift, Schedule, Holiday
 
 # Defaults & constants
 CRED = Credentials(email='testuser@gmail.com', password='testpass')
 signup = lambda client, cred=CRED: client.post('/accounts/signup', json=dict(cred))
 login = lambda client, cred=CRED: client.post('/auth/login', json=dict(cred))
 
-EMPLOYEE = {'employee_name': 'John Doe', 'min_work_hours': 140, 'max_work_hours': 180}
+EMPLOYEE = {'employee_name': 'John Doe', 'team_id': 1, 'min_work_hours': 140, 'max_work_hours': 180}
 SHIFT1 = {'shift_name': 'Day', 'start_time': '08:00', 'end_time': '16:00'}
 SHIFT2 = {'shift_name': 'Evening', 'start_time': '16:00', 'end_time': '20:00'}
 
-SCHEDULE = {'schedule': [[[3], [1]], [[2, 3], [1]], [[3, 1], [2]], [[2], [1, 3]]], 'month': 11, 'year': 2024}
-create_schedule = lambda client, account_id, schedule=SCHEDULE: client.post(f'/schedules/{account_id}', json=schedule)
+SCHEDULE = {'schedule': [[[3], [1]], [[2, 3], [1]], [[3, 1], [2]], [[2], [1, 3]]], 'year': 2024, 'month': 11}
 delete_schedule = lambda client, schedule_id: client.request('DELETE', f'/schedules/{schedule_id}')
 
 HOLIDAY = {'holiday_name': 'Christmas', 'assigned_to': [2, 1], 'start_date': '2023-12-25', 'end_date': '2023-12-26'}
@@ -33,6 +32,7 @@ def _reset_whole_db() -> None:
     with Session() as session:
         session.query(Token).delete()
         session.query(Employee).delete()
+        session.query(Team).delete()
         session.query(Shift).delete()
         session.query(Schedule).delete()
         session.query(Holiday).delete()
@@ -40,6 +40,7 @@ def _reset_whole_db() -> None:
         session.commit()
         session.execute(text('ALTER SEQUENCE accounts_account_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE tokens_token_id_seq RESTART WITH 1;'))
+        session.execute(text('ALTER SEQUENCE teams_team_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE employees_employee_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE shifts_shift_id_seq RESTART WITH 1;'))
         session.execute(text('ALTER SEQUENCE holidays_holiday_id_seq RESTART WITH 1;'))

@@ -1,5 +1,5 @@
 import type { SetStateAction, Dispatch, ReactNode, ChangeEvent } from 'react'
-import { QUERY_TYPES, PLAN_NAMES } from '@const'
+import { QUERY_TYPES, PLAN_NAMES, MONTH_NAMES } from '@const'
 
 // Types
 type SetState<T> = Dispatch<SetStateAction<T>>
@@ -13,15 +13,15 @@ export type AccountAndSub = { account: Account, subscription: Subscription }
 
 export type QueryType = typeof QUERY_TYPES[number]
 export type PlanName = typeof PLAN_NAMES[number]
-export type MonthName = 'January' | 'February' | 'March' | 'April' | 'May'| 'June' | 'July' | 'August' | 'September' | 'October' | 'November' | 'December'
+export type MonthName = typeof MONTH_NAMES[number]
 export type WeekendDays =  'Saturday & Sunday' | 'Friday & Saturday' | 'Sunday & Monday'
 export type Interval =  'Daily' | 'Weekly' | 'Monthly'
 export type SupportedExportFormat = 'csv' | 'tsv' | 'json' | 'xlsx'
-export type ContentName = 'schedules' | 'employees' | 'shifts' | 'holidays' | 'settings' | 'support' | 'subscription'
+export type ContentName = 'schedules' | 'staff' | 'shifts' | 'holidays' | 'settings' | 'support' | 'subscription'
 
 export type ShiftCounts = Map<Employee, number>
 export type ScheduleOfIDs = Employee['id'][][][]
-export type YearToSchedules = Map<number, Schedule[]>
+export type YearToSchedules = Map<number, Map<number, Schedule[]>> // year -> teamId -> 12 monthly schedules
 export type YearToSchedulesValidity = Map<number, Map<number, boolean>>
 
 
@@ -36,6 +36,9 @@ export interface ContextProps {
     subscription: Subscription
     setSubscription: SetState<Subscription>
     invoices: StripeInvoice[]
+
+    teams: Team[]
+    setTeams: SetState<Team[]>
 
     employees: Employee[]
     setEmployees: SetState<Employee[]>
@@ -69,6 +72,16 @@ export interface ContextProps {
     closeModal: () => void
 }
 
+export interface AccountData {
+    teams: TeamResponse[]
+    employees: EmployeeResponse[]
+    shifts: ShiftResponse[]
+    schedules: ScheduleResponse[]
+    holidays: HolidayResponse[]
+    settings: SettingsResponse
+    invoices: StripeInvoiceResponse[]
+}
+
 export interface Account {
     id: number
     email: string
@@ -77,11 +90,17 @@ export interface Account {
     subExpired: boolean
 }
 
+export interface Team {
+    id: number
+    name: string
+}
+
 export interface Employee {
     id: number
     name: string
     minWorkHours: number | null
     maxWorkHours: number | null
+    teamId: number
 }
 
 export interface Shift {
@@ -93,6 +112,7 @@ export interface Shift {
 
 export interface Schedule {
     id: number
+    teamId: number
     schedule: Employee[][][]
 }
 
@@ -183,11 +203,17 @@ export interface SubscriptionResponse {
     expires_at: string
 }
 
+export interface TeamResponse {
+    team_id: number
+    team_name: string
+}
+
 export interface EmployeeResponse {
     employee_id: number
     employee_name: string
     min_work_hours: number | null
     max_work_hours: number | null
+    team_id: number
 }
 
 export interface ShiftResponse {
@@ -199,6 +225,7 @@ export interface ShiftResponse {
 
 export interface ScheduleResponse {
     schedule_id: number
+    team_id: number
     schedule: ScheduleOfIDs
     month: number
     year: number
@@ -239,6 +266,7 @@ export const parseEmployee = (data: EmployeeResponse): Employee => ({
     name: data.employee_name,
     minWorkHours: data.min_work_hours,
     maxWorkHours: data.max_work_hours,
+    teamId: data.team_id
 })
 
 export const parseShift = (data: ShiftResponse): Shift => ({
@@ -273,4 +301,9 @@ export const parseStripeInvoice = (data: StripeInvoiceResponse): StripeInvoice =
     dueDate: data.due_date,
     description: data.description,
     subscriptionId: data.subscription_id,
+})
+
+export const parseTeam = (data: TeamResponse): Team => ({
+    id: data.team_id,
+    name: data.team_name
 })

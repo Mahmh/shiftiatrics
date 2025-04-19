@@ -112,6 +112,13 @@
         button, a { width: 100% }
     }
 
+    .dropdown button {
+        @include themed-bgcolor('light-gray', 'secondary-blue');
+        @include themed-color('primary-text');
+        border-radius: 10px;
+        &:hover { @include themed-bgcolor('alpha-black-1', 'secondary-blue-hover'); }
+    }
+
     div {
         @include themed-color('primary-text')
     }

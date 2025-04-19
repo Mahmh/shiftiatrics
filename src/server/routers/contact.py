@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from src.server.rate_limit import limiter
 from src.server.lib.api import endpoint, get_cookies
 from src.server.lib.models import ContactUsSubmissionData
-from src.server.db import contact
+from src.server.lib.emails import contact
 
 contact_router = APIRouter()
 

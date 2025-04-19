@@ -14,7 +14,7 @@ QueryType: TypeAlias = Literal[
     'Advanced Plan',
     'Enterprise Plan',
     'Change My Plan',
-    'Register a Pediatrican',
+    'Register Staff',
     'Register a Daily Shift',
     'Technical Issue',
     'Bug Report',

@@ -14,7 +14,7 @@ const MARKDOWN_CONTENT = `
 Welcome to **Shiftiatrics** ("we," "our," or "us"). By accessing or using our website **${DOMAIN_NAME}** ("Website") and services, you agree to be bound by these Terms of Service ("Terms"). If you do not agree with any part of these Terms, you must not use our services.
 
 ## 2. Description of Service
-We provide an **automated shift scheduling** platform that allows users to manage pediatrician schedules, designated holidays, and user preferences (e.g., dark mode, scheduling settings). Our services are provided "as is" and may be modified or discontinued at any time.
+We provide an **automated shift scheduling** platform that allows users to manage ER staff member schedules, designated holidays, and user preferences (e.g., dark mode, scheduling settings). Our services are provided "as is" and may be modified or discontinued at any time.
 
 ## 3. Account Registration
 - To use our services, you must register an account using a valid email address.
@@ -33,12 +33,12 @@ By using our services, you agree to:
 - Use the services only for lawful purposes.
 - Not attempt to hack, disrupt, or exploit vulnerabilities in our system.
 - Not misuse the service by submitting false, misleading, or inappropriate content.
-- Ensure that any pediatrician names, minimum and maximum working hours, schedules, or personal data you input comply with applicable labor and privacy laws.
+- Ensure that any ER staff member names, minimum and maximum working hours, schedules, or personal data you input comply with applicable labor and privacy laws.
 
 ## 6. Data & Privacy
 - Your **personal data** (e.g., email, scheduling settings) is handled per our **[Privacy Policy](/legal/privacy)**.
 - We **do not sell your data** to third parties.
-- You are responsible for ensuring that any pediatrician names or scheduling data you input do not violate privacy laws.
+- You are responsible for ensuring that any ER staff member names or scheduling data you input do not violate privacy laws.
 
 ## 7. Modifications & Downtime
 - We reserve the right to modify, suspend, or discontinue any part of our services at any time.

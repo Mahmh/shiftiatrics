@@ -34,7 +34,7 @@ class Token(Base):
     )
     created_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=False)
-    __repr__ = lambda self: f'Token({self.account_id})'
+    __repr__ = lambda self: f'Token({self.account_id}, {self.token_id})'
 
 
 class Subscription(Base):
@@ -49,17 +49,26 @@ class Subscription(Base):
     expires_at = Column(DateTime(timezone=True), nullable=False)
     stripe_subscription_id = Column(String(128), unique=True, nullable=False)
     stripe_chkout_session_id = Column(String(128), unique=True, nullable=False)
-    __repr__ = lambda self: f'Subscription({self.account_id})'
+    __repr__ = lambda self: f'Subscription({self.account_id}, {self.subscription_id})'
+
+
+class Team(Base):
+    __tablename__ = 'teams'
+    account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
+    team_id = Column(Integer, primary_key=True, autoincrement=True)
+    team_name = Column(String(64), nullable=False)
+    __repr__ = lambda self: f'Team({self.account_id}, {self.team_id})'
 
 
 class Employee(Base):
     __tablename__ = 'employees'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
     employee_id = Column(Integer, primary_key=True, autoincrement=True)
+    team_id = Column(Integer, ForeignKey('teams.team_id', ondelete='CASCADE'), nullable=False)
     employee_name = Column(String(40), nullable=False)
     min_work_hours = Column(Integer, nullable=True)
     max_work_hours = Column(Integer, nullable=True)
-    __repr__ = lambda self: f'Employee({self.employee_id})'
+    __repr__ = lambda self: f'Employee({self.account_id}, {self.employee_id})'
 
 
 class Shift(Base):
@@ -69,17 +78,18 @@ class Shift(Base):
     shift_name = Column(String(40), nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
-    __repr__ = lambda self: f'Shift({self.shift_id})'
+    __repr__ = lambda self: f'Shift({self.account_id}, {self.shift_id})'
 
 
 class Schedule(Base):
     __tablename__ = 'schedules'
     account_id = Column(Integer, ForeignKey('accounts.account_id', ondelete='CASCADE'), nullable=False)
+    team_id = Column(Integer, ForeignKey('teams.team_id', ondelete='CASCADE'), nullable=False)
     schedule_id = Column(Integer, primary_key=True, autoincrement=True)
     schedule = Column(JSONB, nullable=False)
     month = Column(Integer, nullable=False)
     year = Column(Integer, nullable=False)
-    __repr__ = lambda self: f'Schedule({self.schedule_id})'
+    __repr__ = lambda self: f'Schedule({self.account_id}, {self.schedule_id})'
 
 
 class Holiday(Base):
@@ -90,7 +100,7 @@ class Holiday(Base):
     assigned_to = Column(ARRAY(Integer, dimensions=1), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
-    __repr__ = lambda self: f'Holiday({self.holiday_id})'
+    __repr__ = lambda self: f'Holiday({self.account_id}, {self.holiday_id})'
 
 
 class Settings(Base):

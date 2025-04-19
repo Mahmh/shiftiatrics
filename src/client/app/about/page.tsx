@@ -10,21 +10,21 @@ export const generateMetadata = async (): Promise<Metadata> => ({
 
 const MARKDOWN_CONTENT = `
 ## Our Mission
-We aim to **streamline pediatrician scheduling**, allowing healthcare professionals to focus more on patient care rather than administrative tasks.
+We aim to **streamline scheduling of ER staff members' shifts and holidays**, allowing healthcare professionals to focus more on patient care rather than administrative tasks.
 
 ## Key Features
 - **Automated Scheduling** – Reduce manual work and auto-generate shifts.
-- **Pediatrician Preferences** – Ensure fair scheduling with customization.
+- **ER Staff Members' Preferences** – Ensure fair scheduling with customization.
 - **Holidays & Leaves** – Account for absences effortlessly.
-- **Flexibility** – Set when shifts start and end, register pediatricians and their working hours, optionally designate holidays to pediatricians, and regenerate schedules when needed.
-- **Compliance** – Manage the generation of schedules to comply with labor laws, such as setting minimum and maximum working hours for pediatricians.
+- **Flexibility** – Set when shifts start and end, register ER staff members and their working hours, optionally designate holidays to ER staff members, and regenerate schedules when needed.
+- **Compliance** – Manage the generation of schedules to comply with labor laws, such as setting minimum and maximum working hours for ER staff members.
 
 ## How It Works
-1. Add pediatricians and their availability.
+1. Add ER staff members and their availability.
 2. Set the shifts per day, including their starting and ending time.
 3. Set designated holidays and scheduling preferences.
 4. Let Shiftiatrics generate an optimized schedule.
-5. Review, adjust, and regenerate if needed. Shiftiatrics allows you to see the number of shifts and working hours per pediatrician in the generated schedule.
+5. Review, adjust, and regenerate if needed. Shiftiatrics allows you to see the number of shifts and working hours per ER staff member in the generated schedule.
 6. Export the schedule and share with stakeholders.
 
 ## Contact Us
@@ -41,7 +41,7 @@ export default function About() {
         <section>
             <h1>About Shiftiatrics</h1>
             <p>
-                Shiftiatrics is an <b>automated shift scheduling platform</b> designed for pediatricians.
+                Shiftiatrics is an <b>automated shift scheduling platform</b> designed for ER staff members.
                 Our goal is to make shift management <b>faster, smarter, and more efficient</b>.
             </p>
         </section>

@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 import random, string
 from src.server.main import app
 from src.server.lib.models import Credentials
+from src.server.db import create_team
 from tests.utils import ctxtest, login, signup, CRED
 
 # Init
@@ -11,7 +12,8 @@ client = TestClient(app)
 
 @ctxtest(disable_rate_limiting=False)
 def setup_and_teardown():
-    signup(client)
+    account_id = signup(client).json()['account']['account_id']
+    create_team(account_id, 'Test Team')
     yield
 
 
@@ -66,20 +68,13 @@ def test_rate_limit_generate_schedule():
 
 def test_rate_limit_get_shift_counts_of_employees():
     login_response = login(client)
-    response = hit_endpoint('/engine/get_shift_counts_of_employees?account_id=1&year=2023&month=10', cookies=login_response.cookies)
+    response = hit_endpoint('/engine/get_shift_counts_of_employees?account_id=1&team_id=1&year=2023&month=10', cookies=login_response.cookies)
     assert response.status_code == 429
 
 
 def test_rate_limit_get_work_hours_of_employees():
     login_response = login(client)
-    response = hit_endpoint('/engine/get_work_hours_of_employees?account_id=1&year=2023&month=10', cookies=login_response.cookies)
-    assert response.status_code == 429
-
-
-def test_rate_limit_create_schedule():
-    login_response = login(client)
-    schedule_info = {'schedule': [[[1], [2]], [[3], [4]]], 'month': 10, 'year': 2023}
-    response = hit_endpoint('/schedules/1', method='post', json=schedule_info, cookies=login_response.cookies)
+    response = hit_endpoint('/engine/get_work_hours_of_employees?account_id=1&team_id=1&year=2023&month=10', cookies=login_response.cookies)
     assert response.status_code == 429
 
 

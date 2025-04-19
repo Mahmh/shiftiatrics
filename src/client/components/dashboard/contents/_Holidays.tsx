@@ -263,9 +263,9 @@ export default function Holidays() {
                 </button>
             </> :
             <>
-                <h1>No Pediatrician Registered</h1>
-                <p>Please add at least one pediatrician before adding a holiday.</p>
-                <button onClick={() => { closeModal(); setContent('employees') }}>Add a Pediatrician</button>
+                <h1>No Staff Registered</h1>
+                <p>Please add at least one ER staff member before adding a holiday.</p>
+                <button onClick={() => { closeModal(); setContent('staff') }}>Add Staff</button>
             </>
         }
 

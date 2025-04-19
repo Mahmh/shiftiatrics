@@ -2,15 +2,17 @@ from typing import Optional, Callable, Any
 from textwrap import dedent
 from functools import wraps
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session as _SessionType
 from sqlalchemy import Boolean, String, Enum
+from sqlalchemy.orm import Session as _SessionType
+from sqlalchemy.dialects.postgresql import array
 import unicodedata, re, bcrypt, inspect, secrets, stripe
+
 from src.server.lib.constants import MIN_EMAIL_LEN, MAX_EMAIL_LEN, MIN_PASSWORD_LEN, MAX_PASSWORD_LEN
 from src.server.lib.utils import log, errlog, get_token_expiry_datetime, utcnow
 from src.server.lib.models import Credentials, Cookies, ContactUsSubmissionData
 from src.server.lib.types import TokenType, SettingValue
 from src.server.lib.exceptions import EmailTaken, NonExistent, InvalidCredentials, CookiesUnavailable, InvalidCookies
-from .tables import Session, Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
+from .tables import Session, Account, Token, Subscription, Team, Employee, Shift, Schedule, Holiday, Settings
 
 def _handle_args(args: tuple) -> tuple:
     # Sanitize credentials if the first parameter is of type `Credentials`
@@ -23,7 +25,7 @@ def _handle_result(commit: bool, func: Callable, result: Any, args: tuple, kwarg
     if commit: session.commit()
     log(f'[{func.__name__}] args={args}\tkwargs={kwargs}\t{result}', 'db', 'DEBUG')
 
-    if isinstance(result, (Account, Token, Employee, Shift, Schedule, Holiday, Settings)):
+    if isinstance(result, (Account, Token, Team, Employee, Shift, Schedule, Holiday, Settings)):
         session.refresh(result)
     return result
 
@@ -79,14 +81,21 @@ def _check_email_is_not_registered(sanitized_email: str, *, session: _SessionTyp
 
 def _check_account(account_id: int, *, session: _SessionType) -> Account:
     """Returns an account if it exists using its ID."""
-    account = session.query(Account).filter_by(account_id=account_id).first()
+    account = session.get(Account, account_id)
     if not account: raise NonExistent('account', account_id)
     return account
 
 
+def _check_team(team_id: int, *, session: _SessionType) -> Team:
+    """Returns a team if it exists using its ID."""
+    team = session.get(Team, team_id)
+    if not team: raise NonExistent('team', team_id)
+    return team
+
+
 def _check_employee(employee_id: int, *, session: _SessionType) -> Employee:
     """Returns an employee if it exists using its ID."""
-    employee = session.query(Employee).filter_by(employee_id=employee_id).first()
+    employee = session.get(Employee, employee_id)
     if not employee: raise NonExistent('employee', employee_id)
     return employee
 
@@ -100,21 +109,21 @@ def _check_work_hours(min_work_hours: Optional[int] = None, max_work_hours: Opti
 
 def _check_shift(shift_id: int, *, session: _SessionType) -> Shift:
     """Returns a shift if it exists using its ID."""
-    shift = session.query(Shift).filter_by(shift_id=shift_id).first()
+    shift = session.get(Shift, shift_id)
     if not shift: raise NonExistent('shift', shift_id)
     return shift
 
 
 def _check_schedule(schedule_id: int, *, session: _SessionType) -> Schedule:
     """Returns an schedule if it exists using its ID."""
-    schedule = session.query(Schedule).filter_by(schedule_id=schedule_id).first()
+    schedule = session.get(Schedule, schedule_id)
     if not schedule: raise NonExistent('schedule', schedule_id)
     return schedule
 
 
 def _check_holiday(holiday_id: int, *, session: _SessionType) -> Holiday:
     """Returns an schedule if it exists using its ID."""
-    holiday = session.query(Holiday).filter_by(holiday_id=holiday_id).first()
+    holiday = session.get(Holiday, holiday_id)
     if not holiday: raise NonExistent('holiday', holiday_id)
     assert holiday.start_date <= holiday.end_date, 'Invalid start & end dates'
     for emp_id in holiday.assigned_to: _check_employee(emp_id, session=session)
@@ -376,7 +385,7 @@ def _validate_and_cast(setting: str, value: SettingValue, column_type: Boolean |
     raise TypeError(f"Unsupported column type: {type(column_type)}")
 
 
-def _get_email_body(data: ContactUsSubmissionData) -> str:
+def _get_contact_us_email_body(data: ContactUsSubmissionData) -> str:
     return dedent(f'''
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -392,3 +401,11 @@ def _get_email_body(data: ContactUsSubmissionData) -> str:
         </body>
         </html>
     ''')
+
+
+def _delete_all_holidays_of_employee(employee_id: int, *, session: _SessionType) -> None:
+    holidays = session.query(Holiday).filter(Holiday.assigned_to.any(employee_id)).all()
+    for holiday in holidays:
+        holiday.assigned_to = array([id for id in holiday.assigned_to if id != employee_id])
+        if len(holiday.assigned_to) == 0:
+            session.delete(holiday)

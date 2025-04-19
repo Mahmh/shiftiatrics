@@ -10,14 +10,15 @@ from src.server.lib.utils import log, parse_date, parse_time, utcnow, todict, to
 from src.server.lib.models import Credentials, Cookies, ScheduleType, ContactUsSubmissionData
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import SettingValue
-from src.server.lib.constants import WEB_SERVER_URL, SUPPORT_EMAIL, PROD_URL
+from src.server.lib.constants import WEB_SERVER_URL, SUPPORT_EMAIL, NOREPLY_EMAIL, SYSTEM_EMAIL, PROD_URL
 from src.server.lib.emails import send_email
 
-from .tables import Account, Token, Subscription, Employee, Shift, Schedule, Holiday, Settings
+from .tables import Account, Token, Subscription, Team, Employee, Shift, Schedule, Holiday, Settings
 from .utils import (
     dbsession,
     _check_email_is_not_registered,
     _check_account,
+    _check_team,
     _check_employee,
     _check_work_hours,
     _check_shift,
@@ -38,7 +39,7 @@ from .utils import (
     _validate_cookies,
     _get_email_from_token,
     _get_active_sub,
-    _get_email_body
+    _delete_all_holidays_of_employee
 )
 
 ## Account
@@ -90,9 +91,9 @@ def change_password(cookies: Cookies, new_password: str, current_password: Optio
     return account
 
 
-@dbsession(commit=True)
+@dbsession()
 async def request_delete_account(cookies: Cookies, *, session: _SessionType) -> None:
-    """Deletes an account and all of its associated objects, and cancels its subscription."""
+    """Sends a delete-account request to SUPPORT_EMAIL."""
     account = _validate_cookies(cookies, session=session)
     await send_email(
         subject='Account Deletion Request',
@@ -100,6 +101,7 @@ async def request_delete_account(cookies: Cookies, *, session: _SessionType) -> 
             <h2>A customer has requested their account to be deleted.</h2>
             <p>Customer email: {account.email}</p>
         '''),
+        sender=SYSTEM_EMAIL,
         recipients=[SUPPORT_EMAIL],
         reply_to=[account.email]
     )
@@ -114,10 +116,10 @@ def delete_account(account_id: int, *, session: _SessionType) -> None:
 
 
 @dbsession()
-def get_account_data(cookies: Cookies, *, session: _SessionType) -> dict[str, list|dict]:
-    account = _validate_cookies(cookies, session=session)
-    account_id = account.account_id
+def get_account_data(cookies: Cookies, *, session: _SessionType) -> dict[str, dict|list]:
+    account_id = _validate_cookies(cookies, session=session).account_id
     return {
+        'teams': todicts(get_teams(account_id)),
         'employees': todicts(get_employees(account_id)),
         'shifts': todicts(get_shifts(account_id)),
         'holidays': todicts(get_holidays(account_id)),
@@ -178,15 +180,11 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
     await send_email(
         subject='Reset Your Shiftiatrics Password',
         body=dedent(f'''
-            <html>
-            <body>
-                <p>You have sent a password reset request: <a href="{reset_link}">Click here to reset your password</a></p>
-                <p>If you have problems with accessing that link, do not hesitate to <a href="{PROD_URL}/support/contact">contact us</a>.</p>
-            </body>
-            </html>
+            <p>You have sent a password reset request: <a href="{reset_link}">Click here to reset your password</a></p>
+            <p>If you have problems with accessing that link, do not hesitate to <a href="{PROD_URL}/support/contact">contact us</a>.</p>
         '''),
-        recipients=[account.email],
-        noreply=True
+        sender=NOREPLY_EMAIL,
+        recipients=[account.email]
     )
 
     return safe_msg
@@ -229,6 +227,7 @@ async def request_verify_email(email: str, *, session: _SessionType) -> str:
     await send_email(
         subject='Verify Your Email',
         body=f'<a href="{verify_link}">Click here to verify your email</a>',
+        sender=NOREPLY_EMAIL,
         recipients=[account.email]
     )
 
@@ -255,6 +254,63 @@ def verify_email(verify_token: str, *, session: _SessionType) -> str:
 
 
 
+
+## Teams
+@dbsession()
+def get_teams(account_id: int, *, session: _SessionType) -> list[Team]:
+    """Returns all teams under an account."""
+    _check_account(account_id, session=session)
+    return session.query(Team).filter_by(account_id=account_id).all()
+
+
+@dbsession()
+def get_employees_of_team(team_id: int, *, session: _SessionType) -> list[Employee]:
+    """Returns all employees associated that have the given team ID."""
+    _check_team(team_id, session=session)
+    return session.query(Employee).filter_by(team_id=team_id).all()
+
+
+@dbsession(commit=True)
+def create_team(account_id: int, team_name: str, *, session: _SessionType) -> Team:
+    """Creates a team for the given account ID."""
+    _check_account(account_id, session=session)
+    teams = session.query(Team).filter_by(account_id=account_id).all()
+    team = Team(account_id=account_id, team_name=team_name)
+    session.add(team)
+    log(f'Created team: {Team}', 'db')
+    return team
+
+
+@dbsession(commit=True)
+def update_team(team_id: int, updates: dict, *, session: _SessionType) -> Team:
+    """Updates an team's attributes based on its ID and the updates."""
+    team = _check_team(team_id, session=session)
+
+    ALLOWED_FIELDS = {'team_name'}
+    for key, value in updates.items():
+        if key not in ALLOWED_FIELDS: raise ValueError(f'"{key}" is not a valid attribute to modify.')
+        setattr(team, key, value)
+
+    log(f'Updated employee: {team}, updates: {updates}', 'db')
+    return team
+
+
+@dbsession(commit=True)
+def delete_team(team_id: int, *, session: _SessionType) -> None:
+    """Deletes the team and its employees."""
+    team = _check_team(team_id, session=session)
+    emps = session.query(Employee).filter(Employee.team_id == team_id).all()
+
+    for emp in emps:
+        _delete_all_holidays_of_employee(emp.employee_id, session=session)
+        session.delete(emp)
+
+    session.delete(team)
+    log(f'Deleted team: {team}', 'db')
+
+
+
+
 ## Employee
 @dbsession()
 def get_employees(account_id: int, *, session: _SessionType) -> list[Employee]:
@@ -267,6 +323,7 @@ def get_employees(account_id: int, *, session: _SessionType) -> list[Employee]:
 def create_employee(
     account_id: int,
     employee_name: str,
+    team_id: int,
     min_work_hours: Optional[int] = None,
     max_work_hours: Optional[int] = None,
     *,
@@ -275,7 +332,13 @@ def create_employee(
     """Creates an employee for the given account ID."""
     _check_account(account_id, session=session)
     min_work_hours, max_work_hours = _check_work_hours(min_work_hours, max_work_hours)
-    employee = Employee(account_id=account_id, employee_name=employee_name, min_work_hours=min_work_hours, max_work_hours=max_work_hours)
+    employee = Employee(
+        account_id=account_id,
+        employee_name=employee_name,
+        team_id=team_id,
+        min_work_hours=min_work_hours,
+        max_work_hours=max_work_hours
+    )
     session.add(employee)
     log(f'Created employee: {employee}', 'db')
     return employee
@@ -301,9 +364,7 @@ def delete_employee(employee_id: int, *, session: _SessionType) -> None:
     """Deletes an employee by their ID. It also removes their ID from any holiday assigned to them, and removes holidays that only contain that ID."""
     employee = _check_employee(employee_id, session=session)
     holidays = session.query(Holiday).filter(Holiday.assigned_to.any(employee_id)).all()
-    for holiday in holidays:
-        holiday.assigned_to = array([id for id in holiday.assigned_to if id != employee_id])
-        if len(holiday.assigned_to) == 0: session.delete(holiday)
+    _delete_all_holidays_of_employee(employee_id, session=session)
     session.delete(employee)
     log(f'Deleted employee: {employee}', 'db')
 
@@ -367,11 +428,12 @@ def get_schedules(account_id: int, *, session: _SessionType, **filter_kwargs) ->
 
 
 @dbsession(commit=True)
-def create_schedule(account_id: int, schedule: ScheduleType, month: int, year: int, *, session: _SessionType) -> Schedule:
+def create_schedule(account_id: int, schedule: ScheduleType, team_id: int, year: int, month: int, *, session: _SessionType) -> Schedule:
     """Creates a schedule for the given account ID."""
     _check_account(account_id, session=session)
+    _check_team(team_id, session=session)
     _check_month_and_year(month, year)
-    schedule = Schedule(account_id=account_id, schedule=schedule, month=month, year=year)
+    schedule = Schedule(account_id=account_id, team_id=team_id, schedule=schedule, year=year, month=month)
     session.add(schedule)
     log(f'Created schedule: {schedule}', 'db')
     return schedule
@@ -572,24 +634,3 @@ def get_invoices(account_id: int, *, session: _SessionType) -> list[dict]:
     ]
     result.sort(key=lambda invoice: invoice['created_at'], reverse=True)  # Sort newest firsts
     return result
-
-
-
-
-# Contact
-@dbsession()
-async def contact(data: ContactUsSubmissionData, cookies: Cookies, *, session) -> None:
-    """Sends an email message that includes the user's email, query type, and query description to the company."""
-    if data.email is None:
-        cookies = _validate_cookies(cookies, session=session)
-        account = _check_account(cookies.account_id, session=session)
-        data.account_id = account.account_id
-        data.email = account.email
-
-    await send_email(
-        subject='New Contact Us Submission',
-        recipients=[SUPPORT_EMAIL],
-        body=_get_email_body(data),
-        reply_to=[data.email],
-        noreply=True
-    )

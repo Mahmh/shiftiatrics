@@ -31,7 +31,7 @@ export default function Content() {
         <section className='lp-content'>
             <Section 
                 h='Effortless Shift Scheduling' 
-                p='Take the hassle out of managing pediatrician shifts. Our fast, intelligent scheduling system streamlines the process, saving time and reducing stress for everyone involved.' 
+                p="Take the hassle out of managing ER staff members' shifts. Our fast, intelligent scheduling system streamlines the process, saving time and reducing stress for everyone involved."
             />
             <Section 
                 h='Optimize Your Workflow' 
@@ -39,7 +39,7 @@ export default function Content() {
             />
             <Section 
                 h='Minimize Burnout' 
-                p='Pediatricians work tirelessly to care for young patients. Our system helps avoid burnout by creating balanced schedules, ensuring adequate rest, and allowing more focus on patient care.' 
+                p='ER staff works tirelessly to care for young patients. Our system helps avoid burnout by creating balanced schedules, ensuring adequate rest, and allowing more focus on patient care.' 
             />
             <Section 
                 h='Seamless Communication' 
@@ -55,7 +55,7 @@ export default function Content() {
             />
             <Section 
                 h='Save Time, Focus on Care' 
-                p='By automating repetitive scheduling tasks, our system frees up valuable administrative time, allowing pediatricians and staff to focus on what truly matters—delivering exceptional care to children.' 
+                p='By automating repetitive scheduling tasks, our system frees up valuable administrative time, allowing ER staff members and staff to focus on what truly matters—delivering exceptional care to children.' 
             />
         </section>
     )

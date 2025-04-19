@@ -1,4 +1,4 @@
-#employees-content, #shifts-content {
+#staff-content, #shifts-content {
     display: flex;
     flex-direction: column;
 
@@ -6,12 +6,33 @@
         @include breakpoint(1300px) { flex-direction: column }
         flex-direction: row;
         flex-wrap: wrap;
-
-        .dashboard-card {
-            @include vertical-flex;
-            @include breakpoint(950px) { min-width: auto }
-            min-width: 400px;
-            .dashboard-card-details { padding-bottom: 10px }
-        }
     }
+
+    .dashboard-card {
+        @include vertical-flex;
+        @include breakpoint(950px) { min-width: auto }
+        min-width: 300px;
+        .dashboard-card-details { padding-bottom: 10px }
+    }
+}
+
+#staff-content .team-card {
+    @include vertical-flex;
+    padding: 10px;
+    margin: 10px;
+    .card-container { padding: 0 }
+
+    .team-name {
+        @include themed-color('primary-text', 'light-gray');
+        font-size: 1.3rem;
+    }
+
+    .no-staff {
+        @include themed-color('primary-text', 'gray');
+        margin: 0;
+    }
+}
+
+.teams-container {
+    padding: 50px 10px;
 }

@@ -6,7 +6,7 @@ import ExcelJS from 'exceljs'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ChevronDown } from 'lucide-react'
 import { dashboardContext } from '@context'
-import { QUERY_TYPES, TOO_MANY_REQS_MSG } from '@const'
+import { MONTH_NAMES, QUERY_TYPES, TOO_MANY_REQS_MSG, WEEKDAY_NAMES } from '@const'
 import { parseAccount, parseSub } from '@types'
 import type {
     MonthName, YearToSchedules, Employee, Shift, Schedule,
@@ -85,7 +85,7 @@ export const Dropdown = (
                 <DropdownMenu.Trigger className='dropdown-trigger'>
                     {selectedOption || 'Select an option'}
                     <ChevronDown
-                        className={`chevron ${open ? 'chevron-open' : ''}`}
+                        className={`chevron ${open ? 'chevron-rotated' : ''}`}
                         size={18}
                         color={settings.darkThemeEnabled ? 'white' : undefined}
                     />
@@ -185,8 +185,8 @@ export const getDaysInCurrentMonth = (): number => {
 }
 
 
-/** @returns The number of days in a month given its index (0-11) */
-export const getDaysInMonth = (i: number, year: number): number | null => {
+/** @returns The number of days in a month given its index (0-11) & year */
+export const getDaysInMonth = (i: number, year: number): number => {
     if (i < 0 || i > 11) throw new Error('Invalid month index. Must be between 0 and 11.')
     return new Date(year, i+1, 0).getDate()
 }
@@ -195,19 +195,14 @@ export const getDaysInMonth = (i: number, year: number): number | null => {
 /** @returns The name of the month given its index (0-11) */
 export const getMonthName = (i: number): MonthName => {
     if (i < 0 || i > 11) throw new Error('Invalid month index. Must be between 0 and 11.')
-    const monthNames: MonthName[] = [
-        'January', 'February', 'March', 'April', 'May', 'June', 
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ]
-    return monthNames[i]
+    return MONTH_NAMES[i]
 }
 
 
 /** @returns The name of the weekday given the year, month (0-11), and its index (1-31) in the month */
 export const getWeekdayName = (year: number, month: number, day: number): string => {
     const date = new Date(year, month, day)
-    const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    return weekdayNames[date.getDay()]
+    return WEEKDAY_NAMES[date.getDay()]
 }
 
 
@@ -217,10 +212,20 @@ export const getEmployeeById = (id: number, employees: Employee[]): Employee | u
 )
 
 
-/** @returns True if the schedule for a specific year & month was already generated  */
-export const hasScheduleForMonth = (schedules: YearToSchedules, year: number, month: number): boolean => (
-    (schedules.get(year)?.[month]?.schedule.length ?? 0) > 0
-)
+/** @returns True if any team has a schedule for the specific year & month */
+export const hasScheduleForMonth = (schedules: YearToSchedules, year: number, month: number): boolean => {
+    const yearMap = schedules.get(year)
+    if (!yearMap) return false
+
+    for (const teamSchedules of yearMap.values()) {
+        const schedule = teamSchedules?.[month]
+        if (schedule && schedule.schedule.length > 0) {
+            return true
+        }
+    }
+
+    return false
+}
 
 
 /** Sanitizes input credentials to prevent XSS and SQL injection */

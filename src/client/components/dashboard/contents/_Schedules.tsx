@@ -1,102 +1,84 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { dashboardContext } from '@context'
-import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, hasScheduleForMonth, getWeekdayName, openRequestChangeModal } from '@utils'
+import { Icon, Request, ScheduleExporter, getDaysInMonth, getEmployeeById, getMonthName, getWeekdayName, openRequestChangeModal } from '@utils'
 import { MIN_YEAR, MAX_YEAR } from '@const'
-import type { SupportedExportFormat, ScheduleOfIDs, Employee, ShiftCounts } from '@types'
+import type { SupportedExportFormat, Employee, ShiftCounts, ScheduleResponse, Shift, Team } from '@types'
 import closeIcon from '@icons/close.png'
 import prevIcon from '@icons/prev.png'
 import nextIcon from '@icons/next.png'
+import backIcon from '@icons/back.png'
 
 export default function Schedules() {
     const {
-        account, employees, validateEmployeeById, shifts, 
-        schedules, setSchedules, setScheduleValidity, getScheduleValidity,
-        setModalContent, openModal, closeModal, setContent, settings
+        account, employees, shifts, schedules,
+        setScheduleValidity, getScheduleValidity, 
+        setModalContent, openModal, closeModal,
+        setContent, settings, teams, setSchedules,
+        validateEmployeeById
     } = useContext(dashboardContext)
-    const [loading, setLoading] = useState(false)
     const today = new Date()
-    const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth())
+    const [loading, setLoading] = useState(false)
+    const [selectedTeam, setSelectedTeam] = useState<number|null>(null)
+    const [selectedMonth, setSelectedMonth] = useState<number>(today.getMonth()) // [0-11]
     const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear())
     const [isLeftChevronActive, setIsLeftChevronActive] = useState(true)
     const [isRightChevronActive, setIsRightChevronActive] = useState(true)
-    const scheduleAvailable = useMemo(
-        () => hasScheduleForMonth(schedules, selectedYear, selectedMonth),
-        [schedules, selectedYear, selectedMonth]
-    )
 
-    const handleUnimplementedAlgorithmError = useCallback((error: string) => {
-        if (error.includes('not yet implemented')) {
-            setModalContent(<>
-                <h1>Cannot Generate Schedule</h1>
-                <p>
-                    The auto-scheduling algorithm is not yet implemented for this account.
-                    Please contact us to implement this system for you.
-                </p>
-                <button onClick={() => openRequestChangeModal('Implement Algorithm for Account', setModalContent, openModal)}>Contact Us</button>
-            </>)
-            openModal()
-        }
-    }, [setModalContent, openModal])
+    const allTeamsHaveSchedules = useMemo(() => {
+        const yearSchedules = schedules.get(selectedYear)
+        if (!yearSchedules) return false
+        return teams.every(team => {
+            const teamMonthly = yearSchedules.get(team.id)
+            return teamMonthly?.[selectedMonth] !== undefined && teamMonthly[selectedMonth] !== null
+        })
+    }, [schedules, selectedYear, selectedMonth, teams])    
 
-    /** Stores the schedule in DB */
-    const storeSchedule = useCallback(async (schedule: ScheduleOfIDs) => {
-        if (schedule.length <= 0) return
-        await new Request(
-            `schedules/${account.id}`,
-            (data: { year: number, month: number, schedule_id: number, schedule: ScheduleOfIDs }) => {
-                // Add the new schedule to the state with the returned data
-                setSchedules((prevSchedules) => {
-                    const updatedSchedules = new Map(prevSchedules)
-                    if (!updatedSchedules.has(data.year)) updatedSchedules.set(data.year, [])
-                    const yearSchedules = updatedSchedules.get(data.year)!
+    const scheduleAvailable = useMemo(() => {
+        if (!selectedTeam) return false
+        const yearSchedules = schedules.get(selectedYear)
+        const teamMonthly = yearSchedules?.get(selectedTeam)
+        return teamMonthly?.[selectedMonth] !== undefined && teamMonthly[selectedMonth] !== null
+    }, [schedules, selectedYear, selectedMonth, selectedTeam])    
 
-                    yearSchedules[data.month] = {
-                        id: data.schedule_id,
-                        schedule: data.schedule.map(day =>
-                            day.map(shift => shift.map(id => validateEmployeeById(id, employees, data.month, data.year)))
-                        )
-                    }
-                    return updatedSchedules
-                })
-            }
-        ).post({ year: selectedYear, month: selectedMonth, schedule })
-    }, [account.id, employees, selectedMonth, selectedYear, setSchedules, validateEmployeeById])
-
-    /** Overwrites the previously generated schedule in DB */
-    const updateSchedule = useCallback(async (scheduleId: number, schedule: ScheduleOfIDs) => {
-        if (schedule.length <= 0) return
-        await new Request(
-            `schedules/${scheduleId}`,
-            (data: { year: number, month: number, schedule_id: number, schedule: ScheduleOfIDs }) => {
-                // Update the schedule in the state
-                setSchedules((prevSchedules) => {
-                    const updatedSchedules = new Map(prevSchedules)
-                    if (!updatedSchedules.has(data.year)) updatedSchedules.set(data.year, [])
-                    const yearSchedules = updatedSchedules.get(data.year)!
+    const _updateSchedule = (newSchedule: ScheduleResponse) => {
+        const { schedule_id: scheduleId, team_id: teamId, year, month, schedule } = newSchedule
     
-                    yearSchedules[data.month] = {
-                        id: data.schedule_id,
-                        schedule: data.schedule.map(day =>
-                            day.map(shift =>
-                                shift.map(id => validateEmployeeById(id, employees, data.month, data.year))
-                            )
-                        )
-                    }
-                    return updatedSchedules
-                })
+        setSchedules((prevSchedules) => {
+            const updatedSchedules = new Map(prevSchedules)
+    
+            if (!updatedSchedules.has(year)) {
+                updatedSchedules.set(year, new Map())
             }
-        ).patch({ schedule })
-    }, [employees, setSchedules, validateEmployeeById])
-
+    
+            const teamSchedules = updatedSchedules.get(year)!
+    
+            if (!teamSchedules.has(teamId)) {
+                teamSchedules.set(teamId, new Array(12).fill(null))
+            }
+    
+            const monthlySchedules = teamSchedules.get(teamId)!
+            monthlySchedules[month] = {
+                id: scheduleId,
+                teamId: teamId,
+                schedule: schedule.map(day =>
+                    day.map(shift =>
+                        shift.map(id => validateEmployeeById(id, employees, month, year))
+                    )
+                )
+            }
+    
+            return updatedSchedules
+        })
+    }    
 
     /** Displays a modal for generating a schedule */
-    const openGenerateScheduleModal = useCallback(() => {
+    const openGenerateScheduleModal = () => {
         setModalContent(
             employees.length <= 0 ?
             <>
                 <h1>Invalid Input</h1>
-                <label>Please register employees first in the &quot;Pediatricians&quot; section.</label>
-                <button onClick={() => { setContent('employees'); closeModal() }}>Register Pediatricians</button>
+                <label>Please register ER staff first in the &quot;Staff&quot; section.</label>
+                <button onClick={() => { setContent('staff'); closeModal() }}>Register Staff</button>
             </>
             : shifts.length <= 0 ?
             <>
@@ -122,10 +104,10 @@ export default function Schedules() {
             </>
         )
         openModal()
-    }, [employees.length, loading, openModal, closeModal, setContent, setModalContent, shifts.length])
+    }
 
     /** Handles traversing between months and years */
-    const handleMonthChange = (direction: 'prev' | 'next') => {
+    const handleMonthChange = (direction: 'prev'|'next') => {
         if (direction === 'prev' && !isLeftChevronActive) return
         if (direction === 'next' && !isRightChevronActive) return
         setSelectedMonth(prevMonth => {
@@ -154,7 +136,7 @@ export default function Schedules() {
 
             const getShiftCounts = useCallback(async () => {
                 await new Request(
-                    `engine/get_shift_counts_of_employees?account_id=${account.id}&year=${selectedYear}&month=${selectedMonth}`,
+                    `engine/get_shift_counts_of_employees?account_id=${account.id}&team_id=${selectedTeam}&year=${selectedYear}&month=${selectedMonth}`,
                     (data: Record<number, number>) => {
                         const newShiftCounts = new Map<Employee, number>()
                         for (const [employeeId, shiftCount] of Object.entries(data)) {
@@ -169,7 +151,7 @@ export default function Schedules() {
 
             const getTotalWorkHours = useCallback(async () => {
                 await new Request(
-                    `engine/get_work_hours_of_employees?account_id=${account.id}&year=${selectedYear}&month=${selectedMonth}`,
+                    `engine/get_work_hours_of_employees?account_id=${account.id}&team_id=${selectedTeam}&year=${selectedYear}&month=${selectedMonth}`,
                     (data: Record<number, number>) => {
                         // data: Record<number, number>
                         const newWorkHours = new Map<Employee, number>()
@@ -193,12 +175,12 @@ export default function Schedules() {
             return scheduleAvailable
             ? <>
                 <h2 style={{ textAlign: 'center' }}>
-                    Total Shifts and Work Hours per Pediatrician This Month
+                    Total Shifts and Work Hours per ER Staff Member This Month
                 </h2>
                 <section id='modal-content' style={{ textAlign: 'left', margin: '0 auto', marginBottom: 5 }}>
                     {!loading ? (
                         employees.length > 0 ? (
-                            employees.map((emp, i) => {
+                            employees.filter(emp => emp.teamId === selectedTeam).map((emp, i) => {
                                 const numShifts = shiftCounts.get(emp) || 0;
                                 const hours = workHours.get(emp) || 0;
                                 return (
@@ -209,7 +191,7 @@ export default function Schedules() {
                             })
                         ) : (
                             <p>
-                                No pediatrician was assigned a shift in this month.
+                                No ER staff member was assigned a shift in this month.
                                 Please ensure you have entered correct information, then regenerate the schedule.
                             </p>
                         )
@@ -232,10 +214,20 @@ export default function Schedules() {
     /** Displays a modal for exporting the schedule */
     const openExportModal = () => {
         const exportSchedule = (format: SupportedExportFormat) => () => {
-            const currentYearSchedules = schedules.get(selectedYear)
-            const currentSchedule = currentYearSchedules?.[selectedMonth]
+            const yearSchedules = schedules.get(selectedYear)
+            const teamSchedules = yearSchedules?.get(selectedTeam!)
+            const currentSchedule = teamSchedules?.[selectedMonth]
             if (!currentSchedule) { alert('No schedule available to export.'); return }
-            const exporter = new ScheduleExporter(currentSchedule.schedule, shifts, employees, selectedYear, selectedMonth, settings.weekendDays)
+
+            const exporter = new ScheduleExporter(
+                currentSchedule.schedule,
+                shifts,
+                employees.filter(emp => emp.teamId === selectedTeam),
+                selectedYear,
+                selectedMonth,
+                settings.weekendDays
+            )
+
             switch (format) {
                 case 'xlsx': exporter.exportExcel(); break
                 case 'csv': exporter.exportCSV(); break
@@ -243,6 +235,7 @@ export default function Schedules() {
                 case 'json': exporter.exportJSON(); break
                 default: console.error('Unsupported export format')
             }
+
             closeModal()
         }
 
@@ -272,8 +265,15 @@ export default function Schedules() {
         openModal()
     }
 
-    /** Sends an API request to the engine for schedule generation */
-    const generateSchedule = useCallback(async () => {
+    const handleTeamClick = (teamId: number) => {
+        setSelectedTeam(teamId)
+    }
+
+    const goBackToTeamSelector = () => {
+        setSelectedTeam(null)
+    }
+
+    const generateAllSchedules = async () => {
         if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || loading) {
             openGenerateScheduleModal()
             return
@@ -281,63 +281,51 @@ export default function Schedules() {
 
         setLoading(true)
         const numDays = getDaysInMonth(selectedMonth, selectedYear)
-        let newSchedule: ScheduleOfIDs = [] // Temporary storage for the new schedule
-    
-        // Send a request to generate a schedule
+
         await new Request(
-            `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}&year=${selectedYear}&month=${selectedMonth+1}`,
-            (data: Employee['id'][][][]) => { newSchedule = data },
-            handleUnimplementedAlgorithmError
+            `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}&year=${selectedYear}&month=${selectedMonth}`,
+            (data: ScheduleResponse[]) => data.map(_updateSchedule),
+            (error) => {
+                if (!error.includes('not yet implemented')) return
+                let pMsg = 'The auto-scheduling algorithm was not yet implemented for this account.'
+
+                if (error.includes('Team')) {
+                    const teamId = parseInt(error.split(' ')[1])
+                    const teamName = teams.find(t => t.id === teamId)?.name ?? teamId
+                    pMsg = `The auto-scheduling algorithm was not yet implemented for team "${teamName}" in your account.`
+                }
+
+                pMsg += ' Please contact us to implement this system for you.'
+
+                setModalContent(<>
+                    <h1>Cannot Generate Schedule</h1>
+                    <p>{pMsg}</p>
+                    <button onClick={() => openRequestChangeModal('Implement Algorithm for Account', setModalContent, openModal)}>Contact Us</button>
+                </>)
+                openModal()
+            }
         ).get()
-    
-        await storeSchedule(newSchedule)
+
         setLoading(false)
-    }, [account.id, employees.length, loading, openGenerateScheduleModal, selectedMonth, selectedYear, shifts.length, storeSchedule, handleUnimplementedAlgorithmError])
+    }
 
-    /** Generates the schedule again then overwrites the old one in DB */
-    const regenerateSchedule = useCallback(async () => {
-        if (employees.length <= 0 || shifts.length <= 0 || employees.length < shifts.length || loading) {
-            openGenerateScheduleModal()
-            return
-        }
-
+    const regenerateSchedule = async () => {
+        await generateAllSchedules()
         setScheduleValidity(true, selectedYear, selectedMonth)
-        setLoading(true)
-        const numDays = getDaysInMonth(selectedMonth, selectedYear)
-        let newSchedule: ScheduleOfIDs = [] // Temporary storage for the new schedule
-
-        // Get the schedule ID for the current year and month
-        const scheduleId = schedules.get(selectedYear)?.[selectedMonth]?.id
-        if (!scheduleId) {
-            alert('No schedule ID found for the selected month. Cannot regenerate.')
-            setLoading(false)
-            return
-        }
-    
-        // Send a request to regenerate the schedule
-        await new Request(
-            `engine/generate_schedule?account_id=${account.id}&num_shifts_per_day=${shifts.length}&num_days=${numDays}&year=${selectedYear}&month=${selectedMonth+1}`,
-            (data: Employee['id'][][][]) => { newSchedule = data },
-            handleUnimplementedAlgorithmError
-        ).get()
-
-        await updateSchedule(scheduleId, newSchedule)
-        setLoading(false)
-    }, [account.id, employees.length, loading, schedules, selectedMonth, selectedYear, setScheduleValidity, shifts.length, updateSchedule, openGenerateScheduleModal, handleUnimplementedAlgorithmError])
-
+    }
 
     useEffect(() => {
-        const shiftsPerDayInSchedule = schedules.get(selectedYear)?.[selectedMonth]?.schedule[0].length
+        const schedule = schedules.get(selectedYear)?.get(selectedTeam!)?.[selectedMonth]
+        const shiftsPerDayInSchedule = schedule?.schedule?.[0]?.length
+    
         if (shiftsPerDayInSchedule === undefined || !(employees.length && shifts.length)) {
             setScheduleValidity(true, selectedYear, selectedMonth)
         } else if (employees.length < shifts.length || shiftsPerDayInSchedule !== shifts.length) {
             setScheduleValidity(false, selectedYear, selectedMonth)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [employees.length, shifts.length, schedules, selectedMonth, selectedYear])
+    }, [employees.length, shifts.length, schedules, selectedMonth, selectedYear, selectedTeam, setScheduleValidity])    
 
     useEffect(() => {
-        // Min: January 2023; Max: December 2025
         setIsLeftChevronActive(!(selectedYear === MIN_YEAR && selectedMonth === 0))
         setIsRightChevronActive(!(selectedYear === MAX_YEAR && selectedMonth === 11))
     }, [selectedMonth, selectedYear])
@@ -346,11 +334,17 @@ export default function Schedules() {
         <header>
             <section id='header-upper'>
                 <section id='header-btns'>
-                    <button onClick={scheduleAvailable ? regenerateSchedule : generateSchedule}>
-                        {scheduleAvailable ? 'Regenerate Schedule' : 'Generate Schedule'}
-                    </button>
-                    <button onClick={openDetailsModal}>Details</button>
-                    <button onClick={openExportModal}>Export</button>
+                    {!selectedTeam ? (
+                        <button onClick={allTeamsHaveSchedules ? regenerateSchedule : generateAllSchedules}>
+                            {allTeamsHaveSchedules ? 'Regenerate Schedules' : 'Generate Schedules'}
+                        </button>
+                    ) : <>
+                        <button onClick={goBackToTeamSelector} id='back-to-team-selector-btn'>
+                            <Icon src={backIcon} alt='Back to Team Selector' size={23}/>
+                        </button>
+                        <button onClick={openDetailsModal}>Details</button>
+                        <button onClick={openExportModal}>Export</button>
+                    </>}
                 </section>
                 <section id='month-navigators'>
                     <button
@@ -365,44 +359,84 @@ export default function Schedules() {
                 </section>
             </section>
             {
-                !getScheduleValidity(selectedYear, selectedMonth) 
+                !getScheduleValidity(selectedYear, selectedMonth) && teams.length > 0
                 ? 
                     <p className='header-msg invalid-msg'>
                         <span>This schedule seems to be invalid or outdated. Please try to regenerate it.</span>
                         <button onClick={() => setScheduleValidity(true, selectedYear, selectedMonth)}><Icon src={closeIcon} alt='Close'/></button>
                     </p>
                 :
-                    <p className='header-msg' style={!loading && scheduleAvailable ? { display: 'none' } : {}}>
+                    <p className='header-msg' style={!loading && (!selectedTeam || scheduleAvailable) ? { display: 'none' } : {}}>
                         {
                             loading
                             ? 'Generating...' 
-                            : !scheduleAvailable && 'No schedule generated yet for this month. Click "Generate Schedule" to automatically generate one.'
+                            : !scheduleAvailable && 'No schedule generated yet for this team in this month.'
                         }
                     </p>
             }
+            {teams.length === 0 && <p className='header-msg'>You haven&apos;t registered any staff team yet.</p>}
         </header>
-        {scheduleAvailable && (
+
+        {!selectedTeam && teams.length > 0 && <TeamSelector teams={teams} selectedTeam={selectedTeam} handleTeamClick={handleTeamClick} />}
+
+        {scheduleAvailable && selectedTeam && schedules.get(selectedYear)?.get(selectedTeam)?.[selectedMonth] && (
             <div className='card-container'>
-                {
-                    schedules.get(selectedYear)![selectedMonth].schedule.map((day, dayI) => 
-                    <div className='day-card' key={dayI}>
-                        <h3>Day {dayI+1} <span className='weekday-name'>| {getWeekdayName(selectedYear, selectedMonth, dayI+1).slice(0, 3)}</span></h3>
-                        <table>
-                            <thead>
-                                <tr><th>Shift</th><th>Pediatrician</th></tr>
-                            </thead>
-                            <tbody>
-                                {day.map((shift, shiftI) => (
-                                    <tr key={shiftI}>
-                                        <td>{shifts[shiftI]?.name}</td>
-                                        <td>{shift.map(employee => employee.name).join(', ') || 'Unknown'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                {schedules.get(selectedYear)!.get(selectedTeam)![selectedMonth].schedule.map((day, dayI) => (
+                    <DayCard
+                        key={dayI}
+                        day={day}
+                        dayI={dayI}
+                        selectedYear={selectedYear}
+                        selectedMonth={selectedMonth}
+                        shifts={shifts}
+                    />
+                ))}
             </div>
         )}
     </>
 }
+
+
+const TeamSelector = (
+    { teams, selectedTeam, handleTeamClick }:
+    { teams: Team[], selectedTeam: number|null, handleTeamClick: (teamId: number) => void }
+) => (
+    <section className='team-selector'>
+        <h1>Select a team to view its generated schedule in this month:</h1>
+        <div className='team-cards'>
+            {teams.map(team => (
+                <section
+                    key={team.id}
+                    className={`team-card ${selectedTeam === team.id ? 'selected' : ''}`}
+                    onClick={() => handleTeamClick(team.id)}
+                >
+                    <h2>{team.name}</h2>
+                    <Icon src={nextIcon} alt='Next month' size={40}/>
+                </section>
+            ))}
+        </div>
+    </section>
+)
+
+
+const DayCard = (
+    { day, dayI, selectedYear, selectedMonth, shifts }:
+    { day: Employee[][], dayI: number, selectedYear: number, selectedMonth: number, shifts: Shift[] }
+) => (
+    <div className='day-card' key={dayI}>
+        <h3>Day {dayI+1} <span className='weekday-name'>| {getWeekdayName(selectedYear, selectedMonth, dayI+1).slice(0, 3)}</span></h3>
+        <table>
+            <thead>
+                <tr><th>Shift</th><th>ER Staff Member</th></tr>
+            </thead>
+            <tbody>
+                {day.map((shift, shiftI) => (
+                    <tr key={shiftI}>
+                        <td>{shifts[shiftI]?.name}</td>
+                        <td>{shift.map(employee => employee.name).join(', ') || 'Unknown'}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+)
