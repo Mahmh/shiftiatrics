@@ -1,5 +1,5 @@
-from src.server.db import create_employee
 from argparse import ArgumentParser
+from src.server.db import create_employee
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Create a new employee')

@@ -45,7 +45,7 @@ export default function Sidebar() {
 
 
 export const MenuButton = () => {
-    const { isMenuShown, setIsMenuShown } = useContext(dashboardContext)
+    const { isMenuShown, setIsMenuShown, isModalOpen } = useContext(dashboardContext)
     const buttonRef = useRef<HTMLButtonElement>(null)
     const [position, setPosition] = useState({ x: 10, y: 0 })
 
@@ -109,7 +109,7 @@ export const MenuButton = () => {
         setIsMenuShown(prev => !prev)
     }
 
-    return (
+    return !isModalOpen && (
         <button
             id='dashboard-menu-btn'
             ref={buttonRef}

@@ -47,7 +47,7 @@ html.logged-in.dark-theme, body.logged-in.dark-theme {
   background-color: #111d28;
 }
 
-body {
+html, main {
   overflow-x: hidden;
 }
 
@@ -1773,12 +1773,15 @@ a:hover {
   align-items: center;
   gap: 200px;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
 }
 @media (max-width: 1550px) {
   #lp-banner {
-    display: block;
+    display: flex;
+    flex-direction: column;
     padding-top: 150px;
+    padding-bottom: 75px;
+    gap: 0;
   }
 }
 @keyframes fadeIn {
@@ -2058,11 +2061,18 @@ a:hover {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 #mid-container #agree-to-tos-sec {
-  width: auto;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  width: 80%;
+  gap: 20px;
+  margin: 20px 0;
+}
+@media (max-width: 850px) {
+  #mid-container #agree-to-tos-sec {
+    width: 150%;
+  }
 }
 #mid-container #agree-to-tos-sec label {
   margin: 0;
@@ -2071,9 +2081,11 @@ a:hover {
   color: #4a90e2;
 }
 #mid-container #agree-to-tos-sec input {
-  scale: 0.4;
-  width: 50px;
-  height: 50px;
+  min-width: 20px;
+  min-height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+  margin: 0;
   box-shadow: none;
 }
 #mid-container .error {
@@ -2167,6 +2179,23 @@ a:hover {
 }
 #mid-container #login-btns #forgot-pass-btn:hover {
   background-color: rgba(255, 255, 255, 0.2823529412);
+}
+
+@media (max-width: 700px) {
+  #reset-password-page {
+    padding: 0;
+  }
+  #reset-password-page .error {
+    margin: 10px 0;
+  }
+  #reset-password-page p {
+    width: 60vw;
+    margin: 0 auto;
+  }
+  #reset-password-page .cred-submit-btn {
+    min-width: 150px;
+    width: 130%;
+  }
 }
 
 #pricing-page {
@@ -2405,6 +2434,11 @@ a:hover {
   width: 70%;
   margin: 0 auto;
 }
+@media (max-width: 1300px) {
+  #contact-page {
+    width: 100%;
+  }
+}
 #contact-page h1, #contact-page p {
   text-align: center;
 }
@@ -2467,9 +2501,8 @@ a:hover {
 }
 @media (max-width: 600px) {
   #about-page, #cookie-policy, #privacy-policy, #terms-of-service {
-    width: 100%;
-    padding: 0 30px;
-    overflow-x: scroll;
+    width: 90%;
+    overflow-x: hidden;
   }
 }
 #about-page section, #cookie-policy section, #privacy-policy section, #terms-of-service section {

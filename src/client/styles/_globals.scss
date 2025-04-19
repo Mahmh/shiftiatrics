@@ -15,7 +15,7 @@ html, body {
     &.logged-in { @include themed-bgcolor('background') }
 }
 
-body {
+html, main {
     overflow-x: hidden;
 }
 

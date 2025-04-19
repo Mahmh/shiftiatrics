@@ -1,4 +1,7 @@
 #contact-page {
+    @include breakpoint(1300px) {
+        width: 100%;
+    }
     @include vertical-flex;
     align-items: center;
     width: 70%;

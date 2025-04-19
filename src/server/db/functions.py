@@ -181,7 +181,7 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
             <html>
             <body>
                 <p>You have sent a password reset request: <a href="{reset_link}">Click here to reset your password</a></p>
-                <p>If you have problems with accessing that link, do not hesitate to <a href="{PROD_URL}/support/contact">contact us.</a></p>
+                <p>If you have problems with accessing that link, do not hesitate to <a href="{PROD_URL}/support/contact">contact us</a>.</p>
             </body>
             </html>
         '''),

@@ -55,11 +55,14 @@
     }
 
     #agree-to-tos-sec {
-        width: auto;
+        @include breakpoint(850px) { width: 150% }
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
+        width: 80%;
+        gap: 20px;
+        margin: 20px 0;
 
         label {
             margin: 0;
@@ -67,9 +70,12 @@
         }
         
         input {
-            scale: .4;
-            width: 50px;
-            height: 50px;
+            $chkbox-len: 20px;
+            min-width: $chkbox-len;
+            min-height: $chkbox-len;
+            max-width: $chkbox-len;
+            max-height: $chkbox-len;
+            margin: 0;
             box-shadow: none;
         }
     }
@@ -118,6 +124,24 @@
         #forgot-pass-btn {
             background-color: get-color('alpha-white');
             &:hover { background-color: #ffffff48 }
+        }
+    }
+}
+
+
+#reset-password-page {
+    @include breakpoint(700px) {
+        padding: 0;
+        .error { margin: 10px 0 }
+
+        p {
+            width: 60vw;
+            margin: 0 auto;
+        }
+
+        .cred-submit-btn {
+            min-width: 150px;
+            width: 130%;
         }
     }
 }

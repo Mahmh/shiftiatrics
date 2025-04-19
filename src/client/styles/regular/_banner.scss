@@ -1,5 +1,10 @@
 #lp-banner {
-    @include breakpoint(1550px) { display: block; padding-top: 150px; }
+    @include breakpoint(1550px) {
+        @include vertical-flex;
+        padding-top: 150px;
+        padding-bottom: 75px;
+        gap: 0;
+    }
     background: linear-gradient(
         to bottom right,
         get-color('banner-blue-0', $lp: true),
@@ -10,7 +15,7 @@
     align-items: center;
     gap: 200px;
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
 
     @keyframes fadeIn {
         from {

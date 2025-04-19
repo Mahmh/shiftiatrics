@@ -1,5 +1,5 @@
-from src.server.db import delete_account
 from argparse import ArgumentParser
+from src.server.db import delete_account
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Delete an existing account')

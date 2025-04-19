@@ -65,7 +65,7 @@ export default function Signup() {
                 </section>
                 <section id='agree-to-tos-sec'>
                     <input type='checkbox' onChange={e => setToSAccepted(e.target.checked)} required/>
-                    <label>I agree to Shiftiatrics&apos; <Link href='/legal/terms'>Terms of Service</Link>.</label>
+                    <label>I agree to Shiftiatrics&apos; <Link href='/legal/terms'>Terms of Service</Link>, <Link href='/legal/privacy'>Privacy Policy</Link>, and <Link href='/legal/cookies'>Cookie Policy</Link>.</label>
                 </section>
                 <p className='error' style={error === null ? { visibility: 'hidden', margin: 0 } : {}}>{error}</p>
                 <button className='cred-submit-btn' id='signup-btn' onClick={handleSignup} disabled={loading}>
