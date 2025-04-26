@@ -5,7 +5,8 @@ import { DashboardProvider } from '@context'
 
 export const metadata: Metadata = {
     title: 'Shiftiatrics',
-    description: 'Auto-scheduling for your business'
+    description: 'Auto-scheduling for your business',
+    icons: { icon: '/icons/favicon.ico' }
 }
 
 export default function RootLayout({ children }: Readonly<{children: React.ReactNode}>) {

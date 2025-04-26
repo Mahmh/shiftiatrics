@@ -19,4 +19,5 @@ src/client/node_modules/
 src/client/.next/
 src/client/build/
 src/client/out/
+src/client/public/icons/favicon.odg
 src/nginx/certs
