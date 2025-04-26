@@ -53,6 +53,7 @@ else:
 # Misc
 PROD_URL = 'https://shiftiatrics.com'
 
+EMAIL_TEMPLATES_DIR = _locate('../templates/')
 SCHEDULE_ENGINE_PATH = _locate('../engine/engine.jar')
 DB_SCHEMA_PATH = _locate('../../db/schema.sql')
 

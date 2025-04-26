@@ -385,24 +385,6 @@ def _validate_and_cast(setting: str, value: SettingValue, column_type: Boolean |
     raise TypeError(f"Unsupported column type: {type(column_type)}")
 
 
-def _get_contact_us_email_body(data: ContactUsSubmissionData) -> str:
-    return dedent(f'''
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <h2 style="color: #0056b3;">New Contact Us Submission</h2>
-            <table style="border-collapse: collapse; width: 100%;">
-                <tr><td><b>Account ID:</b></td><td>{data.account_id}</td></tr>
-                <tr><td><b>Name:</b></td><td>{data.name}</td></tr>
-                <tr><td><b>Email:</b></td><td>{data.email}</td></tr>
-                <tr><td><b>Query Type:</b></td><td>{data.query_type}</td></tr>
-                <tr><td><b>Message:</b></td></tr>
-                <tr><td colspan="2" style="border-top: 1px solid #ccc; padding-top: 10px;">{data.description}</td></tr>
-            </table>
-        </body>
-        </html>
-    ''')
-
-
 def _delete_all_holidays_of_employee(employee_id: int, *, session: _SessionType) -> None:
     holidays = session.query(Holiday).filter(Holiday.assigned_to.any(employee_id)).all()
     for holiday in holidays:

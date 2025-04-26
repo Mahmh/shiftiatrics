@@ -3,11 +3,10 @@ from textwrap import dedent
 from datetime import date, time, datetime, timezone
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session as _SessionType
-from sqlalchemy.dialects.postgresql import array
 import stripe
 
-from src.server.lib.utils import log, parse_date, parse_time, utcnow, todict, todicts
-from src.server.lib.models import Credentials, Cookies, ScheduleType, ContactUsSubmissionData
+from src.server.lib.utils import log, parse_date, parse_time, utcnow, todict, todicts, format_template
+from src.server.lib.models import Credentials, Cookies, ScheduleType
 from src.server.lib.exceptions import CookiesUnavailable, NonExistent
 from src.server.lib.types import SettingValue
 from src.server.lib.constants import WEB_SERVER_URL, SUPPORT_EMAIL, NOREPLY_EMAIL, SYSTEM_EMAIL, PROD_URL
@@ -97,10 +96,7 @@ async def request_delete_account(cookies: Cookies, *, session: _SessionType) -> 
     account = _validate_cookies(cookies, session=session)
     await send_email(
         subject='Account Deletion Request',
-        body=dedent(f'''
-            <h2>A customer has requested their account to be deleted.</h2>
-            <p>Customer email: {account.email}</p>
-        '''),
+        body=format_template('delete_account.html', customer_email=account.email),
         sender=SYSTEM_EMAIL,
         recipients=[SUPPORT_EMAIL],
         reply_to=[account.email]
@@ -179,10 +175,7 @@ async def request_reset_password(email: str, *, session: _SessionType) -> str:
 
     await send_email(
         subject='Reset Your Shiftiatrics Password',
-        body=dedent(f'''
-            <p>You have sent a password reset request: <a href="{reset_link}">Click here to reset your password</a></p>
-            <p>If you have problems with accessing that link, do not hesitate to <a href="{PROD_URL}/support/contact">contact us</a>.</p>
-        '''),
+        body=format_template('reset_password.html', reset_link=reset_link, contact_url=f'{PROD_URL}/support/contact'),
         sender=NOREPLY_EMAIL,
         recipients=[account.email]
     )
@@ -226,7 +219,7 @@ async def request_verify_email(email: str, *, session: _SessionType) -> str:
 
     await send_email(
         subject='Verify Your Email',
-        body=f'<a href="{verify_link}">Click here to verify your email</a>',
+        body=format_template('verify_email.html', verify_link=verify_link),
         sender=NOREPLY_EMAIL,
         recipients=[account.email]
     )
