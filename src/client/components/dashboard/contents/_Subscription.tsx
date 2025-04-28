@@ -85,7 +85,7 @@ const PricingCard = ({ name, titleBg, price, features }: Plan) => {
                 disabled={isActivated}
                 className={isActivated ? 'sub-activated-btn' : ''}
             >
-                {isActivated ? 'Currently Subscribed' : 'Contact Us'}
+                {isActivated ? 'Currently Activated' : 'Contact Us'}
             </button>
         </div>
     )

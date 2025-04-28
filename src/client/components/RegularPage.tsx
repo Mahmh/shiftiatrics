@@ -20,7 +20,7 @@ export default function RegularPage(
 
     return <>
         <Header transparentHeader={transparentHeader}/>
-        <main id={id} style={transparentHeader ? {} : { position: 'relative', top: 120, marginBottom: '35vh' }}>
+        <main id={id} style={transparentHeader ? {} : { position: 'relative', top: 120, marginBottom: '25vh' }}>
             {children}
         </main>
         <Footer marginTop={footerMarginTop}/>

@@ -11,76 +11,82 @@ export const generateMetadata = async (): Promise<Metadata> => ({
 
 const MARKDOWN_CONTENT = `
 ## 1. Acceptance of Terms
-Welcome to **Shiftiatrics** ("we," "our," or "us"). By accessing or using our website **${DOMAIN_NAME}** ("Website") and services, you agree to be bound by these Terms of Service ("Terms"). If you do not agree with any part of these Terms, you must not use our services.
+Welcome to **Shiftiatrics** ("we," "our," or "us"). By engaging with our services through our website **${DOMAIN_NAME}** ("Website") or directly with our team, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you must not use our services.
 
 ## 2. Description of Service
-We provide an **automated shift scheduling** platform that allows users to manage ER staff member schedules, designated holidays, and user preferences (e.g., dark mode, scheduling settings). Our services are provided "as is" and may be modified or discontinued at any time.
+We provide a **personalized ER shift scheduling service** where we work directly with clients to configure, generate, and deliver optimized schedules for ER staff.  
+Our services are provided on a custom basis, tailored to each client's needs, and may be modified as agreed upon during engagement.
 
-## 3. Account Registration
-- To use our services, you must register an account using a valid email address.
-- You are responsible for maintaining the confidentiality of your login credentials.
-- You must be at least 18 years old or have parental/guardian consent to use our services.
-- You agree not to share or transfer your account to others.
+## 3. Service Engagement
+- Clients engage our services by selecting a plan and contacting us.
+- We work with clients to gather required information (e.g., staff names, working hours, holidays).
+- Client accounts are created during onboarding, allowing clients to log in and generate schedules. No self-registration is available.
+- All schedules are generated based on the information, preferences, and parameters provided by the client. We rely on the accuracy, completeness, and timeliness of the data shared with us. Clients are responsible for ensuring that the data provided is correct, lawful, and suitable for schedule generation. We do not independently verify the validity of the client-provided information.
+- Clients will have the opportunity to review the generated schedules and may request reasonable adjustments if needed.
 
-## 4. Authentication & Cookies
-- We use **authentication cookies** to verify users and allow them access to their accounts.
-- These cookies **do not track** users beyond authentication and account-related settings.
-- For more details, refer to our **[Privacy Policy](/legal/privacy)**.
+## 4. Data & Privacy
+- We handle any personal data (e.g., staff names, work schedules) in accordance with our **[Privacy Policy](/legal/privacy)**.
+- We do not sell or misuse client data.
+- Clients are responsible for ensuring the accuracy and legality of the information provided to us.
 
-## 5. User Responsibilities
+## 5. Client Responsibilities
 By using our services, you agree to:
-- Provide accurate and up-to-date information.
+- Provide accurate and up-to-date information necessary for schedule generation.
+- Ensure compliance with applicable labor and privacy laws regarding any data shared with us.
+- Review delivered schedules carefully before implementing them operationally.
 - Use the services only for lawful purposes.
 - Not attempt to hack, disrupt, or exploit vulnerabilities in our system.
 - Not misuse the service by submitting false, misleading, or inappropriate content.
-- Ensure that any ER staff member names, minimum and maximum working hours, schedules, or personal data you input comply with applicable labor and privacy laws.
 
-## 6. Data & Privacy
-- Your **personal data** (e.g., email, scheduling settings) is handled per our **[Privacy Policy](/legal/privacy)**.
-- We **do not sell your data** to third parties.
-- You are responsible for ensuring that any ER staff member names or scheduling data you input do not violate privacy laws.
+## 6. Downtime, Delays, and Service Interruptions
+- While we strive for high service availability, we do not guarantee uninterrupted access to our website or services.
+- Scheduled maintenance, unexpected outages, force majeure events (e.g., natural disasters, power failures), or third-party provider issues may result in temporary unavailability.
+- In the event of downtime or delays, we will make reasonable efforts to notify active clients and resume services as quickly as possible.
+- We are not liable for any loss or damages resulting from service interruptions, delays in schedule delivery, or other unforeseen operational disruptions.
 
-## 7. Modifications & Downtime
-- We reserve the right to modify, suspend, or discontinue any part of our services at any time.
-- We are **not liable for any data loss or service interruption** due to maintenance, upgrades, or unforeseen circumstances.
-- We may update our pricing, features, or functionality with or without notice.
+## 7. Refunds & Cancellations
+- Refunds are handled fairly based on the proportion of work completed at the time of cancellation.
+- Setup fees for delivered work are non-refundable once major customization begins.
+- Clients may cancel future ongoing services with prior written notice.
 
-## 8. Termination
-- We may suspend or terminate your access if you violate these Terms.
-- Users may delete their accounts at any time.
-- Termination does not remove the obligation for any outstanding legal or contractual responsibilities.
-- We reserve the right to **suspend or permanently remove accounts** that violate laws, security policies, or service integrity.
+## 8. Modifications to Service
+- We reserve the right to modify service offerings, methods, or features based on evolving client needs or operational improvements.
+- Any major changes affecting active clients will be communicated directly.
+- Service modifications will not materially reduce the quality of services for active clients without prior notice.
 
-## 9. Disclaimers & Limitation of Liability
+## 9. Termination
+- Either party may terminate service engagement with reasonable notice.
+- We reserve the right to terminate services immediately if clients violate legal, ethical, security, or professional standards.
+- Please note that account deletions are processed manually by our team and may take a few business days to complete.
+
+## 10. Disclaimers & Limitation of Liability
 - Our services are provided "as is" without warranties of any kind.
-- We are **not responsible for any missed shifts, incorrect schedules, financial loss, damages, or operational disruptions** caused by the use of our service.
-- Users are responsible for reviewing and verifying all schedules before implementation.
-- We **do not guarantee uninterrupted access to our services**, and we are not liable for disruptions due to system errors, third-party failures, or force majeure events.
-- To the fullest extent permitted by law, our liability is **limited to the amount paid by you for the service** (if applicable).
+- While we aim for high accuracy, we are **not responsible for missed shifts, financial losses, or operational disruptions** resulting from schedule use.
+- Clients are responsible for reviewing and verifying all schedules before distribution or operational use.
+- We do not guarantee that schedules will be error-free or meet every operational scenario unless specifically agreed in writing.
+- To the fullest extent permitted by law, our liability is limited to the amount paid by the client for the service delivered.
 
-## 10. Arbitration & Dispute Resolution
-- Any disputes arising from these Terms shall be **resolved through binding arbitration** in **Qatar**, rather than in court.
-- Users waive their right to participate in **class-action lawsuits** against Shiftiatrics.
-- If arbitration is deemed unenforceable, disputes shall be handled in the appropriate courts in **Qatar**.
+## 11. Dispute Resolution
+- Any disputes shall be **resolved through binding arbitration** in **Qatar**.
+- If arbitration is unenforceable, disputes will be handled in the courts of **Qatar**.
+- Clients waive the right to participate in any class-action lawsuits against Shiftiatrics.
 
-## 11. Changes to These Terms
-- We may update these Terms from time to time. Changes will be posted on this page with an updated revision date.
-- Continued use of our services after changes means you accept the updated Terms.
+## 12. Changes to These Terms
+- We may update these Terms from time to time. Changes will be posted on this page with a revised date.
+- Continued engagement with our services after changes constitutes acceptance of the updated Terms.
 
-## 12. Governing Law
-These Terms are governed by the laws of **Qatar**. Any disputes shall be resolved in the appropriate courts within this jurisdiction.
+## 13. Governing Law
+These Terms are governed by the laws of **Qatar**. Any disputes will be resolved within this jurisdiction.
 
-## 13. Contact Us
-If you have any questions about these Terms, please visit our [Contact Us](/support/contact) page.
-
-From there, you can submit your inquiry, and our team will respond as soon as possible.
+## 14. Contact Us
+If you have any questions regarding these Terms, please contact us through our [Contact Page](/support/contact).
 `
 
 export default function Privacy() {
     return <RegularPage id='terms-of-service'>
         <section>
             <h1>Terms of Service</h1>
-            <p>Last updated: March 3, 2025</p>
+            <p>Last updated: April 28, 2025</p>
         </section>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{MARKDOWN_CONTENT}</ReactMarkdown>
     </RegularPage>

@@ -10,25 +10,27 @@ export const generateMetadata = async (): Promise<Metadata> => ({
 
 const MARKDOWN_CONTENT = `
 ## Our Mission
-We aim to **streamline scheduling of ER staff members' shifts and holidays**, allowing healthcare professionals to focus more on patient care rather than administrative tasks.
+We aim to **streamline the scheduling of ER staff members' shifts and holidays** by providing a fully personalized service. 
+Our focus is to allow healthcare professionals to concentrate more on patient care while we handle the complexities of scheduling for them.
+In other words, we make the process of converting scheduling rules into automated systems easier and more efficient.
 
-## Key Features
-- **Automated Scheduling** – Reduce manual work and auto-generate shifts.
-- **ER Staff Members' Preferences** – Ensure fair scheduling with customization.
-- **Holidays & Leaves** – Account for absences effortlessly.
-- **Flexibility** – Set when shifts start and end, register ER staff members and their working hours, optionally designate holidays to ER staff members, and regenerate schedules when needed.
-- **Compliance** – Manage the generation of schedules to comply with labor laws, such as setting minimum and maximum working hours for ER staff members.
+## Key Services
+- **Personalized Scheduling Setup** – We build and configure your ER team's shift schedules to match your unique needs.
+- **Consideration of Staff Preferences** – We create fair and balanced schedules based on your staff members' working hours, holidays, and preferences.
+- **Holiday and Leave Management** – We help you manage absences and holiday schedules without manual work.
+- **Flexible Configuration** – Set your shift times, customize ER staff working hours, designate holidays, and adjust settings at any time with our help.
+- **Compliance Support** – We ensure generated schedules comply with labor requirements, such as minimum and maximum working hour rules.
 
 ## How It Works
-1. Add ER staff members and their availability.
-2. Set the shifts per day, including their starting and ending time.
-3. Set designated holidays and scheduling preferences.
-4. Let Shiftiatrics generate an optimized schedule.
-5. Review, adjust, and regenerate if needed. Shiftiatrics allows you to see the number of shifts and working hours per ER staff member in the generated schedule.
-6. Export the schedule and share with stakeholders.
+1. We work closely with you to collect information about your ER staff, their availability, and work constraints.
+2. We configure your shift types, daily patterns, and preferred scheduling rules.
+3. You can assign designated holidays at any time before we generate schedules.
+4. We generate optimized schedules for your review and approval.
+5. Need adjustments? We collaborate with you to fine-tune schedules anytime.
+6. Our system delivers finalized schedules, ready for easy distribution to your teams and stakeholders.
 
 ## Contact Us
-For inquiries or support, visit our [Contact Page](/support/contact).
+For personalized scheduling services, questions, or support, visit our [Contact Page](/support/contact).
 
 ## Legal
 - [Terms of Service](/legal/terms)
@@ -37,14 +39,18 @@ For inquiries or support, visit our [Contact Page](/support/contact).
 `
 
 export default function About() {
-    return <RegularPage id='about-page'>
-        <section>
-            <h1>About Shiftiatrics</h1>
-            <p>
-                Shiftiatrics is an <b>automated shift scheduling platform</b> designed for ER staff members.
-                Our goal is to make shift management <b>faster, smarter, and more efficient</b>.
-            </p>
-        </section>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{MARKDOWN_CONTENT}</ReactMarkdown>
-    </RegularPage>
+    return (
+        <RegularPage id='about-page'>
+            <section>
+                <h1>About Shiftiatrics</h1>
+                <p>
+                    Shiftiatrics is a <b>personalized ER staff scheduling service</b> designed to remove the burden of complex shift planning from healthcare teams. 
+                    Our mission is to make shift management <b>smarter, simpler, and fully tailored</b> to your department&apos;s needs.
+                </p>
+            </section>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {MARKDOWN_CONTENT}
+            </ReactMarkdown>
+        </RegularPage>
+    )
 }

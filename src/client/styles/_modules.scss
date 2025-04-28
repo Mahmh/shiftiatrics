@@ -147,6 +147,7 @@ $main-box-shadow: 0 5px 15px 0 map-get($color-palette, 'alpha-black-1');
 }
 
 @mixin scaled-resolution($prev-width, $prev-height, $new-height) {
-    width: calc($prev-width * $new-height / $prev-height);
+    $new-width: calc($prev-width * $new-height / $prev-height);
+    width: $new-width;
     height: $new-height;
 }

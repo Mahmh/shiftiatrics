@@ -2,19 +2,19 @@ import { useState, useEffect, useContext } from 'react'
 import { dashboardContext, nullSettings, nullAccount, nullSub } from '@context'
 
 export default function LoadingScreen() {
-    const { account, subscription, employees, shifts, schedules, settings } = useContext(dashboardContext)
+    const { account, subscription, teams, employees, shifts, schedules, settings } = useContext(dashboardContext)
     const [isShown, setIsShown] = useState(true)
 
     useEffect(() => {
         setTimeout(() => {
             setIsShown(
-                !(employees && shifts && schedules)
+                !(teams && employees && shifts && schedules)
                 || settings === nullSettings
                 || account === nullAccount
                 || subscription === nullSub
             )
         }, 500)
-    }, [account, employees, shifts, schedules, settings, subscription])
+    }, [account, teams, employees, shifts, schedules, settings, subscription])
 
     return (
         <div className={`loading-screen ${isShown ? 'open' : 'closed'}`}>

@@ -1,8 +1,9 @@
 #subscription-content {
     @include breakpoint(1660px) { margin-left: 280px; }
-    @include breakpoint(950px) { margin-left: auto; max-width: unset }
-    max-width: 60%;
-    margin: 0 auto;
+    @include breakpoint(950px) { margin: 0 auto; max-width: unset }
+    max-width: 100%;
+    margin-left: 300px;
+    margin-right: 70px;
 
     #header-upper { padding-bottom: 0 }
 }
@@ -26,11 +27,12 @@
         gap: 40px;
         .pricing-card { margin: 0 auto; max-width: 90vw }
     }
-    width: 120%;
+    width: 100%;
     flex-direction: row;
     justify-content: flex-start;
     gap: 0;
     padding-left: 0;
+    overflow-y: hidden;
 
     .pricing-card {
         @include themed-bgcolor('alpha-white', 'primary-blue-hover');

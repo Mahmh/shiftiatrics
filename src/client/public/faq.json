@@ -11,12 +11,8 @@
                 "answer": "ER staff members, hospital administrators, HR teams, and clinic managers."
             },
             {
-                "question": "How does the app ensure fairness in scheduling?",
-                "answer": "The system considers workload balance, shift preferences, and legal work-hour limitations."
-            },
-            {
                 "question": "Does this work for private practices as well as hospitals?",
-                "answer": "Yes, the system is flexible and can handle both small clinics and large hospital departments."
+                "answer": "Yes, our app is based upon the fact that we provide custom-tailored scheduling systems that can handle both small clinics and large hospital departments."
             }
         ]
     },
@@ -28,8 +24,8 @@
                 "answer": "On desktop computer, click the Sign Up button on the top right of your screen. On mobile, tap the menu button and press Sign Up."
             },
             {
-                "question": "Can multiple users from the same hospital access the same schedule?",
-                "answer": "Currently, only the account that generates a schedule can export and share it manually. We are considering adding collaborative access for multiple users in the future."
+                "question": "Can multiple users from the same clinic or hospital access the same schedule?",
+                "answer": "Currently, only the account that generates schedules for all teams can export and share generated schedules manually. We are considering adding collaborative access for multiple users in the future."
             }
         ]
     },
@@ -41,12 +37,16 @@
                 "answer": "The system uses AI to analyze preferences, minimum and maximum work-hour constraints, and other settings to create optimal shift plans."
             },
             {
+                "question": "Does this system generate schedules for multiple teams?",
+                "answer": "Yes, each team may have its own scheduling rules, each of which needs its own scheduling system. When you click on the Generate Schedule button on a chosen month and year, you can view each team's generated schedule separately."
+            },
+            {
                 "question": "Can I set preferences for my shifts?",
                 "answer": "Yes, doctors can set preferences for night shifts, weekends, or specific availability. Holidays can be assigned to selected ER staff members, and the system will keep that in mind when generating a schedule."
             },
             {
                 "question": "Can I get notifications about upcoming shifts?",
-                "answer": "Yes, the app can send email notifications. Push notifications and SMS reminders may be available in future updates."
+                "answer": "Currently, the app does not support notifications. However, we are planning on implementing email notifications in the future. Push notifications and SMS reminders may also be available in future updates."
             },
             {
                 "question": "Can I export the schedule?",
@@ -58,12 +58,16 @@
         "category": "Compliance & Policies",
         "questions": [
             {
-                "question": "Does the app ensure compliance with labor laws and pediatric shift regulations?",
+                "question": "Does the app ensure compliance with labor laws and ER shift regulations?",
                 "answer": "Currently, users can set the minimum and maximum work hours for each ER staff member registered. In the future, we are considering implementing various global and regional labor laws to suit your needs."
             },
             {
                 "question": "How does the app prevent over-scheduling?",
-                "answer": "The system enforces fair distribution and flags potential burnout risks. All ER staff members are given equal (or approximately equal) number of work hours."
+                "answer": "The system enforces fair distribution and flags potential burnout risks. All ER staff members are given equal (or approximately equal) number of work hours. You can view the total number of shifts and work hours for each ER staff member in the dashboard when selecting a schedule on a specific month."
+            },
+            {
+                "question": "How does the app ensure fairness in scheduling?",
+                "answer": "The system considers workload balance, shift preferences, designated holidays, and legal work-hour limitations."
             }
         ]
     },
@@ -72,11 +76,11 @@
         "questions": [
             {
                 "question": "Do you offer a free trial version?",
-                "answer": "Yes, a free trial is available for new users. You can activate it from the Pricing page."
+                "answer": "Yes, we offer free trials when negotiating with clients via email."
             },
             {
                 "question": "Are there different plans for small clinics vs. large hospitals?",
-                "answer": "Yes, there are three pre-defined plans for different corporate levels, and custom plans are supported as well."
+                "answer": "Yes, we are available to design fully-personalized scheduling systems for clinics and hospitals of all sizes."
             }
         ]
     },
@@ -85,7 +89,7 @@
         "questions": [
             {
                 "question": "What if my schedule doesn't look right?",
-                "answer": "To regenerate your schedule, check your dashboard settings (employees, shifts, holidays) and click 'Regenerate Schedule.' If issues persist, visit the Contact Us page to report a problem."
+                "answer": "To regenerate your schedule, check your dashboard settings (ER staff, shifts, holidays) and click 'Regenerate Schedule.' If issues persist, visit the Contact Us page to report a problem."
             },
             {
                 "question": "How do I contact support?",

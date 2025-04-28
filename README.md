@@ -1,4 +1,4 @@
-# Shiftiatrics: Automated Shift Scheduling for Businesses in the Pediatrics Industry
+# Shiftiatrics: Automated Shift Scheduling for Businesses in the ER Industry
 <u>Problem statement:</u> Businesses spend a lot of time, energy, and money in scheduling shifts & designing agreed-upon rosters every month, especially in the healthcare industry. In addition, shift schedules for emergency doctors are more complicated than, for example, dentists. Hence, there is a higher demand for automating shift schedules for emergency doctors than dentists.
 
 <u>Solution:</u> I have built an automated scheduling website for businesses that coordinate ER staff members to use for automating this tedious task.

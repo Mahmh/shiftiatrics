@@ -50,7 +50,7 @@ export default function Contact() {
 
         if (queryType === 'partnership') setFormData(prev => ({ ...prev, queryType: 'Partnership & Collaboration' }))
         if (queryType && PLANS.map(p => p.name).includes(queryType.replace('_plan', '') as PlanName)) {
-            setFormData(prev => ({ ...prev, queryType: getUIPlanName(queryType as PlanName) as QueryType }))
+            setFormData(prev => ({ ...prev, queryType: getUIPlanName(queryType.replace('_plan', '') as PlanName) as QueryType }))
         }
     }, [params, queryType])
 

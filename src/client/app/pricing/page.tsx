@@ -17,10 +17,10 @@ export default function Pricing() {
 
     return <RegularPage id='pricing-page' transparentHeader={true} footerMarginTop={false}>
         <h1>Pricing Plans</h1>
-        <p>
-            Choose the plan that fits your needs, and get started auto-scheduling right away!
-            You can request a refund anytime, and we&apos;ll refund the unused portion of your subscription.
-        </p>
+        <div id='pricing-description'>
+            <p>Select the plan that best matches your team&apos;s needs, and our team will work closely with you to personalize your scheduling solution.</p>
+            <p>If you&apos;re not satisfied, you can request a refund—adjusted fairly based on any work already completed for your setup and service.</p>
+        </div>
         <div className='pricing-cards'>
             {PLANS.map(plan => (
                 <PricingCard

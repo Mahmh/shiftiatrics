@@ -16,49 +16,58 @@ export const PLAN_NAMES = ['starter', 'growth', 'advanced', 'enterprise'] as con
 export const PLANS: Plan[] = [
     {
         name: 'starter',
-        price: 249,
-        link: '/support/contact?query_type=starter',
+        price: 79,
+        link: '/support/contact?query_type=starter_plan',
         titleBg: 'linear-gradient(45deg, #72acfe, #3d7cc7)',
         features: [
-            'For small teams (1–5 doctors)',
-            'Standard shift setup',
-            'Monthly schedule generation included',
+            'Up to 6 staff members',
+            'One staff team',
+            'D/E/N shift types',
+            'Manual holiday assignment',
+            'Standard schedule format',
+            'Standard support'
         ],
     },
     {
         name: 'growth',
-        price: 'Custom Quote',
-        link: '/support/contact?query_type=growth',
+        price: 149,
+        link: '/support/contact?query_type=growth_plan',
         titleBg: 'linear-gradient(45deg, #217cff, #5ca7ff)',
         features: [
-            'For 5–15 doctors',
-            'Common rotation patterns',
-            'Basic holiday and absence support',
-            'Monthly schedule updates',
+            'Up to 20 staff members',
+            'Up to 3 staff teams',
+            'D/E/N shift types',
+            'Manual holiday assignment',
+            'Minor formatting requests',
+            'Standard support'
         ],
     },
     {
         name: 'advanced',
-        price: 'Custom Quote',
-        link: '/support/contact?query_type=advanced',
+        price: 249,
+        link: '/support/contact?query_type=advanced_plan',
         titleBg: 'linear-gradient(45deg, #607eff, #47dbf3)',
         features: [
-            'For 15+ doctors',
-            'Custom shift rules and rotation logic',
-            'Advanced fairness and fatigue constraints',
-            'Weekly schedule adjustments',
+            'Up to 50 staff members',
+            'Up to 6 staff teams',
+            'D/E/N shift types',
+            'Manual holiday assignment',
+            'Custom schedule output formats',
+            'Standard support'
         ],
     },
     {
         name: 'enterprise',
         price: 'Custom Quote',
-        link: '/support/contact?query_type=enterprise',
+        link: '/support/contact?query_type=enterprise_plan',
         titleBg: 'linear-gradient(45deg, #a463c7, #2241ad)',
         features: [
-            'White-glove onboarding',
-            'Integrations with internal systems',
-            'Custom notifications and exports',
-            'Dedicated support team',
+            'Unlimited staff members and teams',
+            'D/E/N shift types (or custom shift configurations)',
+            'Automatic holiday assignment',
+            'Custom integrations with hospital systems',
+            'Full custom formatting support',
+            'Dedicated priority support team'
         ],
     }
 ]

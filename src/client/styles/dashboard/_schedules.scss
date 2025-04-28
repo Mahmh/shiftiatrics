@@ -121,6 +121,7 @@
             max-width: 50vw;
             padding: 10px 30px;
             border-radius: 10px;
+            box-shadow: $main-box-shadow;
             cursor: pointer;
             h2 { @include themed-color('background', 'primary-text') }
             &:hover { @include themed-bgcolor('primary-blue-hover', 'secondary-blue') }

@@ -136,7 +136,7 @@ export interface FAQ {
 
 export interface Plan {
     name: PlanName
-    price: number | string
+    price: number | string // Monthly price in USD
     titleBg: string
     link?: string
     features: string[]

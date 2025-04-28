@@ -861,6 +861,7 @@ a:hover {
   max-width: 50vw;
   padding: 10px 30px;
   border-radius: 10px;
+  box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.1764705882);
   cursor: pointer;
 }
 #schedules-content .team-selector section.dark-theme {
@@ -1240,8 +1241,9 @@ a:hover {
 }
 
 #subscription-content {
-  max-width: 60%;
-  margin: 0 auto;
+  max-width: 100%;
+  margin-left: 300px;
+  margin-right: 70px;
 }
 @media (max-width: 1660px) {
   #subscription-content {
@@ -1250,7 +1252,7 @@ a:hover {
 }
 @media (max-width: 950px) {
   #subscription-content {
-    margin-left: auto;
+    margin: 0 auto;
     max-width: unset;
   }
 }
@@ -1272,11 +1274,12 @@ a:hover {
 }
 
 #subscription-content .pricing-cards {
-  width: 120%;
+  width: 100%;
   flex-direction: row;
   justify-content: flex-start;
   gap: 0;
   padding-left: 0;
+  overflow-y: hidden;
 }
 @media (max-width: 1850px) {
   #subscription-content .pricing-cards {
@@ -1917,7 +1920,7 @@ a:hover {
   #lp-banner {
     display: flex;
     flex-direction: column;
-    padding-top: 150px;
+    padding-top: 100px;
     padding-bottom: 75px;
     gap: 0;
   }
@@ -1985,7 +1988,7 @@ a:hover {
   background-color: #f8f9fa;
   box-shadow: 0 5px 60px #4a90e2;
   border-radius: 10px;
-  width: 859px;
+  width: 940px;
   height: 500px;
   opacity: 0;
   transform: translateY(80%);
@@ -1993,13 +1996,13 @@ a:hover {
 }
 @media (max-width: 2000px) {
   #lp-banner img {
-    width: 652.84px;
+    width: 714.4px;
     height: 380px;
   }
 }
 @media (max-width: 1550px) {
   #lp-banner img {
-    width: 652.84px;
+    width: 714.4px;
     height: 380px;
     margin: 0 auto;
     margin-top: 110px;
@@ -2007,13 +2010,13 @@ a:hover {
 }
 @media (max-width: 940px) {
   #lp-banner img {
-    width: 515.4px;
+    width: 564px;
     height: 300px;
   }
 }
 @media (max-width: 600px) {
   #lp-banner img {
-    width: 343.6px;
+    width: 376px;
     height: 200px;
   }
 }
@@ -2376,6 +2379,21 @@ a:hover {
   }
 }
 
+#pricing-description {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+  padding: 15px;
+}
+@media (max-width: 1000px) {
+  #pricing-description {
+    gap: 10px;
+  }
+}
+#pricing-description p {
+  margin: 0;
+}
+
 .pricing-cards {
   display: flex;
   justify-content: space-around;
@@ -2410,7 +2428,7 @@ a:hover {
   background-color: rgba(5, 15, 27, 0.7490196078);
   border-radius: 8px;
   width: 390px;
-  height: 650px;
+  height: 700px;
   margin: 1rem;
   box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.1764705882);
   opacity: 0;
@@ -2635,7 +2653,7 @@ a:hover {
 #about-page, #cookie-policy, #privacy-policy, #terms-of-service {
   width: 75%;
   margin: 0 auto;
-  line-height: 1.25;
+  line-height: 1.5;
 }
 @media (max-width: 600px) {
   #about-page, #cookie-policy, #privacy-policy, #terms-of-service {

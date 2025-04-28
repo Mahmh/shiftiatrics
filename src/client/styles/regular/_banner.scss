@@ -1,7 +1,7 @@
 #lp-banner {
     @include breakpoint(1550px) {
         @include vertical-flex;
-        padding-top: 150px;
+        padding-top: 100px;
         padding-bottom: 75px;
         gap: 0;
     }
@@ -64,16 +64,18 @@
     }
 
     img {
-        @include breakpoint(2000px) { @include scaled-resolution(859px, 500px, 380px) }
-        @include breakpoint(1550px) { @include scaled-resolution(859px, 500px, 380px); margin: 0 auto; margin-top: 110px }
-        @include breakpoint(940px)  { @include scaled-resolution(859px, 500px, 300px) }
-        @include breakpoint(600px)  { @include scaled-resolution(859px, 500px, 200px) }
+        $width: 940px;
+        $height: 500px;
+        @include breakpoint(2000px) { @include scaled-resolution($width, $height, 380px) }
+        @include breakpoint(1550px) { @include scaled-resolution($width, $height, 380px); margin: 0 auto; margin-top: 110px }
+        @include breakpoint(940px)  { @include scaled-resolution($width, $height, 300px) }
+        @include breakpoint(600px)  { @include scaled-resolution($width, $height, 200px) }
         display: block;
         background-color: get-color('background');
         box-shadow: 0 5px 60px get-color('primary-blue');
         border-radius: 10px;
-        width: 859px;
-        height: 500px;
+        width: $width;
+        height: $height;
         opacity: 0;
         transform: translateY(80%);
         animation: fadeIn 1s ease forwards .2s;

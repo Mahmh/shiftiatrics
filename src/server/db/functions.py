@@ -107,6 +107,7 @@ async def request_delete_account(cookies: Cookies, *, session: _SessionType) -> 
 @dbsession(commit=True)
 def delete_account(account_id: int, *, session: _SessionType) -> None:
     """This functions is used by `src.server.scripts.delete_account` to manually delete an account."""
+    _check_account(account_id, session=session)
     account = session.get(Account, account_id)
     session.delete(account)
 
