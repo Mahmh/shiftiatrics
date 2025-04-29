@@ -74,7 +74,7 @@ const Account = () => {
                 exitAccount()
                 await new Request(
                     'accounts',
-                    async () => await logOut(),
+                    () => logOut(),
                     (error) => {
                         if (error.includes('429')) { setError(TOO_MANY_REQS_MSG); return }
                         setError(

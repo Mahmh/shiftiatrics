@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import date, time, datetime, timezone, timedelta
 import logging, os
-from src.server.lib.constants import ENABLE_LOGGING, LOG_DIR, TOKEN_EXPIRY_SECONDS, EMAIL_TEMPLATES_DIR
+from src.server.lib.constants import ENABLE_LOGGING, LOG_DIR, TOKEN_EXPIRY_SECONDS, TEMPLATES_DIR
 
 def get_logger(name: str, filename: str, level: str = 'INFO') -> logging.Logger:
     """Get a logger with a specific name and file handler."""
@@ -76,7 +76,7 @@ def todicts(objs: list[object]) -> list[Optional[dict]]:
 
 
 def format_template(filename: str, **kwargs) -> str:
-    """Formats a template file with the given keyword arguments."""
-    with open(os.path.join(EMAIL_TEMPLATES_DIR, filename), 'r') as file:
+    """Formats a template file (`src/server/templates/{filename}`) with the given keyword arguments."""
+    with open(os.path.join(TEMPLATES_DIR, filename), 'r') as file:
         template = file.read()
     return template.format(**kwargs)

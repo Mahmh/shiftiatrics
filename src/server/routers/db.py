@@ -56,7 +56,7 @@ async def change_password_upon_signup(request: Request, new_password: str = Body
     return change_password(get_cookies(request), new_password, require_current=False)
 
 
-@account_router.delete('/')
+@account_router.delete('')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
 async def delete_existing_account(request: Request, response: Response) -> dict:
