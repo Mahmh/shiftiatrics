@@ -135,6 +135,11 @@
         padding: 10px;
         box-shadow: $main-box-shadow;
     }
+    
+    #agree-to-tos-sec {
+        a { @include themed-color('primary-blue', 'primary-blue-hover') }
+        input { scale: 1.7; margin: 0 12px }
+    }
 }
 
 

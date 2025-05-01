@@ -1240,6 +1240,25 @@ a:hover {
   color: #5a6676;
 }
 
+#settings-content .card-content #dashboard-legal-btns {
+  gap: 10px;
+  justify-content: flex-start;
+}
+@media (max-width: 950px) {
+  #settings-content .card-content #dashboard-legal-btns {
+    flex-direction: column;
+  }
+  #settings-content .card-content #dashboard-legal-btns a {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: center;
+  }
+}
+#settings-content .card-content #dashboard-legal-btns a {
+  text-decoration: none;
+}
+
 #subscription-content {
   max-width: 100%;
   margin-left: 300px;
@@ -1761,6 +1780,20 @@ a:hover {
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.1764705882);
+}
+.backdrop #modal #agree-to-tos-sec a {
+  color: #4a90e2;
+}
+.backdrop #modal #agree-to-tos-sec a.dark-theme {
+  color: #163c62;
+}
+.dark-theme .backdrop #modal #agree-to-tos-sec a {
+  color: #163c62;
+}
+
+.backdrop #modal #agree-to-tos-sec input {
+  scale: 1.7;
+  margin: 0 12px;
 }
 
 @media screen and (max-width: 815px) {

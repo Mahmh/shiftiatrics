@@ -23,7 +23,7 @@ def _handle_client_cookies(cookies: dict) -> None:
         client.cookies.set(key, value)
 
 
-def _generate_random_cred_and_sub_info() -> dict[str, str]:
+def _generate_random_cred() -> dict[str, str]:
     email = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
     cred = Credentials(email=email, password=password)
@@ -35,9 +35,6 @@ def hit_endpoint(endpoint: str, method: LiteralString = 'get', times=30, json: O
     if cookies: _handle_client_cookies(cookies)
 
     for i in range(times+1):
-        if endpoint == '/accounts/signup':
-            json = _generate_random_cred_and_sub_info()
-
         if method == 'get': response = client.get(endpoint)
         elif method == 'post': response = client.post(endpoint, json=json)
         elif method == 'patch': response = client.patch(endpoint, json=json)
@@ -51,7 +48,7 @@ def hit_endpoint(endpoint: str, method: LiteralString = 'get', times=30, json: O
 
 # Tests
 def test_rate_limit_signup():
-    response = hit_endpoint('/accounts/signup', method='post', times=10)
+    response = hit_endpoint('/accounts/signup', method='post', times=10, json={'cred': _generate_random_cred(), 'legal_agree': True})
     assert response.status_code == 429
 
 

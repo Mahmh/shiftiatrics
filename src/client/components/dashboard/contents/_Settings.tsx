@@ -1,5 +1,6 @@
 import { useCallback, useContext, useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { dashboardContext, nullAccount, nullSub } from '@context'
 import { Choice, Switch, Dropdown, Request, ChangePasswordModalContent } from '@utils'
 import { MIN_YEAR, MAX_YEAR, TOO_MANY_REQS_MSG } from '@const'
@@ -12,6 +13,7 @@ export default function Settings() {
         <Account/>
         <Preferences/>
         <Help/>
+        <Legal/>
     </div>
 }
 
@@ -282,3 +284,18 @@ const Help = () => {
         </section>
     )
 }
+
+
+const Legal = () => (
+    <section className='settings-card'>
+        <h3 className='settings-title'>Legal</h3>
+        <div className='card-content'>
+            <p style={{ marginBottom: 20 }}>You can find the terms of service, privacy policy, and cookie policy below.</p>
+            <div id='dashboard-legal-btns'>
+                <Link href='/legal/terms' target='_blank' rel='noopener noreferrer' className='card-btn'>Terms of Service</Link>
+                <Link href='/legal/privacy' target='_blank' rel='noopener noreferrer' className='card-btn'>Privacy Policy</Link>
+                <Link href='/legal/cookies' target='_blank' rel='noopener noreferrer' className='card-btn'>Cookie Policy</Link>
+            </div>
+        </div>
+    </section>
+)

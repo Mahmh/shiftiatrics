@@ -10,7 +10,7 @@ from src.server.db import Session, Account, Token, Team, Employee, Shift, Schedu
 
 # Defaults & constants
 CRED = Credentials(email='testuser@gmail.com', password='testpass')
-signup = lambda client, cred=CRED: client.post('/accounts/signup', json=dict(cred))
+signup = lambda client, cred=CRED: client.post('/accounts/signup', json={'cred': dict(cred), 'legal_agree': True})
 login = lambda client, cred=CRED: client.post('/auth/login', json=dict(cred))
 
 EMPLOYEE = {'employee_name': 'John Doe', 'team_id': 1, 'min_work_hours': 140, 'max_work_hours': 180}

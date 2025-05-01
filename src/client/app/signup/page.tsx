@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Request, sanitizeInput, validateCred, setMetadata } from '@utils'
+import { Request, sanitizeInput, validateCred, setMetadata, LegalAgreeCheckbox } from '@utils'
 import { TOO_MANY_REQS_MSG } from '@const'
 import Link from 'next/link'
 import RegularPage from '@regpage'
@@ -12,14 +12,9 @@ export default function Signup() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string|null>(null)
     const [loading, setLoading] = useState(false)
-    const [ToSAccepted, setToSAccepted] = useState(false)
+    const [legalAgree, setLegalAgree] = useState(false)
 
     const handleSignup = async () => {
-        if (!ToSAccepted) {
-            setError('Before continuing, please accept the terms of service by checking the checkbox above.')
-            return
-        }
-
         setError(null)
         setLoading(true)
 
@@ -42,7 +37,7 @@ export default function Signup() {
                 setLoading(false)
                 setError(error.includes('429') ? TOO_MANY_REQS_MSG : error)
             }
-        ).post({ email: sanitizedEmail, password: sanitizedPassword })
+        ).post({ cred: { email: sanitizedEmail, password: sanitizedPassword }, legal_agree: legalAgree })
     }
 
     useEffect(() => {
@@ -63,10 +58,7 @@ export default function Signup() {
                     <label>Password</label>
                     <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} maxLength={32}/>
                 </section>
-                <section id='agree-to-tos-sec'>
-                    <input type='checkbox' onChange={e => setToSAccepted(e.target.checked)} required/>
-                    <label>I agree to Shiftiatrics&apos; <Link href='/legal/terms'>Terms of Service</Link>, <Link href='/legal/privacy'>Privacy Policy</Link>, and <Link href='/legal/cookies'>Cookie Policy</Link>.</label>
-                </section>
+                <LegalAgreeCheckbox setLegalAgree={setLegalAgree}/>
                 <p className='error' style={error === null ? { visibility: 'hidden', margin: 0 } : {}}>{error}</p>
                 <button className='cred-submit-btn' id='signup-btn' onClick={handleSignup} disabled={loading}>
                     {loading ? 'Signing up...' : 'Sign Up'}

@@ -270,6 +270,23 @@ export const getUIDate = (date: Date) => (
 )
 
 
+/** Used during sign up or account setup */
+export const LegalAgreeCheckbox = ({ setLegalAgree }: { setLegalAgree: (value: boolean) => void }) => (
+    <section id='agree-to-tos-sec'>
+        <input type='checkbox' onChange={e => setLegalAgree(e.target.checked)} required/>
+        <label>
+            I agree to Shiftiatrics&apos;
+            <span> </span>
+            <Link href='/legal/terms' target='_blank' rel='noopener noreferrer'>Terms of Service</Link>,
+            <span> </span>
+            <Link href='/legal/privacy' target='_blank' rel='noopener noreferrer'>Privacy Policy</Link>, and
+            <span> </span>
+            <Link href='/legal/cookies' target='_blank' rel='noopener noreferrer'>Cookie Policy</Link>.
+        </label>
+    </section>
+)
+
+
 /** Modal content for changing an account's password */
 export const ChangePasswordModalContent = (
     { requireCurrent=true, setAccount, closeModal }:
@@ -280,12 +297,14 @@ export const ChangePasswordModalContent = (
     const [tempConfirmPassword, setConfirmPassword] = useState('')
     const [isConfirmDisabled, setConfirmDisabled] = useState(true)
     const [error, setError] = useState('')
+    const [legalAgree, setLegalAgree] = useState(false)
 
     const validateInputs = (current: string, newPass: string, confirmPass: string) => {
         const isValid =
             (!requireCurrent || current.trim().length >= 3) &&
             newPass.trim().length >= 3 &&
-            confirmPass.trim().length >= 3
+            confirmPass.trim().length >= 3 &&
+            (!requireCurrent || legalAgree)
 
         setConfirmDisabled(!isValid)
     }
@@ -314,8 +333,12 @@ export const ChangePasswordModalContent = (
             return
         }
 
-        const payload: Record<string, string> = { new_password: tempNewPassword.trim() }
-        if (requireCurrent) payload.current_password = tempCurrentPassword.trim()
+        const payload: Record<string, string|boolean> = { new_password: tempNewPassword.trim() }
+        if (requireCurrent) {
+            payload.current_password = tempCurrentPassword.trim()
+        } else {
+            payload.legal_agree = legalAgree
+        }
 
         await new Request(
             requireCurrent ? 'accounts/password' : 'accounts/password_upon_signup',
@@ -330,8 +353,8 @@ export const ChangePasswordModalContent = (
                 }
                 setError(
                     error.includes('Invalid cookies')
-                        ? 'Session has expired. Please log out then log in again to update your password.'
-                        : error
+                    ? 'Session has expired. Please log out then log in again to update your password.'
+                    : error
                 )
             }
         ).patch(payload)
@@ -375,6 +398,8 @@ export const ChangePasswordModalContent = (
                     maxLength={32}
                 />
             </section>
+
+            {!requireCurrent && <LegalAgreeCheckbox setLegalAgree={setLegalAgree}/>}
 
             {error && <p className="error">{error}</p>}
 

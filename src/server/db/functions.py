@@ -75,7 +75,8 @@ def change_email(cookies: Cookies, new_email: str, *, session: _SessionType) -> 
 @dbsession(commit=True)
 def change_password(cookies: Cookies, new_password: str, current_password: Optional[str] = None, require_current: bool = True, *, session: _SessionType) -> Account:
     """Updates the account's password after validation."""
-    if current_password is None: assert require_current is False, 'Please provide the current password.'
+    if current_password is None:
+        assert require_current is False, 'Please provide the current password.'
 
     account = _validate_cookies(cookies, session=session)
 

@@ -92,3 +92,9 @@ def return_account_and_sub(account: Account, sub: Optional[Subscription] = None)
         'account': todict(account, sub_expired=check_sub_expired(account.account_id)),
         'subscription': todict(sub)
     }
+
+
+def check_legal_agree(legal_agree: bool) -> None:
+    """Raises an error if the user has not agreed to the terms, conditions, privacy policy, and cookie policy."""
+    if legal_agree is False:
+        raise Exception('You must agree to the terms, conditions, privacy policy, and cookie policy to set up an account by checking the checkbox above.')

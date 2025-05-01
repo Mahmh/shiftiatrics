@@ -170,4 +170,19 @@
         @include themed-color('gray');
         box-shadow: none;
     }
+
+    #dashboard-legal-btns {
+        @include breakpoint(950px) {
+            flex-direction: column;
+            a {
+                width: 100%;
+                padding-left: 0;
+                padding-right: 0;
+                text-align: center;
+            }
+        }
+        gap: 10px;
+        justify-content: flex-start;
+        a { text-decoration: none }
+    }
 }

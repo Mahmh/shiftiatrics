@@ -1,16 +1,13 @@
 from fastapi import APIRouter, Request, Response, Body
 from src.server.rate_limit import limiter
 from src.server.lib.constants import DEFAULT_RATE_LIMIT
-from src.server.lib.models import Credentials, Cookies, ScheduleInfo, HolidayInfo
-from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, return_account_and_sub
+from src.server.lib.models import Credentials, Cookies, HolidayInfo
+from src.server.lib.api import endpoint, get_cookies, store_cookies, clear_cookies, return_account_and_sub, check_legal_agree
 from src.server.lib.types import SettingValue
 from src.server.db import (
     create_account, change_email, change_password, request_delete_account, get_account_data,
-    get_teams, get_employees, get_shifts,
-    get_schedules, create_schedule, update_schedule, delete_schedule,
-    get_settings, update_setting,
-    get_holidays, create_holiday, update_holiday, delete_holiday,
-    create_sub
+    get_teams, get_employees, get_shifts, get_schedules, delete_schedule, get_settings, 
+    update_setting, get_holidays, create_holiday, update_holiday, delete_holiday, create_sub
 )
 
 # Init
@@ -29,7 +26,8 @@ sub_router = APIRouter(prefix='/sub')
 @account_router.post('/signup')
 @limiter.limit('10/minute')
 @endpoint(auth=False)
-async def create_new_account(cred: Credentials, response: Response, request: Request) -> dict:
+async def create_new_account(cred: Credentials, response: Response, request: Request, legal_agree: bool = Body(..., embed=True)) -> dict:
+    check_legal_agree(legal_agree)
     account, token = create_account(cred)
     store_cookies(Cookies(account_id=account.account_id, token=token), response)
     return return_account_and_sub(account)
@@ -52,7 +50,8 @@ async def change_password_endpoint(request: Request, current_password: str = Bod
 @account_router.patch('/password_upon_signup')
 @limiter.limit(DEFAULT_RATE_LIMIT)
 @endpoint()
-async def change_password_upon_signup(request: Request, new_password: str = Body(..., embed=True)) -> dict:
+async def change_password_upon_signup(request: Request, new_password: str = Body(..., embed=True), legal_agree: bool = Body(..., embed=True)) -> dict:
+    check_legal_agree(legal_agree)
     return change_password(get_cookies(request), new_password, require_current=False)
 
 
