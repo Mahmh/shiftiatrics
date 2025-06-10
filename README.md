@@ -31,3 +31,23 @@ With all of that information, I can design an effective system for automating sc
     - **Python** for running the back-end server, and for writing utilities as Python has a large number of useful libraries.
 - Database:
     - **PostgreSQL** for running SQL queries and the database server.
+
+## Preview
+### Logged-out
+<img src='./preview/lp.png'>
+<img src='./preview/pricing.png'>
+<img src='./preview/support.png'>
+<img src='./preview/legal.png'>
+
+### Logged-in
+<img src='./preview/staff.png'>
+<img src='./preview/shifts.png'>
+<img src='./preview/holidays.png'>
+<img src='./preview/settings.png'>
+<img src='./preview/dark-theme.png'>
+
+### Viewing a Specific Team's Auto-generated Schedule
+<img src='./preview/schedules.png'>
+<img src='./preview/primary-team-schedule.png'>
+<img src='./preview/details.png'>
+<img src='./preview/exported.png'>
